@@ -205,5 +205,22 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    @Override
+    public UserResponse getCurrentUserProfile() {
+
+        User user = getPrincipal();
+
+        return UserResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .countryCode(user.getCountryCode())
+                .phoneNumber(user.getPhoneNumber())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .isAccountEnabled(user.isAccountEnabled())
+                .build();
+    }
 
 }

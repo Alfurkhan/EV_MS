@@ -15,4 +15,5 @@ public interface UserService{
     void validateLogin(User user);
     Optional<User> findByCountryCodeAndPhoneNumber(String countryCode, String phoneNumber);
 
+    UserResponse getCurrentUserProfile();
 }

@@ -5,8 +5,11 @@ import {
     Bell,
     UserCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Topbar() {
+    const navigate = useNavigate();
 
     const { sidebarOpen, setSidebarOpen } = useLayout();
 
@@ -52,7 +55,8 @@ export default function Topbar() {
 
                 <UserCircle
                     size={36}
-                    className="text-blue-600"
+                    className="text-blue-600 cursor-pointer hover:scale-110 transition"
+                    onClick={() => navigate("/profile")}
                 />
 
             </div>

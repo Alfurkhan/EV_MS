@@ -1,34 +1,54 @@
+# -------------------------
 # Node
+# -------------------------
 node_modules/
 dist/
-build/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# React
+# React / Vite
 frontend/node_modules/
 frontend/dist/
+frontend/.vite/
 
-# Spring
+# -------------------------
+# Java / Spring Boot
+# -------------------------
 target/
-*.log
+.gradle/
+build/
+out/
+
 *.class
 *.jar
+*.war
+*.ear
 
+# -------------------------
 # IDE
-.vscode/
+# -------------------------
 .idea/
+.vscode/
+*.iml
 
+# -------------------------
 # OS
+# -------------------------
 .DS_Store
 Thumbs.db
 
+# -------------------------
 # Environment
+# -------------------------
 .env
 .env.*
+*.env
 
-# Maven/Gradle
-.gradle/
-build/
-
+# -------------------------
 # Logs
+# -------------------------
 logs/
 *.log
+hs_err_pid*

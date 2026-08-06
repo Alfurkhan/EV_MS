@@ -13,6 +13,7 @@ import Courses from "./pages/Courses";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import StudentsPage from "./features/students/pages/StudentsPage";
+import ProfilePage from "./features/profile/pages/ProfilePage";
 
 export default function App() {
     return (
@@ -32,6 +33,10 @@ export default function App() {
                     <Route
                         path="/students"
                         element={<StudentsPage />}
+                    />
+                    <Route
+                        path="/profile"
+                        element={<ProfilePage />}
                     />
                     <Route path="/faculty" element={<Faculty />} />
                     <Route path="/attendance" element={<Attendance />} />
