@@ -1,0 +1,65 @@
+server:
+  port: 9095
+
+spring:
+  application:
+    name: api-gateway
+
+  servlet:
+    multipart:
+      max-file-size: 15GB
+      max-request-size: 15GB
+
+  cloud:
+    consul:
+      host: localhost
+      port: 8500      # Change to 9096 if your Consul is actually running there
+      discovery:
+        enabled: true
+        register: true
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 30s
+
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "*"
+                allowedMethods: "*"
+                allowedHeaders: "*"
+
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+
+          routes:
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/auth/**,/user/**
+
+application:
+  security:
+    jwt:
+      secret-key: 64cd03ad66a6843afb6b22026df5f3689255ea6a4e8ae69e3ace90a01e4610b8
+      jwtExpirationInMs: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: always
+
+endpoint:
+  user-service: http://localhost:8080

@@ -1,0 +1,111 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/evidyalaya_dev
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 25
+      connection-test-query: SELECT 1
+      connection-timeout: 30000
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      validation-timeout: 1000
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+  application:
+    name: user-service
+
+  servlet:
+    multipart:
+      max-file-size: 15GB
+      max-request-size: 15GB
+  mvc:
+    pathmatch:
+      matching-strategy : ANT_PATH_MATCHER
+  sql:
+    init:
+      mode: always
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        register: true
+        enabled: true
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 30s
+
+management:
+  security:
+    enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+logging:
+  file:
+    name: logs/app.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS Z,Asia/Kolkata} %-5level %logger : %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS Z,Asia/Kolkata} %-5level [%thread] %logger : %msg%n"
+  rollingPolicy:
+    type: timeBased
+    fileNamePattern: "logs/app-%d{yyyy-MM-dd}.log"
+    maxHistory: 7
+  level:
+    liquibase: DEBUG
+    org.springframework.boot.autoconfigure.liquibase: DEBUG
+    com.zukunftai.evidyalaya: DEBUG
+
+application:
+  security:
+    jwt:
+      secret-key: 64cd03ad66a6843afb6b22026df5f3689255ea6a4e8ae69e3ace90a01e4610b8
+      expiration: 86400000 # a day
+      jwtExpirationInMs: 86400000
+      refreshTokenExpirationInMs: 172800000
+
+baseUrl:
+  adminApp: http://localhost:3000
+
+cors:
+  origins: "http://localhost:4200"
+
+springdoc:
+  packagesToScan: com.zukunftai.evidyalaya.controller
+  pathsToMatch: /auth/**,/user/**
+
+service:
+  api:
+    emailService: "http://localhost:9091/email/send"
+
+async:
+  executor:
+        email:
+          corePoolSize: 5
+          maxPoolSize: 20
+          queueCapacity: 200
+rest:
+  client:
+    connect-timeout: 10
+    read-timeout: 30

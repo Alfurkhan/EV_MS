@@ -1,0 +1,4 @@
+rootProject.name = 'E_Vidyalaya_Microservices'
+include 'gateway-service'
+include 'user-service'
+
