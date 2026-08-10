@@ -16,4 +16,5 @@ public interface UserService{
     Optional<User> findByCountryCodeAndPhoneNumber(String countryCode, String phoneNumber);
 
     UserResponse getCurrentUserProfile();
+    UserResponse updateProfile(UpdateProfileRequest request);
 }

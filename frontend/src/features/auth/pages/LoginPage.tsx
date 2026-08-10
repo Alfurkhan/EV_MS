@@ -1,33 +1,82 @@
+import { useState } from "react";
+
 import AuthLayout from "../components/AuthLayout";
 import AuthCard from "../components/AuthCard";
 import LoginForm from "../components/LoginForm";
-import { useState } from "react";
-import RoleSelector from "../components/RoleSelector";
+import RegisterForm from "../components/RegisterForm";
 
 export default function LoginPage() {
+
+    const [mode, setMode] = useState<
+        "signin" | "signup" | null
+    >(null);
+
     const [role, setRole] = useState("Student");
+
     return (
-        <AuthLayout>
+
+        <AuthLayout
+            mode={mode}
+            onModeChange={setMode}
+            role={role}
+            onRoleChange={setRole}
+        >
 
             <AuthCard>
 
-                <h2 className="text-3xl font-bold">
-                    Welcome Back 👋
-                </h2>
+                <div className="mb-8">
 
-                <p className="text-slate-500 mt-2 mb-8">
-                    Sign in to continue to E-Vidyalaya.
-                </p>
+                    <div className="flex items-center gap-3">
 
-                <RoleSelector
-                    role={role}
-                    onChange={setRole}
-                />
+                        <div
+                            className="
+                    w-10
+                    h-10
+                    rounded-xl
+                    bg-blue-100
+                    text-blue-600
+                    flex
+                    items-center
+                    justify-center
+                "
+                        >
+                <span className="text-lg font-bold">
+                    EV
+                </span>
+                        </div>
 
-                <LoginForm role={role} />
+                        <div>
+
+                            <h2 className="text-2xl font-bold text-slate-800">
+                                {mode === "signin"
+                                    ? "Welcome Back"
+                                    : "Create Account"}
+                            </h2>
+
+                            <p className="text-sm text-slate-500">
+                                {mode === "signin"
+                                    ? "Sign in to continue to E-Vidyalaya."
+                                    : "Join E-Vidyalaya and get started."}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                {mode === "signin" && (
+                    <LoginForm role={role} />
+                )}
+
+                {mode === "signup" && (
+                    <RegisterForm role={role} />
+                )}
 
             </AuthCard>
 
         </AuthLayout>
+
     );
 }

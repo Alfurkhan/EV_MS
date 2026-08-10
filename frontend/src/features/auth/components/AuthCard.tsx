@@ -5,11 +5,26 @@ type Props = {
 };
 
 export default function AuthCard({ children }: Props) {
+
     return (
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10">
+
+        <div
+            className="
+                w-full
+                max-w-md
+                bg-white
+                rounded-3xl
+                shadow-2xl
+                border
+                border-slate-100
+                p-8
+                lg:p-10
+            "
+        >
 
             {children}
 
         </div>
+
     );
 }

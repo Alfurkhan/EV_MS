@@ -98,11 +98,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public User createUser(EmailSignUpRequest registrationRequest) {
 
-        if ((registrationRequest.getFullName()==null || registrationRequest.getFullName().isEmpty())) {
+        // Only one Admin account is allowed
+        if (registrationRequest.getRoleName() == RoleName.ROLE_ADMIN) {
+
+            long adminCount =
+                    userRepository.countByRoleName(RoleName.ROLE_ADMIN);
+
+            if (adminCount > 0) {
+                throw new APIException(
+                        "An Admin account already exists. Only one Admin account is allowed.",
+                        HttpStatus.CONFLICT,
+                        "ADMIN_ALREADY_EXISTS"
+                );
+            }
+        }
+
+        if ((registrationRequest.getFullName() == null || registrationRequest.getFullName().isEmpty())) {
             throw new APIException(ErrorCodesAndMessages.ERROR_CODE_MISSING_FULL_NAME, HttpStatus.BAD_REQUEST, ErrorCodesAndMessages.ERROR_MESSAGE_MISSING_FULL_NAME);
 
         }
-        if (registrationRequest.getFullName().length()<4){
+        if (registrationRequest.getFullName().length() < 4) {
             throw new APIException(ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME, HttpStatus.BAD_REQUEST, ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME);
         }
         String fullName = registrationRequest.getFullName();
@@ -139,23 +154,7 @@ public class UserServiceImpl implements UserService {
 
 
     private Set<Role> fetchRolesFor(RoleName roleName) {
-        Set<Role> rolesDb;
-
-        switch (roleName) {
-            case ROLE_STUDENT:
-                rolesDb = roleRepository.findAllByNameIn(RoleName.ROLE_STUDENT);
-                break;
-            case ROLE_ADMIN:
-                rolesDb = new HashSet<>(roleRepository.findAll());
-                break;
-            case ROLE_FACULITY:
-                rolesDb = roleRepository.findAllByNameIn(RoleName.ROLE_FACULITY);
-                break;
-            default:
-                rolesDb = roleRepository.findAllByNameIn(roleName);
-                break;
-        }
-        return rolesDb;
+        return roleRepository.findAllByNameIn(roleName);
     }
 
     @Async("mailExecutor")
@@ -192,6 +191,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new APIException(ErrorCodesAndMessages.ERROR_MESSAGE_USER_NOT_FOUND, HttpStatus.NOT_ACCEPTABLE, ErrorCodesAndMessages.ERROR_CODE_USER_NOT_FOUND_001));
     }
+
     @Override
     public void validateLogin(User user) {
         Date lastLoginDate = new Date();
@@ -199,7 +199,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-   @Override
+    @Override
     public Optional<User> findByCountryCodeAndPhoneNumber(String countryCode, String phoneNumber) {
         return userRepository.findByCountryCodeAndPhoneNumber(countryCode, phoneNumber);
 
@@ -212,14 +212,76 @@ public class UserServiceImpl implements UserService {
 
         return UserResponse.builder()
                 .id(user.getId())
+                .username(user.getUsername())
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .countryCode(user.getCountryCode())
                 .phoneNumber(user.getPhoneNumber())
+                .registeredSource(
+                        user.getRegisteredSource() != null
+                                ? user.getRegisteredSource().name()
+                                : null
+                )
+                .accountEnabled(user.isAccountEnabled())
+                .accountLocked(user.isAccountLocked())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .lastLoginAt(user.getLastLoginAt())
-                .isAccountEnabled(user.isAccountEnabled())
+                .emailVerified(user.isEmailVerified())
+                .termPolicyViewed(user.isTermPolicyViewed())
+                .role(
+                        user.getRoles() != null && !user.getRoles().isEmpty()
+                                ? user.getRoles()
+                                .iterator()
+                                .next()
+                                .getName()
+                                .name()
+                                : null
+                )
+                .build();
+    }
+
+    @Override
+    public UserResponse updateProfile(UpdateProfileRequest request) {
+
+        User user = getPrincipal();
+
+        user.setFullName(request.getFullName());
+        user.setCountryCode(request.getCountryCode());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        user.setUpdatedAt(Instant.now());
+
+        userRepository.save(user);
+
+        return UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .countryCode(user.getCountryCode())
+                .phoneNumber(user.getPhoneNumber())
+                .registeredSource(
+                        user.getRegisteredSource() != null
+                                ? user.getRegisteredSource().name()
+                                : null
+                )
+                .accountEnabled(user.isAccountEnabled())
+                .accountLocked(user.isAccountLocked())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .emailVerified(user.isEmailVerified())
+                .termPolicyViewed(user.isTermPolicyViewed())
+                .role(
+                        user.getRoles() != null && !user.getRoles().isEmpty()
+                                ? user.getRoles()
+                                .iterator()
+                                .next()
+                                .getName()
+                                .name()
+                                : null
+                )
                 .build();
     }
 

@@ -39,7 +39,8 @@ export default function LoginForm({ role }: Props) {
 
             authLogin(
                 response.accessToken,
-                response.refreshToken
+                response.refreshToken,
+                response.roles
             );
 
             toast.success("Login Successful!");

@@ -1,15 +1,13 @@
 package com.zukunftai.evidyalaya.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
-import java.util.*;
 
 @Data
 @ToString
@@ -19,6 +17,8 @@ import java.util.*;
 public class UserResponse {
 
     private Long id;
+
+    private String username;
 
     @Size(max = 200)
     private String fullName;
@@ -32,6 +32,11 @@ public class UserResponse {
 
     private String phoneNumber;
 
+    private String registeredSource;
+
+    private boolean accountEnabled;
+
+    private boolean accountLocked;
 
     @CreatedDate
     private Instant createdAt;
@@ -42,7 +47,9 @@ public class UserResponse {
     @LastModifiedDate
     private Instant lastLoginAt;
 
-    private boolean isAccountEnabled;
+    private boolean emailVerified;
 
+    private boolean termPolicyViewed;
 
+    private String role;
 }

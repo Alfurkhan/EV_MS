@@ -33,30 +33,53 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
         try {
 
             String jwt = getJwtFromRequest(request);
-            String authHeader = request.getHeader("Authorization");
-            String token = null;
-            String username = null;
-            if(authHeader != null && authHeader.startsWith("Bearer ")){
-                token = authHeader.substring(7);
-                username = tokenProvider.getUserIdFromJWT(token);
+
+            if (jwt != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                String username = tokenProvider.getUserIdFromJWT(jwt);
+
+                if (username != null) {
+
+                    UserDetails userDetails =
+                            customUserDetailsService.loadUserByUsername(username);
+
+                    if (tokenProvider.validateToken(jwt, userDetails)) {
+
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
+
+                        authentication.setDetails(
+                                new WebAuthenticationDetailsSource()
+                                        .buildDetails(request)
+                        );
+
+                        SecurityContextHolder
+                                .getContext()
+                                .setAuthentication(authentication);
+                    }
+                }
             }
 
-            if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
-
-                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
         } catch (Exception ex) {
-            logger.error("Could not set user authentication in security context", ex);
+
+            logger.error(
+                    "Could not set user authentication in security context",
+                    ex
+            );
         }
 
         filterChain.doFilter(request, response);
