@@ -1,0 +1,39 @@
+server:
+  port: 9091
+
+spring:
+  application:
+    name: email-service
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        register: true
+        enabled: true
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 30s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: always
