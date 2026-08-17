@@ -8,10 +8,14 @@ import java.util.Optional;
 public interface UserService{
     EmailCheckResponse checkUserExists(EmailCheckRequest request);
 
-    User createUser(EmailSignUpRequest registrationRequest);
+    default User createUser(EmailSignUpRequest registrationRequest) {
+        return null;
+    }
+
     User getPrincipal();
     User findUserByUserName(String username);
-    void invokeSignUpEmail(User user, EmailType emailType);
+    void invokeSignUpEmail(User user, EmailType emailType, String otp);
+    void invokeRegistrationOtpEmail(String email, String otp);
     void validateLogin(User user);
     Optional<User> findByCountryCodeAndPhoneNumber(String countryCode, String phoneNumber);
 

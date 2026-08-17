@@ -6,7 +6,6 @@ type Props = {
 const roles = [
     "Student",
     "Faculty",
-    "Admin",
 ];
 
 export default function RoleSelector({
@@ -14,7 +13,7 @@ export default function RoleSelector({
                                          onChange,
                                      }: Props) {
     return (
-        <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1 rounded-xl mb-8">
+        <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl mb-8">
 
             {roles.map((item) => (
 

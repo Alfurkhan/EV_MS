@@ -2,11 +2,13 @@ import type { ButtonHTMLAttributes } from "react";
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
     loading?: boolean;
+    loadingText?: string;
 };
 
 export default function Button({
                                    children,
                                    loading = false,
+                                   loadingText = "Signing In...",
                                    className = "",
                                    disabled,
                                    ...props
@@ -17,7 +19,7 @@ export default function Button({
             disabled={disabled || loading}
             className={`w-full h-14 rounded-xl bg-blue-700 text-lg text-white font-semibold transition hover:bg-blue-800 active:scale-[0.98] disabled:opacity-60 ${className}`}
         >
-            {loading ? "Signing In..." : children}
+            {loading ? loadingText : children}
         </button>
     );
 }

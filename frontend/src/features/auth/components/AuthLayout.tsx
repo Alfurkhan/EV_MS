@@ -621,47 +621,60 @@ export default function AuthLayout({
 
                 <section
                     className={`
-                        absolute
-                        inset-y-0
-                        right-0
-                        z-20
+        absolute
+        inset-y-0
+        right-0
+        z-20
 
-                        w-[40%]
+        w-[40%]
 
-                        bg-slate-50
+        bg-slate-50
 
-                        flex
-                        items-center
-                        justify-center
+        transform
 
-                        p-6
-                        lg:p-10
+        transition-transform
+        duration-700
+        ease-[cubic-bezier(0.22,1,0.36,1)]
 
-                        transform
-
-                        transition-transform
-                        duration-700
-                        ease-[cubic-bezier(0.22,1,0.36,1)]
-
-                        ${
+        ${
                         authSelected
                             ? "translate-x-0"
                             : "translate-x-full"
                     }
-                    `}
+    `}
                 >
+                    {/* AUTH PANEL SCROLL AREA */}
 
                     <div
                         className="
-                            w-full
-                            max-w-md
-                        "
+            h-full
+            w-full
+            overflow-y-auto
+            overflow-x-hidden
+        "
                     >
+                        <div
+                            className="
+                min-h-full
+                w-full
+                flex
+                items-start
+                justify-center
 
-                        {children}
-
+                p-6
+                lg:p-10
+            "
+                        >
+                            <div
+                                className="
+                    w-full
+                    max-w-md
+                "
+                            >
+                                {children}
+                            </div>
+                        </div>
                     </div>
-
                 </section>
 
             </main>

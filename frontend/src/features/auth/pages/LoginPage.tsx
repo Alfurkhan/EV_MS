@@ -13,6 +13,16 @@ export default function LoginPage() {
 
     const [role, setRole] = useState("Student");
 
+    const [registeredEmail, setRegisteredEmail] =
+        useState("");
+
+    const handleRegistrationSuccess = (email: string) => {
+
+        setRegisteredEmail(email);
+
+        setMode("signin");
+    };
+
     return (
 
         <AuthLayout
@@ -30,19 +40,19 @@ export default function LoginPage() {
 
                         <div
                             className="
-                    w-10
-                    h-10
-                    rounded-xl
-                    bg-blue-100
-                    text-blue-600
-                    flex
-                    items-center
-                    justify-center
-                "
+                                w-10
+                                h-10
+                                rounded-xl
+                                bg-blue-100
+                                text-blue-600
+                                flex
+                                items-center
+                                justify-center
+                            "
                         >
-                <span className="text-lg font-bold">
-                    EV
-                </span>
+                            <span className="text-lg font-bold">
+                                EV
+                            </span>
                         </div>
 
                         <div>
@@ -65,18 +75,22 @@ export default function LoginPage() {
 
                 </div>
 
-
                 {mode === "signin" && (
-                    <LoginForm role={role} />
+                    <LoginForm
+                        role={role}
+                        defaultEmail={registeredEmail}
+                    />
                 )}
 
                 {mode === "signup" && (
-                    <RegisterForm role={role} />
+                    <RegisterForm
+                        role={role}
+                        onSuccess={handleRegistrationSuccess}
+                    />
                 )}
 
             </AuthCard>
 
         </AuthLayout>
-
     );
 }

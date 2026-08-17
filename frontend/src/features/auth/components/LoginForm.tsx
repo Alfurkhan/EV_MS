@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
@@ -13,9 +13,14 @@ import { login } from "../services/authService";
 
 type Props = {
     role: string;
+    defaultEmail?: string;
 };
 
-export default function LoginForm({ role }: Props) {
+export default function LoginForm({
+                                      role,
+                                      defaultEmail = "",
+                                  }: Props) {
+
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
@@ -25,14 +30,27 @@ export default function LoginForm({ role }: Props) {
     const {
         register,
         handleSubmit,
+        reset,
         formState: { errors },
     } = useForm<LoginFormData>({
         resolver: zodResolver(loginSchema),
+        defaultValues: {
+            userName: defaultEmail,
+            password: "",
+        },
     });
+
+    useEffect(() => {
+        reset({
+            userName: defaultEmail,
+            password: "",
+        });
+    }, [defaultEmail, reset]);
 
     const onSubmit = async (data: LoginFormData) => {
 
         try {
+
             setLoading(true);
 
             const response = await login(data);
@@ -47,8 +65,8 @@ export default function LoginForm({ role }: Props) {
 
             navigate("/dashboard");
 
-            // We'll navigate to dashboard here later.
         } catch (error: any) {
+
             console.error(error);
 
             toast.error(
@@ -56,23 +74,29 @@ export default function LoginForm({ role }: Props) {
                 error.message ||
                 "Something went wrong"
             );
+
         } finally {
+
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
+        >
 
             <p className="mb-6 text-sm text-slate-500">
                 Signing in as{" "}
                 <span className="font-semibold text-blue-600">
-        {role}
-    </span>
+                    {role}
+                </span>
             </p>
 
             <Input
                 label="Email"
+                type="email"
                 placeholder="Enter your email"
                 {...register("userName")}
                 error={errors.userName?.message}
@@ -95,9 +119,13 @@ export default function LoginForm({ role }: Props) {
                 </button>
             </div>
 
-            <Button type="submit" loading={loading}>
+            <Button
+                type="submit"
+                loading={loading}
+            >
                 Sign In
             </Button>
+
         </form>
     );
 }

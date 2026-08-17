@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -29,6 +28,11 @@ public class EmailSignUpRequest {
             message = "Password must be at least 6 characters long and include a mix of uppercase and lowercase letters, numbers, and symbols."
     )
     private String password;
+
+    @Size(max = 10)
+    private String countryCode;
+
+    private String phoneNumber;
 
     private RegisteredSource platform;
 

@@ -1,21 +1,43 @@
 import { z } from "zod";
 
-export const registerSchema = z
+export const registerEmailSchema = z.object({
+    email: z
+        .string()
+        .email("Please enter a valid email address"),
+});
+
+export const registerOtpSchema = z.object({
+    otp: z
+        .string()
+        .regex(/^\d{6}$/, "OTP must be exactly 6 digits"),
+});
+
+export const registerDetailsSchema = z
     .object({
         fullName: z
             .string()
-            .min(2, "Full name must be at least 2 characters")
-            .max(100, "Full name is too long"),
+            .min(4, "Full name must be at least 4 characters")
+            .max(200, "Full name is too long")
+            .regex(
+                /^[A-Za-z ]+$/,
+                "Full name can contain only letters and spaces"
+            ),
 
-        email: z
+        countryCode: z
             .string()
-            .email("Please enter a valid email address"),
+            .min(1, "Country code is required")
+            .max(10, "Invalid country code"),
+
+        phoneNumber: z
+            .string()
+            .min(5, "Phone number is required")
+            .max(20, "Phone number is too long"),
 
         password: z
             .string()
             .min(6, "Password must be at least 6 characters")
             .regex(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/,
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
                 "Password must include uppercase, lowercase, number and special character"
             ),
 
@@ -31,4 +53,5 @@ export const registerSchema = z
         }
     );
 
-export type RegisterFormData = z.infer<typeof registerSchema>;
+export type RegisterDetailsFormData =
+    z.infer<typeof registerDetailsSchema>;

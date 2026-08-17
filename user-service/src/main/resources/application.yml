@@ -89,7 +89,7 @@ baseUrl:
   adminApp: http://localhost:3000
 
 cors:
-  origins: "http://localhost:4200"
+  origins: "http://localhost:5173"
 
 springdoc:
   packagesToScan: com.zukunftai.evidyalaya.controller

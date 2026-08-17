@@ -40,19 +40,24 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final RefreshTokenService refreshTokenService;
+    private final EmailRegistrationOtpService emailRegistrationOtpService;
 
     @Autowired
     AuthenticationManager authenticationManager;
 
     @Autowired
-    public AuthController(UserService userService,
-                          JwtTokenProvider jwtTokenProvider,
-                          CustomUserDetailsService customUserDetailsService,
-                          RefreshTokenService refreshTokenService) {
+    public AuthController(
+            UserService userService,
+            JwtTokenProvider jwtTokenProvider,
+            CustomUserDetailsService customUserDetailsService,
+            RefreshTokenService refreshTokenService,
+            EmailRegistrationOtpService emailRegistrationOtpService) {
+
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.customUserDetailsService = customUserDetailsService;
         this.refreshTokenService = refreshTokenService;
+        this.emailRegistrationOtpService = emailRegistrationOtpService;
     }
 
     @PostMapping("/check/email")
@@ -62,10 +67,17 @@ public class AuthController {
     }
 
     @Operation(summary = "User sign-up/register call via email as username and password given while sign-up")
+
     @PostMapping("/register/user")
     public ResponseEntity<JwtResponse> register(@RequestBody EmailSignUpRequest registerRequest) {
+
+        String email = registerRequest.getEmail().toLowerCase().trim();
+
         User user = userService.createUser(registerRequest);
-        System.out.println("1---"+user.getUsername()+"--"+user.getEmail()+"--"+registerRequest.getPassword());
+        log.info(
+                "User registration successful for {}",
+                user.getEmail()
+        );
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), registerRequest.getPassword()));
 
         if (authentication.isAuthenticated()) {
@@ -73,7 +85,7 @@ public class AuthController {
             Set<RoleName> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
             String jwt = jwtTokenProvider.GenerateToken(user.getUsername(), roles, user);
             JwtAuthentication res = new JwtAuthentication(jwt, roles);
-            userService.invokeSignUpEmail(user, EmailType.SIGNUP);
+
             return ResponseEntity.ok(JwtResponse.builder()
                     .tokenType(res.getTokenType()).accessToken(res.getAccessToken()).roles(roles).expireAt(jwtTokenProvider.extractExpiration(jwt).getTime()).refreshToken(refreshTokenService.createRefreshToken(user).getRefreshToken()).build());
         }
@@ -131,6 +143,35 @@ public class AuthController {
                     ERROR_CODE_AUTHENTICATION_FAILED);
         }
     }
+
+    @PostMapping("/send/email")
+    public ResponseEntity<Void> sendRegistrationOtp(
+            @Valid @RequestBody EmailRegistrationOtpRequest request) {
+
+        String email = request.getEmail().toLowerCase().trim();
+
+        String otp =
+                emailRegistrationOtpService.generateAndSaveOtp(email);
+
+        userService.invokeRegistrationOtpEmail(email, otp);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/verify-registration-otp")
+    public ResponseEntity<Void> verifyRegistrationOtp(
+            @Valid @RequestBody EmailRegistrationOtpVerifyRequest request) {
+
+        String email = request.getEmail().toLowerCase().trim();
+
+        emailRegistrationOtpService.verifyOtp(
+                email,
+                request.getOtp()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/refreshToken")
     public ResponseEntity<JwtResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequestDTO) {
         RefreshToken refreshToken = refreshTokenService.findByToken(refreshTokenRequestDTO.getToken())
@@ -138,6 +179,14 @@ public class AuthController {
 
         refreshTokenService.verifyExpiration(refreshToken);
         User user = refreshToken.getUser();
+        if (!user.isAccountEnabled() || user.isAccountLocked()) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_MESSAGE_USER_NOT_ACTIVE_001,
+                    HttpStatus.NOT_ACCEPTABLE,
+                    ErrorCodesAndMessages.ERROR_CODE_USER_NOT_ACTIVE_001
+            );
+        }
+
         Set<RoleName> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
         String jwt = jwtTokenProvider.GenerateToken(user.getUsername(), roles, user);
         JwtAuthentication res = new JwtAuthentication(jwt, roles);

@@ -6,10 +6,10 @@ import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.exception.ErrorCodesAndMessages;
 import com.zukunftai.evidyalaya.model.*;
 import com.zukunftai.evidyalaya.repository.*;
+import com.zukunftai.evidyalaya.service.*;
 import com.zukunftai.evidyalaya.service.CustomUserDetailsService;
 import com.zukunftai.evidyalaya.service.RefreshTokenService;
 import com.zukunftai.evidyalaya.service.UserService;
-import com.zukunftai.evidyalaya.utils.OtpGenerator;
 import com.zukunftai.evidyalaya.utils.UserRequestValidator;
 import jakarta.persistence.Access;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -63,11 +62,13 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final EmailRegistrationOtpService emailRegistrationOtpService;
 
     @Autowired
     public UserServiceImpl(CustomUserDetailsService customUserDetailsService,
                            RoleRepository roleRepository,
                            UserRepository userRepository,
+                           EmailRegistrationOtpService emailRegistrationOtpService,
                            PasswordEncoder passwordEncoder,
                            RestTemplate restTemplate,
                            RefreshTokenRepository refreshTokenRepository,
@@ -77,6 +78,7 @@ public class UserServiceImpl implements UserService {
         this.customUserDetailsService = customUserDetailsService;
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
+        this.emailRegistrationOtpService = emailRegistrationOtpService;
         this.passwordEncoder = passwordEncoder;
         this.restTemplate = restTemplate;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -95,8 +97,15 @@ public class UserServiceImpl implements UserService {
         return new EmailCheckResponse(databaseExists);
     }
 
+    @Transactional
     @Override
     public User createUser(EmailSignUpRequest registrationRequest) {
+
+        String email = registrationRequest.getEmail().toLowerCase().trim();
+
+        EmailRegistrationOtp verifiedOtp =
+                emailRegistrationOtpService
+                        .getVerifiedOtpForRegistration(email);
 
         // Only one Admin account is allowed
         if (registrationRequest.getRoleName() == RoleName.ROLE_ADMIN) {
@@ -125,13 +134,14 @@ public class UserServiceImpl implements UserService {
             throw new APIException(ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME, HttpStatus.BAD_REQUEST, ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME);
         }
         Set<Role> roles = fetchRolesFor(registrationRequest.getRoleName());
-        User user = new User(registrationRequest.getEmail(), registrationRequest.getPassword());
+        User user = new User(email, registrationRequest.getPassword());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRoles(roles);
         user.setFullName(registrationRequest.getFullName());
-        if (registrationRequest.getEmail() != null) {
-            user.setEmail(registrationRequest.getEmail().toLowerCase());
-        }
+
+        user.setCountryCode(registrationRequest.getCountryCode());
+        user.setPhoneNumber(registrationRequest.getPhoneNumber());
+
         user.setRegisteredSource(registrationRequest.getPlatform() != null ? registrationRequest.getPlatform() : RegisteredSource.NONE);
 
         Instant instant = Instant.now();
@@ -140,11 +150,15 @@ public class UserServiceImpl implements UserService {
         user.setLastLoginAt(instant);
         user.setAccountEnabled(true);
         user.setAccountLocked(false);
-        user.setEmailVerified(false);
+        user.setEmailVerified(true);
         user.setTermPolicyViewed(false);
         User userDb = userRepository.save(user);
         userDb.setRootId(userDb.getId());
         updateUser(userDb);
+
+        // Consume the verified registration OTP.
+        emailRegistrationOtpService.consumeOtp(verifiedOtp.getId());
+
         return userDb;
     }
 
@@ -159,31 +173,128 @@ public class UserServiceImpl implements UserService {
 
     @Async("mailExecutor")
     @Override
-    public void invokeSignUpEmail(User user, EmailType emailType) {
+    public void invokeSignUpEmail(User user, EmailType emailType, String otp) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        EmailServiceRequest emailServiceRequest = new EmailServiceRequest();
-        emailServiceRequest.setUserName(user.getFullName() == null ? "User" : user.getFullName());
+
+        EmailServiceRequest emailServiceRequest =
+                new EmailServiceRequest();
+
+        emailServiceRequest.setUserName(
+                user.getFullName() == null
+                        ? "User"
+                        : user.getFullName()
+        );
+
         emailServiceRequest.setTo(user.getEmail());
+
         if (emailType.equals(EmailType.SIGNUP)) {
+
             emailServiceRequest.setSubject("Welcome mail");
+
         } else if (emailType.equals(EmailType.VERIFY)) {
-            emailServiceRequest.setSubject("Email Verification link");
-        }
-        emailServiceRequest.setEmailType(emailType);
-        HttpEntity<EmailServiceRequest> entity = new HttpEntity<>(emailServiceRequest, headers);
-        try {
-            restTemplate.exchange(emailServiceUrl, HttpMethod.POST, entity, Void.class);
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            emailServiceRequest.setSubject("Email Verification OTP");
         }
 
+        emailServiceRequest.setEmailType(emailType);
+        emailServiceRequest.setOtp(otp);
+
+        HttpEntity<EmailServiceRequest> entity =
+                new HttpEntity<>(emailServiceRequest, headers);
+
+        try {
+
+            restTemplate.exchange(
+                    emailServiceUrl,
+                    HttpMethod.POST,
+                    entity,
+                    Void.class
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Failed to send email to {}",
+                    user.getEmail(),
+                    e
+            );
+        }
+    }
+
+    @Async("mailExecutor")
+    @Override
+    public void invokeRegistrationOtpEmail(String email, String otp) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        EmailServiceRequest emailServiceRequest =
+                new EmailServiceRequest();
+
+        emailServiceRequest.setUserName("User");
+        emailServiceRequest.setTo(email);
+        emailServiceRequest.setSubject("Email Verification OTP");
+        emailServiceRequest.setEmailType(EmailType.VERIFY);
+        emailServiceRequest.setOtp(otp);
+
+        HttpEntity<EmailServiceRequest> entity =
+                new HttpEntity<>(emailServiceRequest, headers);
+
+        try {
+
+            restTemplate.exchange(
+                    emailServiceUrl,
+                    HttpMethod.POST,
+                    entity,
+                    Void.class
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Failed to send registration OTP to {}",
+                    email,
+                    e
+            );
+        }
     }
 
     @Override
     public User getPrincipal() {
-        UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return findUserByUserName(userDetails.getUsername());
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null ||
+                !authentication.isAuthenticated() ||
+                authentication instanceof AnonymousAuthenticationToken) {
+
+            throw new APIException(
+                    "User is not authenticated.",
+                    HttpStatus.UNAUTHORIZED,
+                    "USER_NOT_AUTHENTICATED"
+            );
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        String username;
+
+        if (principal instanceof UserDetails userDetails) {
+            username = userDetails.getUsername();
+        } else if (principal instanceof String principalString) {
+            username = principalString;
+        } else {
+            throw new APIException(
+                    "Unable to determine authenticated user.",
+                    HttpStatus.UNAUTHORIZED,
+                    "INVALID_AUTHENTICATION_PRINCIPAL"
+            );
+        }
+
+        return findUserByUserName(username);
     }
 
     @Override

@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EmailRequest {
 
-    private String to;
-
     private String subject;
-
-    private String body;
+    private String bodyText;
+    private String to;
+    private String emailType;
+    private String userName;
+    private String otp;
 }

@@ -18,4 +18,5 @@ public class EmailServiceRequest {
     @Enumerated(EnumType.STRING)
     private EmailType emailType;
     private String userName;
+    private String otp;
 }

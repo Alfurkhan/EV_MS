@@ -62,7 +62,11 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String token, UserDetails userDetails) {
         String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+
+        return username.equals(userDetails.getUsername())
+                && !isTokenExpired(token)
+                && userDetails.isEnabled()
+                && userDetails.isAccountNonLocked();
     }
 
     public String GenerateToken(String username, Set<RoleName> roles, User user) {

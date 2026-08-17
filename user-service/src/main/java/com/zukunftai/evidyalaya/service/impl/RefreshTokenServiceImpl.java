@@ -61,12 +61,17 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return refreshTokenRepository.findByUser(user);
     }
 
-    public RefreshToken verifyExpiration(RefreshToken token){
-        if(token.getExpiredAt().compareTo(Instant.now())<0){
-           // refreshTokenRepository.delete(token);
-            new APIException(ErrorCodesAndMessages.ERROR_MESSAGE_USER_REFRESH_TOKEN_EXPIRED_001, HttpStatus.NOT_ACCEPTABLE, ErrorCodesAndMessages.ERROR_CODE_USER_REFRESH_TOKEN_EXPIRED_001);
-           // throw new RuntimeException(token.getRefreshToken() + " Refresh token is expired. Please make a new login..!");
+    public RefreshToken verifyExpiration(RefreshToken token) {
+
+        if (token.getExpiredAt().isBefore(Instant.now())) {
+
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_MESSAGE_USER_REFRESH_TOKEN_EXPIRED_001,
+                    HttpStatus.NOT_ACCEPTABLE,
+                    ErrorCodesAndMessages.ERROR_CODE_USER_REFRESH_TOKEN_EXPIRED_001
+            );
         }
+
         return token;
     }
 

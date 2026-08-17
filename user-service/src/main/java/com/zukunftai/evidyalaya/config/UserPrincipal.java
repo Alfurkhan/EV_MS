@@ -31,6 +31,10 @@ public class UserPrincipal implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
+    private boolean accountEnabled;
+
+    private boolean accountLocked;
+
     public static UserPrincipal create(User user) {
 
         List<SimpleGrantedAuthority> authorities =
@@ -43,7 +47,9 @@ public class UserPrincipal implements UserDetails {
                 user.getUsername(),
                 user.getEmail(),
                 user.getPassword(),
-                authorities
+                authorities,
+                user.isAccountEnabled(),
+                user.isAccountLocked()
         );
     }
 
@@ -59,7 +65,7 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !accountLocked;
     }
 
     @Override
@@ -69,6 +75,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return accountEnabled;
     }
 }
