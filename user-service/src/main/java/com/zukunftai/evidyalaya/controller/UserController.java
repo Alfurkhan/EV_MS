@@ -77,4 +77,12 @@ public class UserController {
         );
 
     }
+
+    @PutMapping("/terms/accept")
+    public ResponseEntity<Void> acceptTermsAndConditions() {
+
+        userService.acceptTermsAndConditions();
+
+        return ResponseEntity.ok().build();
+    }
 }

@@ -4,6 +4,7 @@ import {
     Pencil,
     GraduationCap,
     BadgeCheck,
+    UserRound,
 } from "lucide-react";
 
 type Props = {
@@ -87,22 +88,23 @@ export default function ProfileCard({
 
                         <div className="flex flex-wrap gap-3 mt-3">
 
-                            <span
-                                className="
-                                    flex
-                                    items-center
-                                    gap-2
-                                    bg-blue-100
-                                    text-blue-700
-                                    text-sm
-                                    px-4
-                                    py-2
-                                    rounded-full
-                                "
-                                                        >
-                                <GraduationCap size={16} />
-                                Student
-                            </span>
+                        <span
+                            className="
+                                flex
+                                items-center
+                                gap-2
+                                bg-blue-100
+                                text-blue-700
+                                text-sm
+                                px-4
+                                py-2
+                                rounded-full
+                            "
+                        >
+                            {getRoleIcon(profile.role)}
+
+                            {formatRole(profile.role)}
+                        </span>
 
                             <span
                                 className={`
@@ -164,4 +166,37 @@ export default function ProfileCard({
         </div>
 
     );
+
+    function formatRole(
+        role: string | null | undefined
+    ) {
+
+        if (!role) {
+            return "User";
+        }
+
+        return role
+            .replace(/^ROLE_/, "")
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .replace(
+                /\b\w/g,
+                (char) => char.toUpperCase()
+            );
+    }
+
+    function getRoleIcon(
+        role: string | null | undefined
+    ) {
+
+        if (role === "ROLE_STUDENT") {
+            return <GraduationCap size={16} />;
+        }
+
+        if (role === "ROLE_FACULTY") {
+            return <UserRound size={16} />;
+        }
+
+        return <BadgeCheck size={16} />;
+    }
 }

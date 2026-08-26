@@ -16,9 +16,11 @@ public interface UserService{
     User findUserByUserName(String username);
     void invokeSignUpEmail(User user, EmailType emailType, String otp);
     void invokeRegistrationOtpEmail(String email, String otp);
+    void invokeForgotPasswordEmail(User user, String otp);
     void validateLogin(User user);
     Optional<User> findByCountryCodeAndPhoneNumber(String countryCode, String phoneNumber);
 
     UserResponse getCurrentUserProfile();
     UserResponse updateProfile(UpdateProfileRequest request);
+    void acceptTermsAndConditions();
 }

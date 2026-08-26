@@ -7,8 +7,6 @@ import lombok.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -31,10 +29,8 @@ public class ForgotPassword {
     @NotNull
     private String otp;
 
-    @Temporal(TemporalType.TIMESTAMP)
     private Instant createdAt;
 
-    @Temporal(TemporalType.TIMESTAMP)
     private Instant expiryAt;
 
     @OneToOne(targetEntity = User.class ,fetch = FetchType.LAZY)

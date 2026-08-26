@@ -16,3 +16,9 @@ export const updateProfile = async (data: {
     return response.data;
 
 };
+
+export const acceptTermsAndConditions = async () => {
+
+    await api.put("/user/terms/accept");
+
+};

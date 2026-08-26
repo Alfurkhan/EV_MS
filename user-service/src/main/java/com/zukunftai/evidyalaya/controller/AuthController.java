@@ -41,6 +41,7 @@ public class AuthController {
     private final CustomUserDetailsService customUserDetailsService;
     private final RefreshTokenService refreshTokenService;
     private final EmailRegistrationOtpService emailRegistrationOtpService;
+    private final ForgotPasswordService forgotPasswordService;
 
     @Autowired
     AuthenticationManager authenticationManager;
@@ -51,13 +52,15 @@ public class AuthController {
             JwtTokenProvider jwtTokenProvider,
             CustomUserDetailsService customUserDetailsService,
             RefreshTokenService refreshTokenService,
-            EmailRegistrationOtpService emailRegistrationOtpService) {
+            EmailRegistrationOtpService emailRegistrationOtpService,
+            ForgotPasswordService forgotPasswordService) {
 
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
         this.customUserDetailsService = customUserDetailsService;
         this.refreshTokenService = refreshTokenService;
         this.emailRegistrationOtpService = emailRegistrationOtpService;
+        this.forgotPasswordService = forgotPasswordService;
     }
 
     @PostMapping("/check/email")
@@ -69,7 +72,8 @@ public class AuthController {
     @Operation(summary = "User sign-up/register call via email as username and password given while sign-up")
 
     @PostMapping("/register/user")
-    public ResponseEntity<JwtResponse> register(@RequestBody EmailSignUpRequest registerRequest) {
+    public ResponseEntity<JwtResponse> register(
+            @Valid @RequestBody EmailSignUpRequest registerRequest) {
 
         String email = registerRequest.getEmail().toLowerCase().trim();
 
@@ -113,7 +117,24 @@ public class AuthController {
                 if (!user.isAccountEnabled())
                     throw new APIException(ErrorCodesAndMessages.ERROR_MESSAGE_USER_NOT_ACTIVE_001, HttpStatus.NOT_ACCEPTABLE, ErrorCodesAndMessages.ERROR_CODE_USER_NOT_ACTIVE_001);
 
-                Set<RoleName> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
+                Set<RoleName> roles = user.getRoles()
+                        .stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet());
+
+                if (!roles.contains(authRequest.getRoleName())) {
+
+                    throw new APIException(
+                            "This account is not registered as "
+                                    + authRequest.getRoleName()
+                                    .name()
+                                    .replace("ROLE_", "")
+                                    .replace("_", " ")
+                                    .toLowerCase(),
+                            HttpStatus.FORBIDDEN,
+                            "ROLE_MISMATCH"
+                    );
+                }
 
                 String jwt = jwtTokenProvider.GenerateToken(user.getUsername(), roles, user);
                 JwtAuthentication res = new JwtAuthentication(jwt, roles);
@@ -167,6 +188,50 @@ public class AuthController {
         emailRegistrationOtpService.verifyOtp(
                 email,
                 request.getOtp()
+        );
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/forgot-password/send-otp")
+    public ResponseEntity<Void> sendForgotPasswordOtp(
+            @Valid @RequestBody ForgotPasswordOtpRequest request) {
+
+        String email =
+                request.getEmail()
+                        .toLowerCase()
+                        .trim();
+
+        forgotPasswordService.generateAndSaveOtp(email);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/forgot-password/verify-otp")
+    public ResponseEntity<String> verifyForgotPasswordOtp(
+            @Valid @RequestBody ForgotPasswordVerifyOtpRequest request) {
+
+        String email =
+                request.getEmail()
+                        .toLowerCase()
+                        .trim();
+
+        String token =
+                forgotPasswordService.verifyOtp(
+                        email,
+                        request.getOtp()
+                );
+
+        return ResponseEntity.ok(token);
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<Void> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request) {
+
+        forgotPasswordService.resetPassword(
+                request.getToken(),
+                request.getNewPassword()
         );
 
         return ResponseEntity.ok().build();

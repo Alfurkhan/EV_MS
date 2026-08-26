@@ -4,10 +4,13 @@ import lombok.Data;
 
 @Data
 public class EmailCheckResponse {
+
     private Boolean userExist;
 
-    public EmailCheckResponse(Boolean dataBaseExist) {
-        this.userExist = dataBaseExist;
+    private String role;
+
+    public EmailCheckResponse(Boolean userExist, String role) {
+        this.userExist = userExist;
+        this.role = role;
     }
 }
-

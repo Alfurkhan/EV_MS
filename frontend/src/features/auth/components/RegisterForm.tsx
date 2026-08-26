@@ -12,10 +12,13 @@ import {
 } from "../schema/registerSchema";
 
 import {
+    checkEmailExists,
     sendRegistrationOtp,
     verifyRegistrationOtp,
     register as registerUser,
 } from "../services/authService";
+
+import TermsAndConditionsModal from "./TermsAndConditionsModal";
 
 type Props = {
     role: string;
@@ -69,6 +72,12 @@ export default function RegisterForm({
     const [confirmPassword, setConfirmPassword] =
         useState("");
 
+    const [showTermsModal, setShowTermsModal] =
+        useState(false);
+
+    const [termsAccepted, setTermsAccepted] =
+        useState(false);
+
     /*
      * STEP 1
      * Send registration OTP
@@ -92,6 +101,26 @@ export default function RegisterForm({
         try {
 
             setLoading(true);
+
+            const normalizedEmail =
+                email.trim().toLowerCase();
+
+            const emailCheck =
+                await checkEmailExists({
+                    email: normalizedEmail,
+                });
+
+            if (emailCheck.userExist) {
+
+                const formattedRole =
+                    formatRole(emailCheck.role);
+
+                toast.error(
+                    `This email is already registered as ${formattedRole}.`
+                );
+
+                return;
+            }
 
             await sendRegistrationOtp({
                 email: email.trim().toLowerCase(),
@@ -193,6 +222,14 @@ export default function RegisterForm({
             return;
         }
 
+        if (!termsAccepted) {
+            toast.error(
+                "Please accept the Terms & Conditions to continue."
+            );
+
+            return;
+        }
+
         try {
 
             setLoading(true);
@@ -205,6 +242,7 @@ export default function RegisterForm({
                 password,
                 platform: "NONE",
                 roleName: roleMap[role],
+                termsAccepted,
             });
 
             toast.success(
@@ -571,18 +609,70 @@ export default function RegisterForm({
                 {/* ROLE */}
 
                 <p className="
-                    text-sm
-                    text-slate-500
-                ">
+    text-sm
+    text-slate-500
+">
                     Creating account as{" "}
 
                     <span className="
-                        font-semibold
-                        text-blue-600
-                    ">
-                        {role}
-                    </span>
+        font-semibold
+        text-blue-600
+    ">
+        {role}
+    </span>
                 </p>
+
+
+                {/* TERMS & CONDITIONS */}
+
+                <label className="
+    flex
+    items-start
+    gap-3
+    cursor-pointer
+    text-sm
+    text-slate-600
+">
+
+                    <input
+                        type="checkbox"
+                        checked={termsAccepted}
+                        onChange={(event) =>
+                            setTermsAccepted(
+                                event.target.checked
+                            )
+                        }
+                        disabled={loading}
+                        className="
+            mt-0.5
+            h-4
+            w-4
+            shrink-0
+            cursor-pointer
+            accent-blue-600
+        "
+                    />
+
+                    <span>
+        I agree to the{" "}
+                        <button
+                            type="button"
+                            onClick={(event) => {
+                                event.preventDefault();
+                                setShowTermsModal(true);
+                            }}
+                            className="
+                font-medium
+                text-blue-600
+                hover:underline
+            "
+                        >
+            Terms & Conditions
+        </button>
+                        {" "}of E-Vidyalaya.
+    </span>
+
+                </label>
 
 
                 <Button
@@ -590,9 +680,22 @@ export default function RegisterForm({
                     loading={loading}
                     loadingText="Creating Account..."
                     onClick={handleRegister}
+                    disabled={!termsAccepted}
                 >
                     Create Account
                 </Button>
+
+                {showTermsModal && (
+                    <TermsAndConditionsModal
+                        onAccept={() => {
+                            setTermsAccepted(true);
+                            setShowTermsModal(false);
+                        }}
+                        onClose={() => {
+                            setShowTermsModal(false);
+                        }}
+                    />
+                )}
 
             </div>
         );
@@ -657,4 +760,22 @@ export default function RegisterForm({
 
         </div>
     );
+
+    function formatRole(
+        role: string | null | undefined
+    ) {
+
+        if (!role) {
+            return "another account";
+        }
+
+        return role
+            .replace(/^ROLE_/, "")
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .replace(
+                /\b\w/g,
+                (char) => char.toUpperCase()
+            );
+    }
 }

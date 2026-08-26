@@ -30,8 +30,10 @@ export const registerDetailsSchema = z
 
         phoneNumber: z
             .string()
-            .min(5, "Phone number is required")
-            .max(20, "Phone number is too long"),
+            .regex(
+                /^\d{10}$/,
+                "Please enter a valid 10-digit mobile number."
+            ),
 
         password: z
             .string()

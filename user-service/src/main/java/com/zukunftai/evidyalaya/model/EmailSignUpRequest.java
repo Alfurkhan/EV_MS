@@ -37,6 +37,8 @@ public class EmailSignUpRequest {
     private RegisteredSource platform;
 
     @NotNull(message = "Role is required")
-    @NotBlank
     private RoleName roleName;
+
+    @AssertTrue(message = "You must accept the Terms & Conditions")
+    private boolean termsAccepted;
 }

@@ -58,6 +58,9 @@ public class EmailSenderService {
             case "FORGOT_PASSWORD" ->
                     "Hello " + userName + ",\n\n"
                             + "We received a request to reset your password.\n\n"
+                            + "Your password reset OTP is: " + request.getOtp() + "\n\n"
+                            + "This OTP is valid for 10 minutes.\n\n"
+                            + "If you did not request a password reset, please ignore this email.\n\n"
                             + "Regards,\n"
                             + "eVidyalaya Team";
 

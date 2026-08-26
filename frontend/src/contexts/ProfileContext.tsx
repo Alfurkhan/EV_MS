@@ -19,6 +19,8 @@ type Profile = {
     updatedAt: string;
     lastLoginAt: string;
     accountEnabled: boolean;
+
+    termPolicyViewed: boolean;
 };
 
 type ProfileContextType = {

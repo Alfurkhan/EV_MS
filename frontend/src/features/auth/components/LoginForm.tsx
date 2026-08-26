@@ -10,6 +10,7 @@ import Input from "../../../components/ui/Input";
 
 import { loginSchema, type LoginFormData } from "../schema/loginSchema";
 import { login } from "../services/authService";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 type Props = {
     role: string;
@@ -23,9 +24,21 @@ export default function LoginForm({
 
     const [loading, setLoading] = useState(false);
 
+    const [showForgotPassword, setShowForgotPassword] =
+        useState(false);
+
     const navigate = useNavigate();
 
     const { login: authLogin } = useAuth();
+
+    const roleMap: Record<
+        string,
+        "ROLE_STUDENT" | "ROLE_FACULTY" | "ROLE_ADMIN"
+    > = {
+        Student: "ROLE_STUDENT",
+        Faculty: "ROLE_FACULTY",
+        Admin: "ROLE_ADMIN",
+    };
 
     const {
         register,
@@ -53,7 +66,10 @@ export default function LoginForm({
 
             setLoading(true);
 
-            const response = await login(data);
+            const response = await login({
+                ...data,
+                roleName: roleMap[role],
+            });
 
             authLogin(
                 response.accessToken,
@@ -113,6 +129,7 @@ export default function LoginForm({
             <div className="text-right">
                 <button
                     type="button"
+                    onClick={() => setShowForgotPassword(true)}
                     className="text-sm text-blue-600 hover:underline"
                 >
                     Forgot Password?
@@ -125,6 +142,22 @@ export default function LoginForm({
             >
                 Sign In
             </Button>
+
+            {showForgotPassword && (
+                <ForgotPasswordModal
+                    email=""
+                    onClose={() =>
+                        setShowForgotPassword(false)
+                    }
+                    onSuccess={() => {
+                        setShowForgotPassword(false);
+
+                        toast.success(
+                            "You can now sign in with your new password."
+                        );
+                    }}
+                />
+            )}
 
         </form>
     );

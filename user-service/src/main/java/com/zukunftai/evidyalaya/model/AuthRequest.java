@@ -1,5 +1,6 @@
 package com.zukunftai.evidyalaya.model;
 
+import com.zukunftai.evidyalaya.database.RoleName;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class AuthRequest {
+
     @NotNull
     @NotEmpty
     private String userName;
@@ -19,4 +21,7 @@ public class AuthRequest {
     @NotNull
     @NotEmpty
     private String password;
+
+    @NotNull
+    private RoleName roleName;
 }

@@ -88,13 +88,39 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public EmailCheckResponse checkUserExists(EmailCheckRequest request) {
-        Optional<User> user = userRepository.findByUsername(request.getEmail());
-        boolean databaseExists = false;
+    public EmailCheckResponse checkUserExists(
+            EmailCheckRequest request
+    ) {
+
+        Optional<User> user =
+                userRepository.findByUsername(
+                        request.getEmail()
+                );
+
         if (user.isPresent()) {
-            databaseExists = true;
+
+            String role =
+                    user.get()
+                            .getRoles()
+                            .stream()
+                            .findFirst()
+                            .map(userRole ->
+                                    userRole
+                                            .getName()
+                                            .name()
+                            )
+                            .orElse(null);
+
+            return new EmailCheckResponse(
+                    true,
+                    role
+            );
         }
-        return new EmailCheckResponse(databaseExists);
+
+        return new EmailCheckResponse(
+                false,
+                null
+        );
     }
 
     @Transactional
@@ -134,7 +160,11 @@ public class UserServiceImpl implements UserService {
             throw new APIException(ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME, HttpStatus.BAD_REQUEST, ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME);
         }
         Set<Role> roles = fetchRolesFor(registrationRequest.getRoleName());
-        User user = new User(email, registrationRequest.getPassword());
+        User user = new User(
+                email,
+                email,
+                registrationRequest.getPassword()
+        );
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRoles(roles);
         user.setFullName(registrationRequest.getFullName());
@@ -261,6 +291,59 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Async("mailExecutor")
+    @Override
+    public void invokeForgotPasswordEmail(User user, String otp) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        EmailServiceRequest emailServiceRequest =
+                new EmailServiceRequest();
+
+        emailServiceRequest.setUserName(
+                user.getFullName() == null
+                        ? "User"
+                        : user.getFullName()
+        );
+
+        emailServiceRequest.setTo(user.getEmail());
+
+        emailServiceRequest.setSubject(
+                "Password Reset OTP"
+        );
+
+        emailServiceRequest.setEmailType(
+                EmailType.FORGOT_PASSWORD
+        );
+
+        emailServiceRequest.setOtp(otp);
+
+        HttpEntity<EmailServiceRequest> entity =
+                new HttpEntity<>(
+                        emailServiceRequest,
+                        headers
+                );
+
+        try {
+
+            restTemplate.exchange(
+                    emailServiceUrl,
+                    HttpMethod.POST,
+                    entity,
+                    Void.class
+            );
+
+        } catch (Exception e) {
+
+            log.error(
+                    "Failed to send password reset OTP to {}",
+                    user.getEmail(),
+                    e
+            );
+        }
+    }
+
     @Override
     public User getPrincipal() {
 
@@ -308,6 +391,22 @@ public class UserServiceImpl implements UserService {
         Date lastLoginDate = new Date();
         user.setLastLoginAt(lastLoginDate.toInstant());
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void acceptTermsAndConditions() {
+
+        User user = getPrincipal();
+
+        if (!user.isTermPolicyViewed()) {
+
+            user.setTermPolicyViewed(true);
+
+            user.setUpdatedAt(Instant.now());
+
+            userRepository.save(user);
+        }
     }
 
     @Override
