@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.zukunftai.evidyalaya.model.UpdateProfileRequest;
 import com.zukunftai.evidyalaya.model.UserResponse;
 import com.zukunftai.evidyalaya.database.User;
+import com.zukunftai.evidyalaya.model.FacultyResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -84,5 +87,14 @@ public class UserController {
         userService.acceptTermsAndConditions();
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/faculties")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<FacultyResponse>> getFaculties() {
+
+        return ResponseEntity.ok(
+                userService.getAllFaculties()
+        );
     }
 }

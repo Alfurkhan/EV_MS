@@ -7,8 +7,6 @@ import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.annotations.servers.Server;
-import org.springdoc.core.models.GroupedOpenApi;
-import org.springframework.context.annotation.Bean;
 
 @OpenAPIDefinition(
         info = @Info(
@@ -45,11 +43,4 @@ import org.springframework.context.annotation.Bean;
         in = SecuritySchemeIn.HEADER
 )
 public class OpenApiConfig {
-        @Bean
-        public GroupedOpenApi controllerApi() {
-                return GroupedOpenApi.builder()
-                        .group("controller-api")
-                        .packagesToScan("com.zukunftai.evidyalaya.controller") // Specify the package to scan
-                        .build();
-        }
 }

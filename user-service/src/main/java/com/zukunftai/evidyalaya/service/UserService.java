@@ -4,6 +4,7 @@ import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.model.*;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface UserService{
     EmailCheckResponse checkUserExists(EmailCheckRequest request);
@@ -23,4 +24,6 @@ public interface UserService{
     UserResponse getCurrentUserProfile();
     UserResponse updateProfile(UpdateProfileRequest request);
     void acceptTermsAndConditions();
+
+    List<FacultyResponse> getAllFaculties();
 }

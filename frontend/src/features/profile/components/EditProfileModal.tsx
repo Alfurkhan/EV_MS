@@ -3,7 +3,6 @@ import {
     User,
     Phone,
     Globe,
-    Mail,
     X,
     Save,
 } from "lucide-react";
@@ -224,52 +223,6 @@ export default function EditProfileModal({
                                 {errors.fullName}
                             </p>
                         )}
-
-                    </div>
-
-                    {/* Email */}
-
-                    <div>
-
-                        <label className="text-sm font-medium text-slate-700">
-                            Email
-                        </label>
-
-                        <div className="relative mt-2">
-
-                            <Mail
-                                size={18}
-                                className="
-                                    absolute
-                                    left-3
-                                    top-1/2
-                                    -translate-y-1/2
-                                    text-slate-400
-                                "
-                            />
-
-                            <input
-                                value={profile.email}
-                                disabled
-                                className="
-                                    w-full
-                                    bg-slate-100
-                                    border
-                                    border-slate-200
-                                    rounded-xl
-                                    pl-10
-                                    pr-4
-                                    py-3
-                                    text-slate-500
-                                    cursor-not-allowed
-                                "
-                            />
-
-                        </div>
-
-                        <p className="text-xs text-slate-400 mt-2">
-                            Email changes will require verification.
-                        </p>
 
                     </div>
 

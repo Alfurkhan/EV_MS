@@ -2,6 +2,7 @@ import {
     User,
     Mail,
     Phone,
+    Globe,
     CalendarDays,
     Clock3,
     AtSign,
@@ -56,12 +57,23 @@ export default function ProfileInfo({
                     />
 
                     <InfoCard
+                        icon={<Globe size={22} />}
+                        label="Country Code"
+                        value={
+                            profile.countryCode
+                                ? profile.countryCode
+                                : "Not Added"
+                        }
+                    />
+
+                    <InfoCard
                         icon={<Phone size={22} />}
-                        label="Phone Number"
-                        value={formatPhoneNumber(
-                            profile.countryCode,
+                        label="Mobile Number"
+                        value={
                             profile.phoneNumber
-                        )}
+                                ? profile.phoneNumber
+                                : "Not Added"
+                        }
                     />
 
                 </div>
@@ -210,21 +222,4 @@ function formatRole(role: string | null | undefined) {
         .replace(/_/g, " ")
         .toLowerCase()
         .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function formatPhoneNumber(
-    countryCode: string | null | undefined,
-    phoneNumber: string | null | undefined
-) {
-
-    if (!phoneNumber) {
-        return "Not Added";
-    }
-
-    return [
-        countryCode,
-        phoneNumber,
-    ]
-        .filter(Boolean)
-        .join(" ");
 }

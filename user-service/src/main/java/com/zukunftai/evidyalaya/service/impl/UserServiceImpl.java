@@ -495,4 +495,28 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<FacultyResponse> getAllFaculties() {
+
+        return userRepository.findAll()
+                .stream()
+                .filter(user ->
+                        user.getRoles() != null &&
+                                user.getRoles()
+                                        .stream()
+                                        .anyMatch(role ->
+                                                role.getName() == RoleName.ROLE_FACULTY
+                                        )
+                )
+                .map(user ->
+                        FacultyResponse.builder()
+                                .id(user.getId())
+                                .fullName(user.getFullName())
+                                .email(user.getEmail())
+                                .build()
+                )
+                .toList();
+    }
+
 }

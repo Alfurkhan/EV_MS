@@ -13,7 +13,7 @@ spring:
   cloud:
     consul:
       host: localhost
-      port: 8500      # Change to 9096 if your Consul is actually running there
+      port: 8500
       discovery:
         enabled: true
         register: true
@@ -24,11 +24,13 @@ spring:
     gateway:
       server:
         webflux:
+
           globalcors:
             cors-configurations:
               '[/**]':
                 allowedOrigins:
                   - "http://localhost:5173"
+
                 allowedMethods:
                   - GET
                   - POST
@@ -36,8 +38,10 @@ spring:
                   - DELETE
                   - OPTIONS
                   - PATCH
+
                 allowedHeaders:
                   - "*"
+
                 allowCredentials: true
 
           discovery:
@@ -49,13 +53,15 @@ spring:
             - id: user-service
               uri: lb://user-service
               predicates:
-                - Path=/auth/**,/user/**
+                - Path=/auth/**,/user/**,/subject/**
+
 
 application:
   security:
     jwt:
       secret-key: 64cd03ad66a6843afb6b22026df5f3689255ea6a4e8ae69e3ace90a01e4610b8
       jwtExpirationInMs: 86400000
+
 
 management:
   endpoints:
@@ -66,6 +72,7 @@ management:
   endpoint:
     health:
       show-details: always
+
 
 endpoint:
   user-service: http://localhost:8080
