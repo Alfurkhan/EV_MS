@@ -20,6 +20,9 @@ import ProfilePage from "./features/profile/pages/ProfilePage";
 
 import UnauthorizedPage from "./pages/UnauthorizedPage";
 
+import AcademicManagementPage
+    from "./features/academic/pages/AcademicManagementPage";
+
 export default function App() {
     return (
         <>
@@ -102,6 +105,17 @@ export default function App() {
                                 allowedRoles={["ROLE_ADMIN"]}
                             >
                                 <Faculty />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/academic-management"
+                        element={
+                            <RoleProtectedRoute
+                                allowedRoles={["ROLE_ADMIN"]}
+                            >
+                                <AcademicManagementPage />
                             </RoleProtectedRoute>
                         }
                     />

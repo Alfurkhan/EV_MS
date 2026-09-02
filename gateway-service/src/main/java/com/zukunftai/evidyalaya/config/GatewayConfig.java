@@ -20,13 +20,93 @@ public class GatewayConfig {
 
     @Bean
     public RouteLocator routes(RouteLocatorBuilder builder) {
+
         return builder.routes()
-                .route("user-service", r -> r.path(
-                                "/user/**",
-                                "/subject/**"
-                        )
-                        .filters(f -> f.filter(filter))
-                        .uri(userServiceUrl))
+
+                /*
+                 * User APIs
+                 */
+                .route(
+                        "user-service-user",
+                        r -> r.path("/user/**")
+                                .filters(f ->
+                                        f.filter(filter)
+                                )
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Authentication APIs
+                 */
+                .route(
+                        "user-service-auth",
+                        r -> r.path("/auth/**")
+                                .filters(f ->
+                                        f.filter(filter)
+                                )
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Subject APIs
+                 */
+                .route(
+                        "user-service-subject",
+                        r -> r.path("/subject/**")
+                                .filters(f ->
+                                        f.filter(filter)
+                                )
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Academic Year APIs
+                 */
+                .route(
+                        "user-service-academic-year",
+                        r -> r.path("/academic-year/**")
+                                .filters(f ->
+                                        f.filter(filter)
+                                )
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Grade APIs
+                 */
+                .route(
+                        "user-service-grade",
+                        r -> r.path("/grade/**")
+                                .filters(f ->
+                                        f.filter(filter)
+                                )
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Section APIs
+                 */
+                .route(
+                        "user-service-section",
+                        r -> r.path("/section/**")
+                                .filters(f ->
+                                        f.filter(filter)
+                                )
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Student Enrollment APIs
+                 */
+                .route(
+                        "user-service-student-enrollment",
+                        r -> r.path("/student-enrollment/**")
+                                .filters(f ->
+                                        f.filter(filter)
+                                )
+                                .uri(userServiceUrl)
+                )
+
                 .build();
     }
 

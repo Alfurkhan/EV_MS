@@ -65,6 +65,11 @@ export default function Topbar() {
             subtitle: "Manage courses and subjects",
         },
 
+        "/academic-management": {
+            title: "Academic Management",
+            subtitle: "Manage academic years, grades, sections and enrollments",
+        },
+
         "/notifications": {
             title: "Notifications",
             subtitle: "Stay updated with school activities",

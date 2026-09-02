@@ -8,6 +8,7 @@ import {
     GraduationCap,
     CalendarCheck,
     BookOpen,
+    School,
     Bell,
     Settings,
     LogOut,
@@ -82,6 +83,12 @@ const menu: MenuSection[] = [
                     "ROLE_ADMIN",
                 ],
             },
+            {
+                icon: School,
+                label: "Academic Management",
+                path: "/academic-management",
+                allowedRoles: ["ROLE_ADMIN"],
+            },
         ],
     },
 
@@ -115,20 +122,21 @@ export default function Sidebar() {
     return (
         <aside
             className={`
-                bg-slate-900
-                text-white
-                flex
-                flex-col
-                h-screen
-                shrink-0
-                transition-[width]
-                duration-300
-                ${
+        bg-slate-900
+        text-white
+        flex
+        flex-col
+        h-screen
+        shrink-0
+        overflow-x-hidden
+        transition-[width]
+        duration-300
+        ${
                 sidebarOpen
                     ? "w-72"
                     : "w-20"
             }
-            `}
+    `}
         >
 
             {/* Logo */}
@@ -160,16 +168,17 @@ export default function Sidebar() {
                     {/* Expanded Logo */}
                     <div
                         className={`
+                            min-w-0
                             transition-all
                             duration-300
                             ease-out
                             whitespace-nowrap
                             ${
-                                sidebarOpen
-                                    ? "opacity-100 translate-x-0"
-                                    : "opacity-0 -translate-x-2"
-                        }
-            `}
+                            sidebarOpen
+                                ? "opacity-100 translate-x-0"
+                                : "opacity-0 -translate-x-2"
+                            }
+                        `}
                     >
                         <h1 className="text-2xl font-bold">
                             E-Vidyalaya
@@ -186,7 +195,7 @@ export default function Sidebar() {
 
 
             {/* Navigation */}
-            <div className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-6">
 
                 {menu.map((group) => {
 
@@ -231,20 +240,35 @@ export default function Sidebar() {
                                             key={item.label}
                                             to={item.path}
                                             className={({ isActive }) =>
-                                                `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition ${
+                                                `
+                                                    w-full
+                                                    flex
+                                                    items-center
+                                                    ${sidebarOpen
+                                                    ? "justify-start gap-3 px-4"
+                                                    : "justify-center px-0"
+                                                }
+                                                    py-3
+                                                    rounded-xl
+                                                    transition
+                                                    ${
                                                     isActive
                                                         ? "bg-blue-600 text-white shadow"
                                                         : "text-slate-300 hover:bg-slate-800"
-                                                }`
+                                                }
+        `
                                             }
                                         >
 
-                                            <Icon size={20} />
+                                            <Icon
+                                                size={20}
+                                                className="shrink-0"
+                                            />
 
                                             {sidebarOpen && (
-                                                <span>
-                                                    {item.label}
-                                                </span>
+                                                <span className="whitespace-nowrap shrink-0">
+                                                {item.label}
+                                            </span>
                                             )}
 
                                         </NavLink>
