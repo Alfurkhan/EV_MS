@@ -235,20 +235,20 @@ public class StudentEnrollmentServiceImpl
 
         /*
          * STEP 9
-         * Check whether the student is already
-         * enrolled in this Academic Year.
+         * Check whether the student already has
+         * an ACTIVE enrollment in this Academic Year.
          */
 
         if (
                 enrollmentRepository
-                        .existsByStudentAndAcademicYear(
+                        .existsByStudentAndAcademicYearAndActiveTrue(
                                 student,
                                 academicYear
                         )
         ) {
 
             throw new APIException(
-                    "The Student is already enrolled in this academic year.",
+                    "The Student already has an active enrollment in this academic year.",
                     HttpStatus.CONFLICT,
                     "STUDENT_ALREADY_ENROLLED"
             );
@@ -280,6 +280,136 @@ public class StudentEnrollmentServiceImpl
         );
     }
 
+    /*
+     * ============================================================
+     * UPDATE ENROLLMENT
+     * ============================================================
+     */
+
+    @Override
+    public StudentEnrollment updateEnrollment(
+            Long id,
+            Long gradeId,
+            Long sectionId
+    ) {
+
+        /*
+         * STEP 1
+         * Find the existing enrollment.
+         */
+        StudentEnrollment enrollment =
+                getEnrollmentById(id);
+
+
+        /*
+         * STEP 2
+         * Find the selected Grade.
+         */
+        Grade grade =
+                gradeRepository.findById(gradeId)
+                        .orElseThrow(() ->
+                                new APIException(
+                                        "Grade not found.",
+                                        HttpStatus.NOT_FOUND,
+                                        "GRADE_NOT_FOUND"
+                                )
+                        );
+
+
+        /*
+         * STEP 3
+         * Make sure the Grade belongs to
+         * the same Academic Year as the enrollment.
+         */
+        if (!grade.getAcademicYear()
+                .getId()
+                .equals(enrollment.getAcademicYear().getId())) {
+
+            throw new APIException(
+                    "The selected Grade does not belong to the enrollment's Academic Year.",
+                    HttpStatus.BAD_REQUEST,
+                    "GRADE_ACADEMIC_YEAR_MISMATCH"
+            );
+        }
+
+
+        /*
+         * STEP 4
+         * Find the selected Section.
+         */
+        Section section =
+                sectionRepository.findById(sectionId)
+                        .orElseThrow(() ->
+                                new APIException(
+                                        "Section not found.",
+                                        HttpStatus.NOT_FOUND,
+                                        "SECTION_NOT_FOUND"
+                                )
+                        );
+
+
+        /*
+         * STEP 5
+         * Make sure Section belongs to
+         * the selected Grade.
+         */
+        if (!section.getGrade()
+                .getId()
+                .equals(grade.getId())) {
+
+            throw new APIException(
+                    "The selected Section does not belong to the selected Grade.",
+                    HttpStatus.BAD_REQUEST,
+                    "SECTION_GRADE_MISMATCH"
+            );
+        }
+
+
+        /*
+         * STEP 6
+         * Grade and Section must be active.
+         */
+        if (!grade.isActive()) {
+
+            throw new APIException(
+                    "The selected Grade is not active.",
+                    HttpStatus.BAD_REQUEST,
+                    "GRADE_INACTIVE"
+            );
+        }
+
+        if (!section.isActive()) {
+
+            throw new APIException(
+                    "The selected Section is not active.",
+                    HttpStatus.BAD_REQUEST,
+                    "SECTION_INACTIVE"
+            );
+        }
+
+
+        /*
+         * STEP 7
+         * Update the existing enrollment.
+         *
+         * Student and Academic Year remain unchanged.
+         */
+        enrollment.setGrade(grade);
+        enrollment.setSection(section);
+
+        enrollment.setUpdatedAt(
+                Instant.now()
+        );
+
+
+        /*
+         * STEP 8
+         * Save the same enrollment row.
+         */
+        return enrollmentRepository.save(
+                enrollment
+        );
+    }
 
     /*
      * ============================================================
@@ -466,6 +596,35 @@ public class StudentEnrollmentServiceImpl
 
         StudentEnrollment enrollment =
                 getEnrollmentById(id);
+
+        /*
+         * If the enrollment is already active,
+         * there is nothing to do.
+         */
+        if (enrollment.isActive()) {
+            return;
+        }
+
+        /*
+         * Check whether the student already has
+         * another active enrollment in this
+         * academic year.
+         */
+        boolean alreadyHasActiveEnrollment =
+                enrollmentRepository
+                        .existsByStudentAndAcademicYearAndActiveTrue(
+                                enrollment.getStudent(),
+                                enrollment.getAcademicYear()
+                        );
+
+        if (alreadyHasActiveEnrollment) {
+
+            throw new APIException(
+                    "The Student already has another active enrollment in this academic year.",
+                    HttpStatus.CONFLICT,
+                    "STUDENT_ALREADY_ENROLLED"
+            );
+        }
 
         enrollment.setActive(true);
 

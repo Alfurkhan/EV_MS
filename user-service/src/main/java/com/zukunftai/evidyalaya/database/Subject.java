@@ -1,5 +1,7 @@
 package com.zukunftai.evidyalaya.database;
 
+import com.zukunftai.evidyalaya.database.Grade;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -53,4 +55,8 @@ public class Subject {
     )
     @Builder.Default
     private Set<User> faculties = new HashSet<>();
+
+    @ManyToMany(mappedBy = "subjects")
+    @Builder.Default
+    private Set<Grade> grades = new HashSet<>();
 }

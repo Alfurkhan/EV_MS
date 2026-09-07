@@ -5,6 +5,9 @@ import lombok.*;
 
 import java.time.Instant;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -35,6 +38,15 @@ public class Grade {
             nullable = false
     )
     private AcademicYear academicYear;
+
+    @ManyToMany
+    @JoinTable(
+            name = "grade_subject",
+            joinColumns = @JoinColumn(name = "grade_id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id")
+    )
+    @Builder.Default
+    private Set<Subject> subjects = new HashSet<>();
 
     @Column(
             name = "name",

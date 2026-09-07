@@ -13,6 +13,12 @@ public interface StudentEnrollmentService {
             Long sectionId
     );
 
+    StudentEnrollment updateEnrollment(
+            Long id,
+            Long gradeId,
+            Long sectionId
+    );
+
     List<StudentEnrollment> getAllEnrollments();
 
     List<StudentEnrollment> getEnrollmentsByStudent(

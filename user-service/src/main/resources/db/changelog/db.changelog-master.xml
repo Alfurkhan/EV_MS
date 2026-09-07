@@ -397,4 +397,37 @@
 
     </changeSet>
 
+    <changeSet id="31082026-005" author="Furkhan">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="grade_subject"/>
+            </not>
+        </preConditions>
+
+        <comment>Create grade_subject relationship table</comment>
+
+        <sql>
+            CREATE TABLE "grade_subject"
+            (
+                grade_id   INT8 NOT NULL,
+                subject_id INT8 NOT NULL,
+
+                CONSTRAINT grade_subject_pkey
+                    PRIMARY KEY (grade_id, subject_id),
+
+                CONSTRAINT fk_grade_subject_grade
+                    FOREIGN KEY (grade_id)
+                        REFERENCES "grade" (id)
+                        ON DELETE CASCADE,
+
+                CONSTRAINT fk_grade_subject_subject
+                    FOREIGN KEY (subject_id)
+                        REFERENCES "subject" (id)
+                        ON DELETE CASCADE
+            );
+        </sql>
+
+    </changeSet>
+
 </databaseChangeLog>

@@ -1,3 +1,9 @@
+import {
+    CheckCircle2,
+    PanelsTopLeft,
+    XCircle,
+} from "lucide-react";
+
 import type { Section } from "../services/sectionService";
 
 interface SectionTableProps {
@@ -13,19 +19,48 @@ export default function SectionTable({
     if (sections.length === 0) {
         return (
             <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
-                <p className="text-sm font-medium text-slate-700">
-                    No sections found.
-                </p>
 
-                <p className="mt-1 text-sm text-slate-500">
+                <PanelsTopLeft
+                    size={40}
+                    className="mx-auto text-slate-300"
+                />
+
+                <h3
+                    className="
+                        mt-4
+                        text-lg
+                        font-semibold
+                        text-slate-700
+                    "
+                >
+                    No Sections
+                </h3>
+
+                <p
+                    className="
+                        mt-1
+                        text-sm
+                        text-slate-400
+                    "
+                >
                     Add a section to this grade to get started.
                 </p>
+
             </div>
         );
     }
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div
+            className="
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-sm
+            "
+        >
 
             <div className="overflow-x-auto">
 
@@ -35,27 +70,88 @@ export default function SectionTable({
                     {/* TABLE HEADER */}
                     {/* ================================================= */}
 
-                    <thead className="border-b border-slate-200 bg-slate-50">
+                    <thead>
 
-                    <tr>
+                    <tr
+                        className="
+                            border-b
+                            border-slate-200
+                            bg-slate-50
+                        "
+                    >
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th
+                            className="
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Section
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th
+                            className="
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Grade
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th
+                            className="
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Description
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th
+                            className="
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Status
                         </th>
 
-                        <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th
+                            className="
+                                px-6
+                                py-4
+                                text-right
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Action
                         </th>
 
@@ -63,32 +159,76 @@ export default function SectionTable({
 
                     </thead>
 
-
-                    {/* ================================================= */}
-                    {/* TABLE BODY */}
-                    {/* ================================================= */}
-
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
 
                     {sections.map((section) => (
 
                         <tr
                             key={section.id}
-                            className="transition hover:bg-slate-50"
+                            className="
+                                border-b
+                                border-slate-100
+                                last:border-b-0
+                                hover:bg-slate-50/70
+                            "
                         >
-
-                            {/* SECTION */}
 
                             <td className="px-6 py-4">
 
-                                <div className="text-sm font-semibold text-slate-900">
-                                    {section.name}
+                                <div
+                                    className="
+                                        flex
+                                        items-center
+                                        gap-3
+                                    "
+                                >
+
+                                    <div
+                                        className="
+                                            flex
+                                            h-10
+                                            w-10
+                                            shrink-0
+                                            items-center
+                                            justify-center
+                                            rounded-xl
+                                            bg-blue-50
+                                            text-blue-600
+                                        "
+                                    >
+
+                                        <PanelsTopLeft
+                                            size={19}
+                                        />
+
+                                    </div>
+
+                                    <div>
+
+                                        <p
+                                            className="
+                                                text-sm
+                                                font-semibold
+                                                text-slate-800
+                                            "
+                                        >
+                                            {section.name}
+                                        </p>
+
+                                        <p
+                                            className="
+                                                text-xs
+                                                text-slate-400
+                                            "
+                                        >
+                                            Section
+                                        </p>
+
+                                    </div>
+
                                 </div>
 
                             </td>
-
-
-                            {/* GRADE */}
 
                             <td className="px-6 py-4">
 
@@ -98,9 +238,6 @@ export default function SectionTable({
 
                             </td>
 
-
-                            {/* DESCRIPTION */}
-
                             <td className="max-w-xs px-6 py-4">
 
                                 <div className="truncate text-sm text-slate-600">
@@ -109,42 +246,77 @@ export default function SectionTable({
 
                             </td>
 
-
-                            {/* STATUS */}
-
                             <td className="px-6 py-4">
 
+                                {section.active ? (
+
                                     <span
-                                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                            section.active
-                                                ? "bg-green-50 text-green-700"
-                                                : "bg-slate-100 text-slate-600"
-                                        }`}
+                                        className="
+                                            inline-flex
+                                            items-center
+                                            gap-1.5
+                                            rounded-full
+                                            bg-green-50
+                                            px-3
+                                            py-1.5
+                                            text-xs
+                                            font-semibold
+                                            text-green-600
+                                        "
                                     >
-                                        {section.active
-                                            ? "Active"
-                                            : "Inactive"}
+
+                                        <CheckCircle2
+                                            size={14}
+                                        />
+
+                                        Active
+
                                     </span>
 
+                                ) : (
+
+                                    <span
+                                        className="
+                                            inline-flex
+                                            items-center
+                                            gap-1.5
+                                            rounded-full
+                                            bg-slate-100
+                                            px-3
+                                            py-1.5
+                                            text-xs
+                                            font-semibold
+                                            text-slate-500
+                                        "
+                                    >
+
+                                        <XCircle
+                                            size={14}
+                                        />
+
+                                        Inactive
+
+                                    </span>
+
+                                )}
+
                             </td>
-
-
-                            {/* ACTION */}
 
                             <td className="px-6 py-4 text-right">
 
                                 <button
                                     type="button"
-                                    onClick={() =>
-                                        onManage(section)
-                                    }
+                                    onClick={() => onManage(section)}
                                     className="
-                                            text-sm
-                                            font-medium
-                                            text-blue-600
-                                            transition
-                                            hover:text-blue-700
-                                        "
+                                        rounded-lg
+                                        px-4
+                                        py-2
+                                        text-sm
+                                        font-semibold
+                                        text-blue-600
+                                        transition
+                                        hover:bg-blue-50
+                                    "
                                 >
                                     Manage
                                 </button>

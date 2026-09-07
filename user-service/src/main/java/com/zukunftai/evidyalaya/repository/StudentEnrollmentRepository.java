@@ -16,7 +16,7 @@ public interface StudentEnrollmentRepository
      * Check whether a student already has
      * an enrollment in a particular Academic Year.
      */
-    boolean existsByStudentAndAcademicYear(
+    boolean existsByStudentAndAcademicYearAndActiveTrue(
             User student,
             AcademicYear academicYear
     );

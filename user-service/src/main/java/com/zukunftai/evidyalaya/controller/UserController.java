@@ -1,6 +1,6 @@
 package com.zukunftai.evidyalaya.controller;
 
-import com.zukunftai.evidyalaya.model.UserResponse;
+import com.zukunftai.evidyalaya.model.*;
 import com.zukunftai.evidyalaya.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +95,15 @@ public class UserController {
 
         return ResponseEntity.ok(
                 userService.getAllFaculties()
+        );
+    }
+
+    @GetMapping("/students")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<StudentResponse>> getStudents() {
+
+        return ResponseEntity.ok(
+                userService.getAllStudents()
         );
     }
 }

@@ -1,14 +1,18 @@
 package com.zukunftai.evidyalaya.controller;
 
+import com.zukunftai.evidyalaya.config.UserPrincipal;
+import com.zukunftai.evidyalaya.database.AcademicYear;
 import com.zukunftai.evidyalaya.database.StudentEnrollment;
 import com.zukunftai.evidyalaya.model.StudentEnrollmentRequest;
 import com.zukunftai.evidyalaya.model.StudentEnrollmentResponse;
+import com.zukunftai.evidyalaya.service.AcademicYearService;
 import com.zukunftai.evidyalaya.service.StudentEnrollmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +26,8 @@ import java.util.List;
 public class StudentEnrollmentController {
 
     private final StudentEnrollmentService enrollmentService;
+
+    private final AcademicYearService academicYearService;
 
 
     /*
@@ -47,6 +53,32 @@ public class StudentEnrollmentController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(toResponse(enrollment));
+    }
+
+
+    /*
+     * ============================================================
+     * UPDATE ENROLLMENT
+     * ============================================================
+     */
+
+    @PutMapping("/id/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<StudentEnrollmentResponse> updateEnrollment(
+            @PathVariable Long id,
+            @Valid @RequestBody StudentEnrollmentRequest request
+    ) {
+
+        StudentEnrollment enrollment =
+                enrollmentService.updateEnrollment(
+                        id,
+                        request.getGradeId(),
+                        request.getSectionId()
+                );
+
+        return ResponseEntity.ok(
+                toResponse(enrollment)
+        );
     }
 
 
@@ -171,6 +203,40 @@ public class StudentEnrollmentController {
 
     /*
      * ============================================================
+     * GET MY ACTIVE ENROLLMENT
+     * ============================================================
+     *
+     * The student ID is taken from the authenticated JWT
+     * through UserPrincipal.
+     *
+     * The client does NOT provide a student ID.
+     *
+     */
+
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<StudentEnrollmentResponse>
+    getMyActiveEnrollment(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+
+        AcademicYear activeAcademicYear =
+                academicYearService.getActiveAcademicYear();
+
+        StudentEnrollment enrollment =
+                enrollmentService.getActiveEnrollmentForStudent(
+                        userPrincipal.getId(),
+                        activeAcademicYear.getId()
+                );
+
+        return ResponseEntity.ok(
+                toResponse(enrollment)
+        );
+    }
+
+
+    /*
+     * ============================================================
      * GET ACTIVE ENROLLMENT FOR STUDENT
      * ============================================================
      */
@@ -218,6 +284,7 @@ public class StudentEnrollmentController {
         );
     }
 
+
     /*
      * ============================================================
      * ACTIVATE ENROLLMENT
@@ -240,6 +307,7 @@ public class StudentEnrollmentController {
                 )
         );
     }
+
 
     /*
      * ============================================================

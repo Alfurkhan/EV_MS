@@ -3,9 +3,11 @@ package com.zukunftai.evidyalaya.service.impl;
 import com.zukunftai.evidyalaya.database.Subject;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
+import com.zukunftai.evidyalaya.database.Grade;
 import com.zukunftai.evidyalaya.repository.UserRepository;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.repository.SubjectRepository;
+import com.zukunftai.evidyalaya.repository.GradeRepository;
 import com.zukunftai.evidyalaya.service.SubjectService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,12 +27,16 @@ public class SubjectServiceImpl implements SubjectService {
 
     private final UserRepository userRepository;
 
+    private final GradeRepository gradeRepository;
+
     public SubjectServiceImpl(
             SubjectRepository subjectRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            GradeRepository gradeRepository
     ) {
         this.subjectRepository = subjectRepository;
         this.userRepository = userRepository;
+        this.gradeRepository = gradeRepository;
     }
 
     @Override
@@ -245,6 +251,54 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     @Override
+    public void assignSubjectToGrade(Long subjectId, Long gradeId) {
+
+        Subject subject = getSubjectById(subjectId);
+
+        Grade grade = gradeRepository.findById(gradeId)
+                .orElseThrow(() -> new APIException(
+                        "Grade not found.",
+                        HttpStatus.NOT_FOUND,
+                        "GRADE_NOT_FOUND"
+                ));
+
+        if (grade.getSubjects().contains(subject)) {
+            throw new APIException(
+                    "This Subject is already assigned to the Grade.",
+                    HttpStatus.CONFLICT,
+                    "SUBJECT_ALREADY_ASSIGNED"
+            );
+        }
+
+        grade.getSubjects().add(subject);
+        gradeRepository.save(grade);
+    }
+
+
+    @Override
+    public void removeSubjectFromGrade(Long subjectId, Long gradeId) {
+
+        Subject subject = getSubjectById(subjectId);
+
+        Grade grade = gradeRepository.findById(gradeId)
+                .orElseThrow(() -> new APIException(
+                        "Grade not found.",
+                        HttpStatus.NOT_FOUND,
+                        "GRADE_NOT_FOUND"
+                ));
+
+        if (!grade.getSubjects().remove(subject)) {
+            throw new APIException(
+                    "This Subject is not assigned to the Grade.",
+                    HttpStatus.NOT_FOUND,
+                    "SUBJECT_GRADE_ASSIGNMENT_NOT_FOUND"
+            );
+        }
+
+        gradeRepository.save(grade);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<Subject> getSubjectsForFaculty(
             Long facultyId
@@ -276,6 +330,15 @@ public class SubjectServiceImpl implements SubjectService {
         }
 
         return value.trim();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Subject> getSubjectsForGrade(
+            Long gradeId
+    ) {
+
+        return subjectRepository.findByGradesId(gradeId);
     }
 
     @Override

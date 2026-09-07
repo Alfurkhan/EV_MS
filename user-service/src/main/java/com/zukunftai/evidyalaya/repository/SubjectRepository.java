@@ -24,6 +24,14 @@ public interface SubjectRepository
 
     List<Subject> findByFacultiesContaining(User faculty);
 
+    /*
+     * ============================================================
+     * FIND SUBJECTS BY GRADE
+     * ============================================================
+     */
+
+    List<Subject> findByGradesId(Long gradeId);
+
     @Query("""
         SELECT DISTINCT s
         FROM Subject s

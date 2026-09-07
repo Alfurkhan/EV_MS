@@ -519,4 +519,28 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<StudentResponse> getAllStudents() {
+
+        return userRepository.findAll()
+                .stream()
+                .filter(user ->
+                        user.getRoles() != null &&
+                                user.getRoles()
+                                        .stream()
+                                        .anyMatch(role ->
+                                                role.getName() == RoleName.ROLE_STUDENT
+                                        )
+                )
+                .map(user ->
+                        StudentResponse.builder()
+                                .id(user.getId())
+                                .fullName(user.getFullName())
+                                .email(user.getEmail())
+                                .build()
+                )
+                .toList();
+    }
+
 }

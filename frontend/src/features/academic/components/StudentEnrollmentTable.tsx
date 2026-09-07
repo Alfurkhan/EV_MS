@@ -1,3 +1,9 @@
+import {
+    CheckCircle2,
+    UserRoundCheck,
+    XCircle,
+} from "lucide-react";
+
 import type { StudentEnrollment } from "../services/studentEnrollmentService";
 
 interface StudentEnrollmentTableProps {
@@ -13,57 +19,186 @@ export default function StudentEnrollmentTable({
     if (enrollments.length === 0) {
         return (
             <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
-                <p className="text-sm font-medium text-slate-700">
-                    No student enrollments found.
-                </p>
 
-                <p className="mt-1 text-sm text-slate-500">
+                <UserRoundCheck
+                    size={40}
+                    className="mx-auto text-slate-300"
+                />
+
+                <h3
+                    className="
+                        mt-4
+                        text-lg
+                        font-semibold
+                        text-slate-700
+                    "
+                >
+                    No Student Enrollments
+                </h3>
+
+                <p
+                    className="
+                        mt-1
+                        text-sm
+                        text-slate-400
+                    "
+                >
                     Enroll a student to get started.
                 </p>
+
             </div>
         );
     }
 
     return (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div
+            className="
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-sm
+            "
+        >
 
             <div className="overflow-x-auto">
 
-                <table className="w-full min-w-[900px]">
+                <table className="w-full min-w-[1100px]">
 
-                    {/* ================================================= */}
-                    {/* TABLE HEADER */}
-                    {/* ================================================= */}
+                    <thead>
 
-                    <thead className="border-b border-slate-200 bg-slate-50">
+                    <tr
+                        className="
+                            border-b
+                            border-slate-200
+                            bg-slate-50
+                        "
+                    >
 
-                    <tr>
+                        {/* STUDENT */}
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <th
+                            className="
+                                whitespace-nowrap
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Student
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {/* EMAIL */}
+
+                        <th
+                            className="
+                                whitespace-nowrap
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Email
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {/* ACADEMIC YEAR */}
+
+                        <th
+                            className="
+                                whitespace-nowrap
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Academic Year
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {/* GRADE */}
+
+                        <th
+                            className="
+                                whitespace-nowrap
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Grade
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {/* SECTION */}
+
+                        <th
+                            className="
+                                whitespace-nowrap
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Section
                         </th>
 
-                        <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {/* STATUS */}
+
+                        <th
+                            className="
+                                whitespace-nowrap
+                                px-6
+                                py-4
+                                text-left
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Status
                         </th>
 
-                        <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {/* ACTION */}
+
+                        <th
+                            className="
+                                whitespace-nowrap
+                                px-6
+                                py-4
+                                text-right
+                                text-xs
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-slate-500
+                            "
+                        >
                             Action
                         </th>
 
@@ -71,93 +206,205 @@ export default function StudentEnrollmentTable({
 
                     </thead>
 
-
-                    {/* ================================================= */}
-                    {/* TABLE BODY */}
-                    {/* ================================================= */}
-
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
 
                     {enrollments.map((enrollment) => (
 
                         <tr
                             key={enrollment.id}
-                            className="transition hover:bg-slate-50"
+                            className="
+                                border-b
+                                border-slate-100
+                                last:border-b-0
+                                hover:bg-slate-50/70
+                            "
                         >
 
                             {/* STUDENT */}
 
                             <td className="px-6 py-4">
 
-                                <div className="text-sm font-semibold text-slate-900">
-                                    {enrollment.studentName}
+                                <div
+                                    className="
+                                        flex
+                                        items-center
+                                        gap-3
+                                        whitespace-nowrap
+                                    "
+                                >
+
+                                    <div
+                                        className="
+                                            flex
+                                            h-10
+                                            w-10
+                                            shrink-0
+                                            items-center
+                                            justify-center
+                                            rounded-xl
+                                            bg-blue-50
+                                            text-blue-600
+                                        "
+                                    >
+
+                                        <UserRoundCheck
+                                            size={19}
+                                        />
+
+                                    </div>
+
+                                    <div>
+
+                                        <p
+                                            className="
+                                                whitespace-nowrap
+                                                text-sm
+                                                font-semibold
+                                                text-slate-800
+                                            "
+                                        >
+                                            {enrollment.studentName}
+                                        </p>
+
+                                        <p
+                                            className="
+                                                whitespace-nowrap
+                                                text-xs
+                                                text-slate-400
+                                            "
+                                        >
+                                            Student Enrollment
+                                        </p>
+
+                                    </div>
+
                                 </div>
 
                             </td>
-
 
                             {/* EMAIL */}
 
                             <td className="px-6 py-4">
 
-                                <div className="text-sm text-slate-600">
+                                <div
+                                    className="
+                                        whitespace-nowrap
+                                        text-sm
+                                        text-slate-600
+                                    "
+                                >
                                     {enrollment.studentEmail}
                                 </div>
 
                             </td>
 
-
                             {/* ACADEMIC YEAR */}
 
                             <td className="px-6 py-4">
 
-                                <div className="text-sm text-slate-700">
+                                <div
+                                    className="
+                                        whitespace-nowrap
+                                        text-sm
+                                        text-slate-700
+                                    "
+                                >
                                     {enrollment.academicYearName}
                                 </div>
 
                             </td>
 
-
                             {/* GRADE */}
 
                             <td className="px-6 py-4">
 
-                                <div className="text-sm text-slate-700">
+                                <div
+                                    className="
+                                        whitespace-nowrap
+                                        text-sm
+                                        text-slate-700
+                                    "
+                                >
                                     {enrollment.gradeName}
                                 </div>
 
                             </td>
 
-
                             {/* SECTION */}
 
                             <td className="px-6 py-4">
 
-                                <div className="text-sm text-slate-700">
+                                <div
+                                    className="
+                                        whitespace-nowrap
+                                        text-sm
+                                        text-slate-700
+                                    "
+                                >
                                     {enrollment.sectionName}
                                 </div>
 
                             </td>
 
-
                             {/* STATUS */}
 
                             <td className="px-6 py-4">
 
+                                {enrollment.active ? (
+
                                     <span
-                                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                            enrollment.active
-                                                ? "bg-green-50 text-green-700"
-                                                : "bg-slate-100 text-slate-600"
-                                        }`}
+                                        className="
+                                            inline-flex
+                                            items-center
+                                            gap-1.5
+                                            whitespace-nowrap
+                                            rounded-full
+                                            bg-green-50
+                                            px-3
+                                            py-1.5
+                                            text-xs
+                                            font-semibold
+                                            text-green-600
+                                        "
                                     >
-                                        {enrollment.active
-                                            ? "Active"
-                                            : "Inactive"}
+
+                                        <CheckCircle2
+                                            size={14}
+                                        />
+
+                                        Active
+
                                     </span>
 
-                            </td>
+                                ) : (
 
+                                    <span
+                                        className="
+                                            inline-flex
+                                            items-center
+                                            gap-1.5
+                                            whitespace-nowrap
+                                            rounded-full
+                                            bg-slate-100
+                                            px-3
+                                            py-1.5
+                                            text-xs
+                                            font-semibold
+                                            text-slate-500
+                                        "
+                                    >
+
+                                        <XCircle
+                                            size={14}
+                                        />
+
+                                        Inactive
+
+                                    </span>
+
+                                )}
+
+                            </td>
 
                             {/* ACTION */}
 
@@ -165,16 +412,18 @@ export default function StudentEnrollmentTable({
 
                                 <button
                                     type="button"
-                                    onClick={() =>
-                                        onManage(enrollment)
-                                    }
+                                    onClick={() => onManage(enrollment)}
                                     className="
-                                            text-sm
-                                            font-medium
-                                            text-blue-600
-                                            transition
-                                            hover:text-blue-700
-                                        "
+                                        whitespace-nowrap
+                                        rounded-lg
+                                        px-4
+                                        py-2
+                                        text-sm
+                                        font-semibold
+                                        text-blue-600
+                                        transition
+                                        hover:bg-blue-50
+                                    "
                                 >
                                     Manage
                                 </button>

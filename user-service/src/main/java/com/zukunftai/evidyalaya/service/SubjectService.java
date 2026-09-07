@@ -36,8 +36,22 @@ public interface SubjectService {
             Long facultyId
     );
 
+    void assignSubjectToGrade(
+            Long subjectId,
+            Long gradeId
+    );
+
+    void removeSubjectFromGrade(
+            Long subjectId,
+            Long gradeId
+    );
+
     List<Subject> getSubjectsForFaculty(
             Long facultyId
+    );
+
+    List<Subject> getSubjectsForGrade(
+            Long gradeId
     );
 
     List<Subject> getMySubjects();

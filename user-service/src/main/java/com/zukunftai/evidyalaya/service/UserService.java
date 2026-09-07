@@ -26,4 +26,5 @@ public interface UserService{
     void acceptTermsAndConditions();
 
     List<FacultyResponse> getAllFaculties();
+    List<StudentResponse> getAllStudents();
 }

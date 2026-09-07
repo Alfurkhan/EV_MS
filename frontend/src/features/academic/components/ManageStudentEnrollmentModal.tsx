@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import type { StudentEnrollment } from "../services/studentEnrollmentService";
 import {
     activateEnrollment,
     deactivateEnrollment,
     deleteEnrollment,
+    updateEnrollment,
 } from "../services/studentEnrollmentService";
+
+import {
+    getGradesByAcademicYear,
+    type Grade,
+} from "../services/gradeService";
+
+import {
+    getSectionsByGrade,
+    type Section,
+} from "../services/sectionService";
 
 interface ManageStudentEnrollmentModalProps {
     enrollment: StudentEnrollment;
@@ -18,11 +30,151 @@ export default function ManageStudentEnrollmentModal({
                                                          onUpdated,
                                                      }: ManageStudentEnrollmentModalProps) {
     const [active, setActive] = useState(enrollment.active);
+
+    const [selectedGradeId, setSelectedGradeId] = useState(
+        String(enrollment.gradeId)
+    );
+
+    const [selectedSectionId, setSelectedSectionId] = useState(
+        String(enrollment.sectionId)
+    );
+
+    const [grades, setGrades] = useState<Grade[]>([]);
+    const [sections, setSections] = useState<Section[]>([]);
+
+    const [loadingOptions, setLoadingOptions] = useState(false);
+    const [loadingSections, setLoadingSections] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
+    const [showDeleteConfirmation, setShowDeleteConfirmation] =
+        useState(false);
+
+    /*
+     * Load active grades for this enrollment's academic year.
+     */
+    useEffect(() => {
+        const loadGrades = async () => {
+            try {
+                setLoadingOptions(true);
+
+                const data = await getGradesByAcademicYear(
+                    enrollment.academicYearId
+                );
+
+                setGrades(data.filter((grade) => grade.active));
+            } catch (error: any) {
+                console.error("Failed to load grades:", error);
+
+                toast.error(
+                    error?.response?.data?.message ||
+                    "Unable to load grades."
+                );
+            } finally {
+                setLoadingOptions(false);
+            }
+        };
+
+        loadGrades();
+    }, [enrollment.academicYearId]);
+
+    /*
+     * Load active sections for the initially selected grade.
+     */
+    useEffect(() => {
+        const loadSections = async () => {
+            if (!selectedGradeId) {
+                setSections([]);
+                return;
+            }
+
+            try {
+                setLoadingSections(true);
+
+                const data = await getSectionsByGrade(
+                    Number(selectedGradeId)
+                );
+
+                setSections(data.filter((section) => section.active));
+            } catch (error: any) {
+                console.error("Failed to load sections:", error);
+
+                toast.error(
+                    error?.response?.data?.message ||
+                    "Unable to load sections."
+                );
+            } finally {
+                setLoadingSections(false);
+            }
+        };
+
+        loadSections();
+    }, [selectedGradeId]);
+
+    /*
+     * When Grade changes:
+     * 1. Update selected grade.
+     * 2. Clear the old section.
+     * 3. Load sections belonging to the new grade.
+     */
+    const handleGradeChange = async (gradeId: string) => {
+        setSelectedGradeId(gradeId);
+        setSelectedSectionId("");
+
+        if (!gradeId) {
+            setSections([]);
+            return;
+        }
+
+        try {
+            setLoadingSections(true);
+
+            const data = await getSectionsByGrade(Number(gradeId));
+
+            setSections(data.filter((section) => section.active));
+        } catch (error: any) {
+            console.error("Failed to load sections:", error);
+
+            toast.error(
+                error?.response?.data?.message ||
+                "Unable to load sections."
+            );
+
+            setSections([]);
+        } finally {
+            setLoadingSections(false);
+        }
+    };
 
     const handleSave = async () => {
-        if (active === enrollment.active) {
+        const gradeChanged =
+            Number(selectedGradeId) !== enrollment.gradeId;
+
+        const sectionChanged =
+            Number(selectedSectionId) !== enrollment.sectionId;
+
+        const statusChanged =
+            active !== enrollment.active;
+
+        /*
+         * Make sure a Grade is selected.
+         */
+        if (!selectedGradeId) {
+            toast.error("Please select a grade.");
+            return;
+        }
+
+        /*
+         * Make sure a Section is selected.
+         */
+        if (!selectedSectionId) {
+            toast.error("Please select a section.");
+            return;
+        }
+
+        /*
+         * Nothing changed.
+         */
+        if (!gradeChanged && !sectionChanged && !statusChanged) {
             onClose();
             return;
         }
@@ -30,16 +182,55 @@ export default function ManageStudentEnrollmentModal({
         try {
             setLoading(true);
 
-            if (active) {
-                await activateEnrollment(enrollment.id);
+            /*
+             * Update Grade / Section if either changed.
+             *
+             * The backend endpoint currently accepts the existing
+             * StudentEnrollmentRequest, so we send the complete
+             * enrollment information. The backend only uses the
+             * Grade and Section values for this update operation.
+             */
+            if (gradeChanged || sectionChanged) {
+                await updateEnrollment(enrollment.id, {
+                    studentId: enrollment.studentId,
+                    academicYearId: enrollment.academicYearId,
+                    gradeId: Number(selectedGradeId),
+                    sectionId: Number(selectedSectionId),
+                });
+            }
+
+            /*
+             * Update status if it changed.
+             */
+            if (statusChanged) {
+                if (active) {
+                    await activateEnrollment(enrollment.id);
+                } else {
+                    await deactivateEnrollment(enrollment.id);
+                }
+            }
+
+            /*
+             * Show one clean success message instead of multiple
+             * messages when several fields were changed together.
+             */
+            if (gradeChanged || sectionChanged) {
+                toast.success("Student enrollment updated successfully.");
+            } else if (active) {
+                toast.success("Student enrollment activated successfully.");
             } else {
-                await deactivateEnrollment(enrollment.id);
+                toast.success("Student enrollment deactivated successfully.");
             }
 
             onUpdated();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to update enrollment:", error);
+
+            toast.error(
+                error?.response?.data?.message ||
+                "Unable to update student enrollment."
+            );
         } finally {
             setLoading(false);
         }
@@ -51,10 +242,17 @@ export default function ManageStudentEnrollmentModal({
 
             await deleteEnrollment(enrollment.id);
 
+            toast.success("Student enrollment deleted successfully.");
+
             onUpdated();
             onClose();
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to delete enrollment:", error);
+
+            toast.error(
+                error?.response?.data?.message ||
+                "Unable to delete student enrollment."
+            );
         } finally {
             setLoading(false);
             setShowDeleteConfirmation(false);
@@ -64,6 +262,7 @@ export default function ManageStudentEnrollmentModal({
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-6">
             <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
                     <div>
@@ -89,6 +288,7 @@ export default function ManageStudentEnrollmentModal({
                 {/* Content */}
                 <div className="max-h-[70vh] overflow-y-auto px-6 py-6">
                     <div className="space-y-5">
+
                         {/* Student */}
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -117,24 +317,78 @@ export default function ManageStudentEnrollmentModal({
 
                         {/* Grade */}
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <label
+                                htmlFor="manage-enrollment-grade"
+                                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                                 Grade
-                            </p>
+                            </label>
 
-                            <p className="mt-1 text-sm text-slate-700">
-                                {enrollment.gradeName}
-                            </p>
+                            <select
+                                id="manage-enrollment-grade"
+                                value={selectedGradeId}
+                                onChange={(event) =>
+                                    handleGradeChange(event.target.value)
+                                }
+                                disabled={loading || loadingOptions}
+                                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                            >
+                                <option value="">
+                                    {loadingOptions
+                                        ? "Loading grades..."
+                                        : "Select grade"}
+                                </option>
+
+                                {grades.map((grade) => (
+                                    <option
+                                        key={grade.id}
+                                        value={grade.id}
+                                    >
+                                        {grade.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         {/* Section */}
                         <div>
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            <label
+                                htmlFor="manage-enrollment-section"
+                                className="text-xs font-semibold uppercase tracking-wide text-slate-500"
+                            >
                                 Section
-                            </p>
+                            </label>
 
-                            <p className="mt-1 text-sm text-slate-700">
-                                {enrollment.sectionName}
-                            </p>
+                            <select
+                                id="manage-enrollment-section"
+                                value={selectedSectionId}
+                                onChange={(event) =>
+                                    setSelectedSectionId(event.target.value)
+                                }
+                                disabled={
+                                    loading ||
+                                    loadingSections ||
+                                    !selectedGradeId
+                                }
+                                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                            >
+                                <option value="">
+                                    {loadingSections
+                                        ? "Loading sections..."
+                                        : !selectedGradeId
+                                            ? "Select a grade first"
+                                            : "Select section"}
+                                </option>
+
+                                {sections.map((section) => (
+                                    <option
+                                        key={section.id}
+                                        value={section.id}
+                                    >
+                                        {section.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         {/* Status */}
@@ -143,21 +397,47 @@ export default function ManageStudentEnrollmentModal({
                                 Status
                             </p>
 
-                            <label className="mt-2 flex cursor-pointer items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    checked={active}
-                                    onChange={(event) =>
-                                        setActive(event.target.checked)
-                                    }
-                                    disabled={loading}
-                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                />
+                            <button
+                                type="button"
+                                onClick={() => setActive(!active)}
+                                disabled={loading}
+                                className={`mt-2 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                    active
+                                        ? "bg-red-50 text-red-600 hover:bg-red-100"
+                                        : "bg-green-50 text-green-600 hover:bg-green-100"
+                                }`}
+                            >
+                                {/* Power Icon */}
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    className="h-4 w-4"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 3v9"
+                                    />
 
-                                <span className="text-sm font-medium text-slate-700">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M18.36 6.64a9 9 0 1 1-12.73 0"
+                                    />
+                                </svg>
+
+                                {active ? "Deactivate" : "Activate"}
+                            </button>
+
+                            <p className="mt-2 text-xs text-slate-500">
+                                Current status:{" "}
+                                <span className="font-medium text-slate-700">
                                     {active ? "Active" : "Inactive"}
                                 </span>
-                            </label>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -222,7 +502,7 @@ export default function ManageStudentEnrollmentModal({
                                     setShowDeleteConfirmation(false)
                                 }
                                 disabled={loading}
-                                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 Cancel
                             </button>

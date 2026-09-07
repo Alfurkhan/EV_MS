@@ -76,6 +76,16 @@ public class SubjectController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{subjectId}/grade/{gradeId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> assignSubjectToGrade(
+            @PathVariable Long subjectId,
+            @PathVariable Long gradeId
+    ) {
+        subjectService.assignSubjectToGrade(subjectId, gradeId);
+        return ResponseEntity.ok().build();
+    }
+
     @DeleteMapping("/{subjectId}/faculty/{facultyId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeFaculty(
@@ -87,6 +97,16 @@ public class SubjectController {
                 facultyId
         );
 
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{subjectId}/grade/{gradeId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> removeSubjectFromGrade(
+            @PathVariable Long subjectId,
+            @PathVariable Long gradeId
+    ) {
+        subjectService.removeSubjectFromGrade(subjectId, gradeId);
         return ResponseEntity.noContent().build();
     }
 
@@ -158,6 +178,21 @@ public class SubjectController {
                 .active(subject.isActive())
                 .assignedFaculties(assignedFaculties)
                 .build();
+    }
+
+    @GetMapping("/grade/{gradeId}")
+    public ResponseEntity<List<SubjectResponse>> getGradeSubjects(
+            @PathVariable Long gradeId
+    ) {
+
+        List<SubjectResponse> response =
+                subjectService
+                        .getSubjectsForGrade(gradeId)
+                        .stream()
+                        .map(this::toResponse)
+                        .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/my")

@@ -22,6 +22,12 @@ export type StudentEnrollment = {
     updatedAt: string;
 };
 
+export type Student = {
+    id: number;
+    fullName: string;
+    email: string;
+};
+
 export interface StudentEnrollmentRequest {
     studentId: number;
     academicYearId: number;
@@ -216,4 +222,40 @@ export async function deleteEnrollment(
     await api.delete(
         `/student-enrollment/id/${id}`
     );
+}
+
+export async function updateEnrollment(
+    id: number,
+    data: {
+        studentId: number;
+        academicYearId: number;
+        gradeId: number;
+        sectionId: number;
+    }
+): Promise<StudentEnrollment> {
+    const response = await api.put<StudentEnrollment>(
+        `/student-enrollment/id/${id}`,
+        data
+    );
+
+    return response.data;
+}
+
+/*
+ * ============================================================
+ * GET STUDENTS
+ * ============================================================
+ */
+
+export async function getStudents(): Promise<Student[]> {
+    const response = await api.get<Student[]>("/user/students");
+    return response.data;
+}
+
+export async function getMyActiveEnrollment(): Promise<StudentEnrollment> {
+    const response = await api.get<StudentEnrollment>(
+        "/student-enrollment/my"
+    );
+
+    return response.data;
 }
