@@ -1,0 +1,107 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: user-service
+
+  cloud:
+    consul:
+      enabled: false
+      discovery:
+        enabled: false
+
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT:5432}/${DATABASE_NAME}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 5
+      connection-test-query: SELECT 1
+      connection-timeout: 30000
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      validation-timeout: 1000
+
+  jpa:
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+  servlet:
+    multipart:
+      max-file-size: 15GB
+      max-request-size: 15GB
+
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+  sql:
+    init:
+      mode: always
+
+management:
+  security:
+    enabled: false
+
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    liquibase: INFO
+    org.springframework.boot.autoconfigure.liquibase: INFO
+    com.zukunftai.evidyalaya: INFO
+
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET}
+      expiration: ${JWT_EXPIRATION:86400000}
+      jwtExpirationInMs: ${JWT_EXPIRATION:86400000}
+      refreshTokenExpirationInMs: ${JWT_REFRESH_EXPIRATION:172800000}
+
+cors:
+  origins: ${CORS_ORIGIN}
+
+springdoc:
+  packagesToScan: com.zukunftai.evidyalaya.controller
+  pathsToMatch: /auth/**,/user/**,/subject/**,/academic-year/**,/grade/**,/section/**,/student-enrollment/**
+
+service:
+  api:
+    emailService: ${EMAIL_SERVICE_URL}
+
+async:
+  executor:
+    email:
+      corePoolSize: 2
+      maxPoolSize: 5
+      queueCapacity: 50
+
+rest:
+  client:
+    connect-timeout: 10
+    read-timeout: 30
