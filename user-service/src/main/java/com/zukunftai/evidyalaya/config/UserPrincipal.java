@@ -35,6 +35,8 @@ public class UserPrincipal implements UserDetails {
 
     private boolean accountLocked;
 
+    private boolean accountDeleted;
+
     public static UserPrincipal create(User user) {
 
         List<SimpleGrantedAuthority> authorities =
@@ -49,7 +51,8 @@ public class UserPrincipal implements UserDetails {
                 user.getPassword(),
                 authorities,
                 user.isAccountEnabled(),
-                user.isAccountLocked()
+                user.isAccountLocked(),
+                user.isAccountDeleted()
         );
     }
 
@@ -75,6 +78,6 @@ public class UserPrincipal implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return accountEnabled;
+        return accountEnabled && !accountDeleted;
     }
 }

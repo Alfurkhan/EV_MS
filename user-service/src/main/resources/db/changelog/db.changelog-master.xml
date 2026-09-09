@@ -430,4 +430,23 @@
 
     </changeSet>
 
+    <changeSet id="31082026-006" author="Furkhan">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists
+                        tableName="user"
+                        columnName="account_deleted"/>
+            </not>
+        </preConditions>
+
+        <comment>Add soft-delete flag to user accounts</comment>
+
+        <sql>
+            ALTER TABLE "user"
+                ADD COLUMN account_deleted BOOL NOT NULL DEFAULT FALSE;
+        </sql>
+
+    </changeSet>
+
 </databaseChangeLog>

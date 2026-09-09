@@ -19,46 +19,68 @@ import {
 
 import {
     createEnrollment,
-    getStudents,
-    type Student,
 } from "../services/studentEnrollmentService";
+
+import {
+    getStudents,
+    type StudentUser,
+} from "../../students/services/studentService";
+
 
 interface AddStudentEnrollmentModalProps {
     onClose: () => void;
     onAdded: () => void | Promise<void>;
 }
 
+
 export default function AddStudentEnrollmentModal({
-                                                      onClose,
-                                                      onAdded,
-                                                  }: AddStudentEnrollmentModalProps) {
+    onClose,
+    onAdded,
+}: AddStudentEnrollmentModalProps) {
 
     /* --------------------------------------------------
        DATA
     -------------------------------------------------- */
 
-    const [students, setStudents] = useState<Student[]>([]);
-    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
-    const [grades, setGrades] = useState<Grade[]>([]);
-    const [sections, setSections] = useState<Section[]>([]);
+    const [students, setStudents] =
+        useState<StudentUser[]>([]);
+
+    const [academicYears, setAcademicYears] =
+        useState<AcademicYear[]>([]);
+
+    const [grades, setGrades] =
+        useState<Grade[]>([]);
+
+    const [sections, setSections] =
+        useState<Section[]>([]);
 
 
     /* --------------------------------------------------
        SELECTIONS
     -------------------------------------------------- */
 
-    const [studentId, setStudentId] = useState<number | "">("");
-    const [academicYearId, setAcademicYearId] = useState<number | "">("");
-    const [gradeId, setGradeId] = useState<number | "">("");
-    const [sectionId, setSectionId] = useState<number | "">("");
+    const [studentId, setStudentId] =
+        useState<number | "">("");
+
+    const [academicYearId, setAcademicYearId] =
+        useState<number | "">("");
+
+    const [gradeId, setGradeId] =
+        useState<number | "">("");
+
+    const [sectionId, setSectionId] =
+        useState<number | "">("");
 
 
     /* --------------------------------------------------
        UI STATE
     -------------------------------------------------- */
 
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [loading, setLoading] =
+        useState(true);
+
+    const [saving, setSaving] =
+        useState(false);
 
 
     /* --------------------------------------------------
@@ -66,23 +88,28 @@ export default function AddStudentEnrollmentModal({
     -------------------------------------------------- */
 
     useEffect(() => {
+
         const loadInitialData = async () => {
 
             try {
 
                 setLoading(true);
 
-                const [studentsData, academicYearsData] =
-                    await Promise.all([
-                        getStudents(),
-                        getAcademicYears(),
-                    ]);
+                const [
+                    studentsData,
+                    academicYearsData,
+                ] = await Promise.all([
+                    getStudents(),
+                    getAcademicYears(),
+                ]);
+
 
                 setStudents(studentsData);
 
+
                 setAcademicYears(
                     academicYearsData.filter(
-                        (academicYear) =>
+                        (academicYear: AcademicYear) =>
                             academicYear.active
                     )
                 );
@@ -106,6 +133,7 @@ export default function AddStudentEnrollmentModal({
             }
         };
 
+
         loadInitialData();
 
     }, []);
@@ -121,11 +149,13 @@ export default function AddStudentEnrollmentModal({
 
             setGrades([]);
             setGradeId("");
+
             setSections([]);
             setSectionId("");
 
             return;
         }
+
 
         const loadGrades = async () => {
 
@@ -135,6 +165,7 @@ export default function AddStudentEnrollmentModal({
                     await getGradesByAcademicYear(
                         academicYearId
                     );
+
 
                 setGrades(
                     data.filter(
@@ -160,6 +191,7 @@ export default function AddStudentEnrollmentModal({
 
         };
 
+
         loadGrades();
 
     }, [academicYearId]);
@@ -179,6 +211,7 @@ export default function AddStudentEnrollmentModal({
             return;
         }
 
+
         const loadSections = async () => {
 
             try {
@@ -187,6 +220,7 @@ export default function AddStudentEnrollmentModal({
                     await getSectionsByGrade(
                         gradeId
                     );
+
 
                 setSections(
                     data.filter(
@@ -212,6 +246,7 @@ export default function AddStudentEnrollmentModal({
             }
 
         };
+
 
         loadSections();
 
@@ -268,6 +303,7 @@ export default function AddStudentEnrollmentModal({
             return;
         }
 
+
         if (academicYearId === "") {
 
             toast.error(
@@ -277,6 +313,7 @@ export default function AddStudentEnrollmentModal({
             return;
         }
 
+
         if (gradeId === "") {
 
             toast.error(
@@ -285,6 +322,7 @@ export default function AddStudentEnrollmentModal({
 
             return;
         }
+
 
         if (sectionId === "") {
 
@@ -307,11 +345,14 @@ export default function AddStudentEnrollmentModal({
                 sectionId,
             });
 
+
             await onAdded();
+
 
             toast.success(
                 "Student enrolled successfully."
             );
+
 
             onClose();
 
@@ -526,6 +567,7 @@ export default function AddStudentEnrollmentModal({
                                     Student Information
                                 </h3>
 
+
                                 <div
                                     className="
                                         space-y-4
@@ -548,13 +590,16 @@ export default function AddStudentEnrollmentModal({
                                             Student
                                         </label>
 
+
                                         <select
                                             value={studentId}
                                             onChange={(event) =>
                                                 setStudentId(
                                                     event.target.value === ""
                                                         ? ""
-                                                        : Number(event.target.value)
+                                                        : Number(
+                                                            event.target.value
+                                                        )
                                                 )
                                             }
                                             disabled={saving}
@@ -581,6 +626,7 @@ export default function AddStudentEnrollmentModal({
                                             <option value="">
                                                 Select a student
                                             </option>
+
 
                                             {students.map(
                                                 (student) => (
@@ -617,6 +663,7 @@ export default function AddStudentEnrollmentModal({
                                             >
                                                 Email
                                             </label>
+
 
                                             <div
                                                 className="
@@ -657,6 +704,7 @@ export default function AddStudentEnrollmentModal({
                                     Academic Information
                                 </h3>
 
+
                                 <div
                                     className="
                                         space-y-4
@@ -678,6 +726,7 @@ export default function AddStudentEnrollmentModal({
                                         >
                                             Academic Year
                                         </label>
+
 
                                         <select
                                             value={academicYearId}
@@ -711,6 +760,7 @@ export default function AddStudentEnrollmentModal({
                                                 Select an academic year
                                             </option>
 
+
                                             {academicYears.map(
                                                 (academicYear) => (
                                                     <option
@@ -742,6 +792,7 @@ export default function AddStudentEnrollmentModal({
                                         >
                                             Grade
                                         </label>
+
 
                                         <select
                                             value={gradeId}
@@ -783,6 +834,7 @@ export default function AddStudentEnrollmentModal({
                                                         : "Select a grade"}
                                             </option>
 
+
                                             {grades.map(
                                                 (grade) => (
                                                     <option
@@ -815,13 +867,16 @@ export default function AddStudentEnrollmentModal({
                                             Section
                                         </label>
 
+
                                         <select
                                             value={sectionId}
                                             onChange={(event) =>
                                                 setSectionId(
                                                     event.target.value === ""
                                                         ? ""
-                                                        : Number(event.target.value)
+                                                        : Number(
+                                                            event.target.value
+                                                        )
                                                 )
                                             }
                                             disabled={
@@ -856,6 +911,7 @@ export default function AddStudentEnrollmentModal({
                                                         ? "No active sections available"
                                                         : "Select a section"}
                                             </option>
+
 
                                             {sections.map(
                                                 (section) => (

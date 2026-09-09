@@ -8,6 +8,18 @@ import lombok.Data;
 public class StudentResponse {
 
     private Long id;
+
     private String fullName;
+
     private String email;
+
+    private String countryCode;
+
+    private String phoneNumber;
+
+    private boolean accountEnabled;
+
+    private boolean accountLocked;
+
+    private boolean emailVerified;
 }

@@ -5,20 +5,29 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 import java.util.Set;
 
 @Data
 @NoArgsConstructor
 @Builder
 public class JwtResponse {
+
+    private Long userId;
     private String accessToken;
     private String tokenType;
     private Set<RoleName> roles;
     private Long expireAt;
     private String refreshToken;
 
-    public JwtResponse(String accessToken, String tokenType, Set<RoleName> roles, Long expireAt,String refreshToken) {
+    public JwtResponse(
+            Long userId,
+            String accessToken,
+            String tokenType,
+            Set<RoleName> roles,
+            Long expireAt,
+            String refreshToken
+    ) {
+        this.userId = userId;
         this.accessToken = accessToken;
         this.tokenType = tokenType;
         this.roles = roles;

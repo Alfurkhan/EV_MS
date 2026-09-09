@@ -526,7 +526,8 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll()
                 .stream()
                 .filter(user ->
-                        user.getRoles() != null &&
+                        !user.isAccountDeleted() &&
+                                user.getRoles() != null &&
                                 user.getRoles()
                                         .stream()
                                         .anyMatch(role ->
@@ -538,9 +539,387 @@ public class UserServiceImpl implements UserService {
                                 .id(user.getId())
                                 .fullName(user.getFullName())
                                 .email(user.getEmail())
+                                .countryCode(user.getCountryCode())
+                                .phoneNumber(user.getPhoneNumber())
+                                .accountEnabled(user.isAccountEnabled())
+                                .accountLocked(user.isAccountLocked())
+                                .emailVerified(user.isEmailVerified())
                                 .build()
                 )
                 .toList();
     }
 
+    @Override
+    @Transactional
+    public User createStudentByAdmin(AdminStudentRequest request) {
+
+        String email = request.getEmail()
+                .toLowerCase()
+                .trim();
+
+        // Prevent duplicate accounts.
+        if (userRepository.findByUsername(email).isPresent()) {
+            throw new APIException(
+                    "A user with this email already exists.",
+                    HttpStatus.CONFLICT,
+                    "USER_ALREADY_EXISTS"
+            );
+        }
+
+        // Validate full name.
+        String fullName = request.getFullName().trim();
+
+        if (fullName.length() < 4) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        if (!fullName.matches("^[A-Za-z ]+$")) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        // Get the student role.
+        Set<Role> roles =
+                fetchRolesFor(RoleName.ROLE_STUDENT);
+
+        if (roles == null || roles.isEmpty()) {
+            throw new APIException(
+                    "Student role is not configured.",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "STUDENT_ROLE_NOT_FOUND"
+            );
+        }
+
+        // Create the user.
+        User user = new User(
+                email,
+                email,
+                request.getPassword()
+        );
+
+        user.setPassword(
+                passwordEncoder.encode(user.getPassword())
+        );
+
+        user.setRoles(roles);
+        user.setFullName(fullName);
+
+        user.setCountryCode(request.getCountryCode());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        user.setRegisteredSource(
+                RegisteredSource.NONE
+        );
+
+        Instant instant = Instant.now();
+
+        user.setCreatedAt(instant);
+        user.setUpdatedAt(instant);
+        user.setLastLoginAt(instant);
+
+        user.setAccountEnabled(true);
+        user.setAccountLocked(false);
+
+        // Admin-created students don't need registration OTP verification.
+        user.setEmailVerified(true);
+
+        user.setTermPolicyViewed(false);
+
+        User savedUser =
+                userRepository.save(user);
+
+        savedUser.setRootId(
+                savedUser.getId()
+        );
+
+        updateUser(savedUser);
+
+        return savedUser;
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateStudentByAdmin(
+            Long studentId,
+            UpdateStudentRequest request) {
+
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new APIException(
+                        "Student not found.",
+                        HttpStatus.NOT_FOUND,
+                        "STUDENT_NOT_FOUND"
+                ));
+
+        boolean isStudent = student.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_STUDENT
+                );
+
+        if (!isStudent) {
+            throw new APIException(
+                    "The selected user is not a student.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_STUDENT"
+            );
+        }
+
+        String fullName = request.getFullName().trim();
+
+        if (fullName.length() < 4) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        if (!fullName.matches("^[A-Za-z ]+$")) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        student.setFullName(fullName);
+        student.setCountryCode(request.getCountryCode());
+        student.setPhoneNumber(request.getPhoneNumber());
+        student.setUpdatedAt(Instant.now());
+
+        User savedStudent = userRepository.save(student);
+
+        String role = savedStudent.getRoles()
+                .stream()
+                .findFirst()
+                .map(roleEntity -> roleEntity.getName().name())
+                .orElse(null);
+
+        return UserResponse.builder()
+                .id(savedStudent.getId())
+                .username(savedStudent.getUsername())
+                .fullName(savedStudent.getFullName())
+                .email(savedStudent.getEmail())
+                .countryCode(savedStudent.getCountryCode())
+                .phoneNumber(savedStudent.getPhoneNumber())
+                .registeredSource(
+                        savedStudent.getRegisteredSource() != null
+                                ? savedStudent.getRegisteredSource().name()
+                                : null
+                )
+                .accountEnabled(savedStudent.isAccountEnabled())
+                .accountLocked(savedStudent.isAccountLocked())
+                .createdAt(savedStudent.getCreatedAt())
+                .updatedAt(savedStudent.getUpdatedAt())
+                .lastLoginAt(savedStudent.getLastLoginAt())
+                .emailVerified(savedStudent.isEmailVerified())
+                .termPolicyViewed(savedStudent.isTermPolicyViewed())
+                .role(role)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void disableStudent(Long studentId) {
+
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new APIException(
+                        "Student not found.",
+                        HttpStatus.NOT_FOUND,
+                        "STUDENT_NOT_FOUND"
+                ));
+
+        boolean isStudent = student.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_STUDENT
+                );
+
+        if (!isStudent) {
+            throw new APIException(
+                    "The selected user is not a student.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_STUDENT"
+            );
+        }
+
+        if (!student.isAccountEnabled()) {
+            throw new APIException(
+                    "Student account is already disabled.",
+                    HttpStatus.CONFLICT,
+                    "STUDENT_ALREADY_DISABLED"
+            );
+        }
+
+        student.setAccountEnabled(false);
+        student.setUpdatedAt(Instant.now());
+
+        userRepository.save(student);
+    }
+
+
+    @Override
+    @Transactional
+    public void enableStudent(Long studentId) {
+
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new APIException(
+                        "Student not found.",
+                        HttpStatus.NOT_FOUND,
+                        "STUDENT_NOT_FOUND"
+                ));
+
+        boolean isStudent = student.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_STUDENT
+                );
+
+        if (!isStudent) {
+            throw new APIException(
+                    "The selected user is not a student.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_STUDENT"
+            );
+        }
+
+        if (student.isAccountEnabled()) {
+            throw new APIException(
+                    "Student account is already enabled.",
+                    HttpStatus.CONFLICT,
+                    "STUDENT_ALREADY_ENABLED"
+            );
+        }
+
+        student.setAccountEnabled(true);
+        student.setUpdatedAt(Instant.now());
+
+        userRepository.save(student);
+    }
+
+    @Override
+    @Transactional
+    public void lockStudent(Long studentId) {
+
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new APIException(
+                        "Student not found.",
+                        HttpStatus.NOT_FOUND,
+                        "STUDENT_NOT_FOUND"
+                ));
+
+        boolean isStudent = student.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_STUDENT
+                );
+
+        if (!isStudent) {
+            throw new APIException(
+                    "The selected user is not a student.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_STUDENT"
+            );
+        }
+
+        if (student.isAccountLocked()) {
+            throw new APIException(
+                    "Student account is already locked.",
+                    HttpStatus.CONFLICT,
+                    "STUDENT_ALREADY_LOCKED"
+            );
+        }
+
+        student.setAccountLocked(true);
+        student.setUpdatedAt(Instant.now());
+
+        userRepository.save(student);
+    }
+
+
+    @Override
+    @Transactional
+    public void unlockStudent(Long studentId) {
+
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new APIException(
+                        "Student not found.",
+                        HttpStatus.NOT_FOUND,
+                        "STUDENT_NOT_FOUND"
+                ));
+
+        boolean isStudent = student.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_STUDENT
+                );
+
+        if (!isStudent) {
+            throw new APIException(
+                    "The selected user is not a student.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_STUDENT"
+            );
+        }
+
+        if (!student.isAccountLocked()) {
+            throw new APIException(
+                    "Student account is already unlocked.",
+                    HttpStatus.CONFLICT,
+                    "STUDENT_ALREADY_UNLOCKED"
+            );
+        }
+
+        student.setAccountLocked(false);
+        student.setUpdatedAt(Instant.now());
+
+        userRepository.save(student);
+    }
+
+    @Override
+    @Transactional
+    public void deleteStudent(Long studentId) {
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new APIException(
+                        "Student not found.",
+                        HttpStatus.NOT_FOUND,
+                        "STUDENT_NOT_FOUND"
+                ));
+
+        boolean isStudent = student.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_STUDENT
+                );
+
+        if (!isStudent) {
+            throw new APIException(
+                    "The selected user is not a student.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_STUDENT"
+            );
+        }
+
+        if (student.isAccountDeleted()) {
+            throw new APIException(
+                    "Student account is already deleted.",
+                    HttpStatus.CONFLICT,
+                    "STUDENT_ALREADY_DELETED"
+            );
+        }
+
+        student.setAccountDeleted(true);
+        student.setAccountEnabled(false);
+        student.setAccountLocked(false);
+        student.setUpdatedAt(Instant.now());
+
+        userRepository.save(student);
+    }
 }

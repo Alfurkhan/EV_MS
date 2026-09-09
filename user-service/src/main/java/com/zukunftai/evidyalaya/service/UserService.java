@@ -27,4 +27,21 @@ public interface UserService{
 
     List<FacultyResponse> getAllFaculties();
     List<StudentResponse> getAllStudents();
+
+    User createStudentByAdmin(AdminStudentRequest request);
+
+    UserResponse updateStudentByAdmin(
+            Long studentId,
+            UpdateStudentRequest request
+    );
+
+    void disableStudent(Long studentId);
+
+    void enableStudent(Long studentId);
+
+    void lockStudent(Long studentId);
+
+    void unlockStudent(Long studentId);
+
+    void deleteStudent(Long studentId);
 }

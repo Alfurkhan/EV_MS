@@ -11,13 +11,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
 import com.zukunftai.evidyalaya.model.UpdateProfileRequest;
 import com.zukunftai.evidyalaya.model.UserResponse;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.model.FacultyResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
+
+import jakarta.validation.Valid;
 
 @Slf4j
 @RestController
@@ -105,5 +111,95 @@ public class UserController {
         return ResponseEntity.ok(
                 userService.getAllStudents()
         );
+    }
+
+    @PostMapping("/students")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<StudentResponse> createStudent(
+            @Valid @RequestBody AdminStudentRequest request) {
+
+        User user =
+                userService.createStudentByAdmin(request);
+
+        StudentResponse response =
+                StudentResponse.builder()
+                        .id(user.getId())
+                        .fullName(user.getFullName())
+                        .email(user.getEmail())
+                        .countryCode(user.getCountryCode())
+                        .phoneNumber(user.getPhoneNumber())
+                        .accountEnabled(user.isAccountEnabled())
+                        .accountLocked(user.isAccountLocked())
+                        .emailVerified(user.isEmailVerified())
+                        .build();
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PutMapping("/students/{studentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateStudent(
+            @PathVariable Long studentId,
+            @Valid @RequestBody UpdateStudentRequest request) {
+
+        return ResponseEntity.ok(
+                userService.updateStudentByAdmin(
+                        studentId,
+                        request
+                )
+        );
+    }
+
+    @PutMapping("/students/{studentId}/disable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> disableStudent(
+            @PathVariable Long studentId) {
+
+        userService.disableStudent(studentId);
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PutMapping("/students/{studentId}/enable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> enableStudent(
+            @PathVariable Long studentId) {
+
+        userService.enableStudent(studentId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/students/{studentId}/lock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> lockStudent(
+            @PathVariable Long studentId) {
+
+        userService.lockStudent(studentId);
+
+        return ResponseEntity.ok().build();
+    }
+
+
+    @PutMapping("/students/{studentId}/unlock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> unlockStudent(
+            @PathVariable Long studentId) {
+
+        userService.unlockStudent(studentId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/students/{studentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteStudent(
+            @PathVariable Long studentId
+    ) {
+        userService.deleteStudent(studentId);
+        return ResponseEntity.noContent().build();
     }
 }

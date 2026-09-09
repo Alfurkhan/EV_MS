@@ -1,10 +1,15 @@
+import type { StudentEnrollment } from "../../academic/services/studentEnrollmentService";
+
 export interface Student {
     id: number;
-    admissionNo: string;
-    name: string;
+    fullName: string;
     email: string;
-    grade: string;
-    section: string;
-    phone: string;
-    status: "ACTIVE" | "INACTIVE";
+    countryCode: string | null;
+    phoneNumber: string | null;
+
+    accountEnabled: boolean;
+    accountLocked: boolean;
+    emailVerified: boolean;
+
+    enrollment: StudentEnrollment | null;
 }

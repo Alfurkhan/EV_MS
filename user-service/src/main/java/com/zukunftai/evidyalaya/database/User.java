@@ -52,6 +52,7 @@ public class User {
     @Size(max = 10)
     private String countryCode;
 
+    @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
     private String phoneNumber;
 
     private Long rootId;
@@ -63,6 +64,7 @@ public class User {
 
     private boolean accountEnabled;
     private boolean accountLocked;
+    private boolean accountDeleted;
 
     @CreatedDate
     private Instant createdAt;

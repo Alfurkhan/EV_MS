@@ -22,12 +22,6 @@ export type StudentEnrollment = {
     updatedAt: string;
 };
 
-export type Student = {
-    id: number;
-    fullName: string;
-    email: string;
-};
-
 export interface StudentEnrollmentRequest {
     studentId: number;
     academicYearId: number;
@@ -238,17 +232,6 @@ export async function updateEnrollment(
         data
     );
 
-    return response.data;
-}
-
-/*
- * ============================================================
- * GET STUDENTS
- * ============================================================
- */
-
-export async function getStudents(): Promise<Student[]> {
-    const response = await api.get<Student[]>("/user/students");
     return response.data;
 }
 
