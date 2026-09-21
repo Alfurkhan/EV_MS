@@ -1,11 +1,12 @@
 package com.zukunftai.evidyalaya.controller;
 
 import com.zukunftai.evidyalaya.database.Subject;
-import com.zukunftai.evidyalaya.model.SubjectRequest;
+import com.zukunftai.evidyalaya.model.FacultySummaryResponse;
+import com.zukunftai.evidyalaya.model.StudentSubjectResponse;
 import com.zukunftai.evidyalaya.model.SubjectFacultyRequest;
+import com.zukunftai.evidyalaya.model.SubjectRequest;
 import com.zukunftai.evidyalaya.model.SubjectResponse;
 import com.zukunftai.evidyalaya.service.SubjectService;
-import com.zukunftai.evidyalaya.model.FacultySummaryResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,33 +17,41 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/subject", produces = "application/json")
+@RequestMapping(
+        path = "/subject",
+        produces = "application/json"
+)
 @RequiredArgsConstructor
 public class SubjectController {
 
     private final SubjectService subjectService;
 
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubjectResponse> createSubject(
-            @Valid @RequestBody SubjectRequest request) {
+            @Valid @RequestBody SubjectRequest request
+    ) {
 
-        Subject subject = subjectService.createSubject(
-                request.getName(),
-                request.getCode(),
-                request.getDescription()
-        );
+        Subject subject =
+                subjectService.createSubject(
+                        request.getName(),
+                        request.getCode(),
+                        request.getDescription()
+                );
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(toResponse(subject));
     }
 
+
     @GetMapping
     public ResponseEntity<List<SubjectResponse>> getAllSubjects() {
 
         List<SubjectResponse> response =
-                subjectService.getAllSubjects()
+                subjectService
+                        .getAllSubjects()
                         .stream()
                         .map(this::toResponse)
                         .toList();
@@ -50,9 +59,11 @@ public class SubjectController {
         return ResponseEntity.ok(response);
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<SubjectResponse> getSubject(
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
 
         Subject subject =
                 subjectService.getSubjectById(id);
@@ -62,11 +73,13 @@ public class SubjectController {
         );
     }
 
+
     @PostMapping("/{subjectId}/faculty")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> assignFaculty(
             @PathVariable Long subjectId,
-            @Valid @RequestBody SubjectFacultyRequest request) {
+            @Valid @RequestBody SubjectFacultyRequest request
+    ) {
 
         subjectService.assignFacultyToSubject(
                 subjectId,
@@ -76,21 +89,29 @@ public class SubjectController {
         return ResponseEntity.ok().build();
     }
 
+
     @PostMapping("/{subjectId}/grade/{gradeId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> assignSubjectToGrade(
             @PathVariable Long subjectId,
             @PathVariable Long gradeId
     ) {
-        subjectService.assignSubjectToGrade(subjectId, gradeId);
+
+        subjectService.assignSubjectToGrade(
+                subjectId,
+                gradeId
+        );
+
         return ResponseEntity.ok().build();
     }
+
 
     @DeleteMapping("/{subjectId}/faculty/{facultyId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeFaculty(
             @PathVariable Long subjectId,
-            @PathVariable Long facultyId) {
+            @PathVariable Long facultyId
+    ) {
 
         subjectService.removeFacultyFromSubject(
                 subjectId,
@@ -100,20 +121,28 @@ public class SubjectController {
         return ResponseEntity.noContent().build();
     }
 
+
     @DeleteMapping("/{subjectId}/grade/{gradeId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> removeSubjectFromGrade(
             @PathVariable Long subjectId,
             @PathVariable Long gradeId
     ) {
-        subjectService.removeSubjectFromGrade(subjectId, gradeId);
+
+        subjectService.removeSubjectFromGrade(
+                subjectId,
+                gradeId
+        );
+
         return ResponseEntity.noContent().build();
     }
+
 
     @GetMapping("/faculty/{facultyId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<SubjectResponse>> getFacultySubjects(
-            @PathVariable Long facultyId) {
+            @PathVariable Long facultyId
+    ) {
 
         List<SubjectResponse> response =
                 subjectService
@@ -125,11 +154,13 @@ public class SubjectController {
         return ResponseEntity.ok(response);
     }
 
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubjectResponse> updateSubject(
             @PathVariable Long id,
-            @Valid @RequestBody SubjectRequest request) {
+            @Valid @RequestBody SubjectRequest request
+    ) {
 
         Subject subject =
                 subjectService.updateSubject(
@@ -145,40 +176,18 @@ public class SubjectController {
         );
     }
 
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteSubject(
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
 
         subjectService.deleteSubject(id);
 
         return ResponseEntity.noContent().build();
     }
 
-    private SubjectResponse toResponse(
-            Subject subject) {
-
-        List<FacultySummaryResponse> assignedFaculties =
-                subject.getFaculties()
-                        .stream()
-                        .map(faculty ->
-                                FacultySummaryResponse.builder()
-                                        .id(faculty.getId())
-                                        .fullName(faculty.getFullName())
-                                        .email(faculty.getEmail())
-                                        .build()
-                        )
-                        .toList();
-
-        return SubjectResponse.builder()
-                .id(subject.getId())
-                .name(subject.getName())
-                .code(subject.getCode())
-                .description(subject.getDescription())
-                .active(subject.isActive())
-                .assignedFaculties(assignedFaculties)
-                .build();
-    }
 
     @GetMapping("/grade/{gradeId}")
     public ResponseEntity<List<SubjectResponse>> getGradeSubjects(
@@ -195,6 +204,7 @@ public class SubjectController {
         return ResponseEntity.ok(response);
     }
 
+
     @GetMapping("/my")
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<List<SubjectResponse>> getMySubjects() {
@@ -207,5 +217,57 @@ public class SubjectController {
                         .toList();
 
         return ResponseEntity.ok(response);
+    }
+
+
+    /*
+     * ============================================================
+     * STUDENT SUBJECTS
+     * ============================================================
+     */
+    @GetMapping("/my/student")
+    @PreAuthorize("hasRole('STUDENT')")
+    public ResponseEntity<List<StudentSubjectResponse>>
+    getMyStudentSubjects() {
+
+        return ResponseEntity.ok(
+                subjectService.getMyStudentSubjects()
+        );
+    }
+
+
+    private SubjectResponse toResponse(
+            Subject subject
+    ) {
+
+        List<FacultySummaryResponse> assignedFaculties =
+                subject.getFaculties()
+                        .stream()
+                        .map(faculty ->
+                                FacultySummaryResponse
+                                        .builder()
+                                        .id(faculty.getId())
+                                        .fullName(
+                                                faculty.getFullName()
+                                        )
+                                        .email(
+                                                faculty.getEmail()
+                                        )
+                                        .build()
+                        )
+                        .toList();
+
+        return SubjectResponse.builder()
+                .id(subject.getId())
+                .name(subject.getName())
+                .code(subject.getCode())
+                .description(
+                        subject.getDescription()
+                )
+                .active(subject.isActive())
+                .assignedFaculties(
+                        assignedFaculties
+                )
+                .build();
     }
 }

@@ -1,6 +1,7 @@
 package com.zukunftai.evidyalaya.service;
 
 import com.zukunftai.evidyalaya.database.Subject;
+import com.zukunftai.evidyalaya.model.StudentSubjectResponse;
 
 import java.util.List;
 
@@ -55,4 +56,6 @@ public interface SubjectService {
     );
 
     List<Subject> getMySubjects();
+
+    List<StudentSubjectResponse> getMyStudentSubjects();
 }

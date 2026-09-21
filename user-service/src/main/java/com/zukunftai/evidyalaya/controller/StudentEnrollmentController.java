@@ -263,6 +263,22 @@ public class StudentEnrollmentController {
 
     /*
      * ============================================================
+     * GET COUNT OF ENROLLED STUDENTS
+     * ============================================================
+     */
+
+    @GetMapping("/my-students/count")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<Long> countMyStudents() {
+
+        return ResponseEntity.ok(
+                enrollmentService.countMyStudents()
+        );
+    }
+
+
+    /*
+     * ============================================================
      * DEACTIVATE ENROLLMENT
      * ============================================================
      */

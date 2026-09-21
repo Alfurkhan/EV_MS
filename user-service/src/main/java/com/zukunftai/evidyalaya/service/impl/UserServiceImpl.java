@@ -502,7 +502,8 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll()
                 .stream()
                 .filter(user ->
-                        user.getRoles() != null &&
+                        !user.isAccountDeleted() &&
+                                user.getRoles() != null &&
                                 user.getRoles()
                                         .stream()
                                         .anyMatch(role ->
@@ -514,9 +515,392 @@ public class UserServiceImpl implements UserService {
                                 .id(user.getId())
                                 .fullName(user.getFullName())
                                 .email(user.getEmail())
+                                .countryCode(user.getCountryCode())
+                                .phoneNumber(user.getPhoneNumber())
+                                .accountEnabled(user.isAccountEnabled())
+                                .accountLocked(user.isAccountLocked())
+                                .emailVerified(user.isEmailVerified())
                                 .build()
                 )
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public User createFacultyByAdmin(AdminFacultyRequest request) {
+
+        String email = request.getEmail()
+                .toLowerCase()
+                .trim();
+
+        // Prevent duplicate accounts.
+        if (userRepository.findByUsername(email).isPresent()) {
+            throw new APIException(
+                    "A user with this email already exists.",
+                    HttpStatus.CONFLICT,
+                    "USER_ALREADY_EXISTS"
+            );
+        }
+
+        // Validate full name.
+        String fullName = request.getFullName().trim();
+
+        if (fullName.length() < 4) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        if (!fullName.matches("^[A-Za-z ]+$")) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        // Get the faculty role.
+        Set<Role> roles =
+                fetchRolesFor(RoleName.ROLE_FACULTY);
+
+        if (roles == null || roles.isEmpty()) {
+            throw new APIException(
+                    "Faculty role is not configured.",
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "FACULTY_ROLE_NOT_FOUND"
+            );
+        }
+
+        // Create the user.
+        User user = new User(
+                email,
+                email,
+                request.getPassword()
+        );
+
+        user.setPassword(
+                passwordEncoder.encode(user.getPassword())
+        );
+
+        user.setRoles(roles);
+        user.setFullName(fullName);
+
+        user.setCountryCode(request.getCountryCode());
+        user.setPhoneNumber(request.getPhoneNumber());
+
+        user.setRegisteredSource(
+                RegisteredSource.NONE
+        );
+
+        Instant instant = Instant.now();
+
+        user.setCreatedAt(instant);
+        user.setUpdatedAt(instant);
+        user.setLastLoginAt(instant);
+
+        user.setAccountEnabled(true);
+        user.setAccountLocked(false);
+
+        // Admin-created faculty don't need registration OTP verification.
+        user.setEmailVerified(true);
+
+        user.setTermPolicyViewed(false);
+
+        User savedUser =
+                userRepository.save(user);
+
+        savedUser.setRootId(
+                savedUser.getId()
+        );
+
+        updateUser(savedUser);
+
+        return savedUser;
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateFacultyByAdmin(
+            Long facultyId,
+            UpdateFacultyRequest request) {
+
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException(
+                        "Faculty not found.",
+                        HttpStatus.NOT_FOUND,
+                        "FACULTY_NOT_FOUND"
+                ));
+
+        boolean isFaculty = faculty.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_FACULTY
+                );
+
+        if (!isFaculty) {
+            throw new APIException(
+                    "The selected user is not a faculty member.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_FACULTY"
+            );
+        }
+
+        String fullName = request.getFullName().trim();
+
+        if (fullName.length() < 4) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        if (!fullName.matches("^[A-Za-z ]+$")) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
+        }
+
+        faculty.setFullName(fullName);
+        faculty.setCountryCode(request.getCountryCode());
+        faculty.setPhoneNumber(request.getPhoneNumber());
+        faculty.setUpdatedAt(Instant.now());
+
+        User savedFaculty = userRepository.save(faculty);
+
+        String role = savedFaculty.getRoles()
+                .stream()
+                .findFirst()
+                .map(roleEntity -> roleEntity.getName().name())
+                .orElse(null);
+
+        return UserResponse.builder()
+                .id(savedFaculty.getId())
+                .username(savedFaculty.getUsername())
+                .fullName(savedFaculty.getFullName())
+                .email(savedFaculty.getEmail())
+                .countryCode(savedFaculty.getCountryCode())
+                .phoneNumber(savedFaculty.getPhoneNumber())
+                .registeredSource(
+                        savedFaculty.getRegisteredSource() != null
+                                ? savedFaculty.getRegisteredSource().name()
+                                : null
+                )
+                .accountEnabled(savedFaculty.isAccountEnabled())
+                .accountLocked(savedFaculty.isAccountLocked())
+                .createdAt(savedFaculty.getCreatedAt())
+                .updatedAt(savedFaculty.getUpdatedAt())
+                .lastLoginAt(savedFaculty.getLastLoginAt())
+                .emailVerified(savedFaculty.isEmailVerified())
+                .termPolicyViewed(savedFaculty.isTermPolicyViewed())
+                .role(role)
+                .build();
+    }
+
+
+    @Override
+    @Transactional
+    public void disableFaculty(Long facultyId) {
+
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException(
+                        "Faculty not found.",
+                        HttpStatus.NOT_FOUND,
+                        "FACULTY_NOT_FOUND"
+                ));
+
+        boolean isFaculty = faculty.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_FACULTY
+                );
+
+        if (!isFaculty) {
+            throw new APIException(
+                    "The selected user is not a faculty member.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_FACULTY"
+            );
+        }
+
+        if (!faculty.isAccountEnabled()) {
+            throw new APIException(
+                    "Faculty account is already disabled.",
+                    HttpStatus.CONFLICT,
+                    "FACULTY_ALREADY_DISABLED"
+            );
+        }
+
+        faculty.setAccountEnabled(false);
+        faculty.setUpdatedAt(Instant.now());
+
+        userRepository.save(faculty);
+    }
+
+
+    @Override
+    @Transactional
+    public void enableFaculty(Long facultyId) {
+
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException(
+                        "Faculty not found.",
+                        HttpStatus.NOT_FOUND,
+                        "FACULTY_NOT_FOUND"
+                ));
+
+        boolean isFaculty = faculty.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_FACULTY
+                );
+
+        if (!isFaculty) {
+            throw new APIException(
+                    "The selected user is not a faculty member.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_FACULTY"
+            );
+        }
+
+        if (faculty.isAccountEnabled()) {
+            throw new APIException(
+                    "Faculty account is already enabled.",
+                    HttpStatus.CONFLICT,
+                    "FACULTY_ALREADY_ENABLED"
+            );
+        }
+
+        faculty.setAccountEnabled(true);
+        faculty.setUpdatedAt(Instant.now());
+
+        userRepository.save(faculty);
+    }
+
+
+    @Override
+    @Transactional
+    public void lockFaculty(Long facultyId) {
+
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException(
+                        "Faculty not found.",
+                        HttpStatus.NOT_FOUND,
+                        "FACULTY_NOT_FOUND"
+                ));
+
+        boolean isFaculty = faculty.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_FACULTY
+                );
+
+        if (!isFaculty) {
+            throw new APIException(
+                    "The selected user is not a faculty member.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_FACULTY"
+            );
+        }
+
+        if (faculty.isAccountLocked()) {
+            throw new APIException(
+                    "Faculty account is already locked.",
+                    HttpStatus.CONFLICT,
+                    "FACULTY_ALREADY_LOCKED"
+            );
+        }
+
+        faculty.setAccountLocked(true);
+        faculty.setUpdatedAt(Instant.now());
+
+        userRepository.save(faculty);
+    }
+
+
+    @Override
+    @Transactional
+    public void unlockFaculty(Long facultyId) {
+
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException(
+                        "Faculty not found.",
+                        HttpStatus.NOT_FOUND,
+                        "FACULTY_NOT_FOUND"
+                ));
+
+        boolean isFaculty = faculty.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_FACULTY
+                );
+
+        if (!isFaculty) {
+            throw new APIException(
+                    "The selected user is not a faculty member.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_FACULTY"
+            );
+        }
+
+        if (!faculty.isAccountLocked()) {
+            throw new APIException(
+                    "Faculty account is already unlocked.",
+                    HttpStatus.CONFLICT,
+                    "FACULTY_ALREADY_UNLOCKED"
+            );
+        }
+
+        faculty.setAccountLocked(false);
+        faculty.setUpdatedAt(Instant.now());
+
+        userRepository.save(faculty);
+    }
+
+
+    @Override
+    @Transactional
+    public void deleteFaculty(Long facultyId) {
+
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException(
+                        "Faculty not found.",
+                        HttpStatus.NOT_FOUND,
+                        "FACULTY_NOT_FOUND"
+                ));
+
+        boolean isFaculty = faculty.getRoles()
+                .stream()
+                .anyMatch(role ->
+                        role.getName() == RoleName.ROLE_FACULTY
+                );
+
+        if (!isFaculty) {
+            throw new APIException(
+                    "The selected user is not a faculty member.",
+                    HttpStatus.BAD_REQUEST,
+                    "USER_IS_NOT_FACULTY"
+            );
+        }
+
+        if (faculty.isAccountDeleted()) {
+            throw new APIException(
+                    "Faculty account is already deleted.",
+                    HttpStatus.CONFLICT,
+                    "FACULTY_ALREADY_DELETED"
+            );
+        }
+
+        faculty.setAccountDeleted(true);
+        faculty.setAccountEnabled(false);
+        faculty.setAccountLocked(false);
+        faculty.setUpdatedAt(Instant.now());
+
+        userRepository.save(faculty);
     }
 
     @Override

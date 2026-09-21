@@ -1,10 +1,13 @@
 package com.zukunftai.evidyalaya.repository;
 
 import com.zukunftai.evidyalaya.database.AcademicYear;
+import com.zukunftai.evidyalaya.database.Grade;
+import com.zukunftai.evidyalaya.database.Section;
 import com.zukunftai.evidyalaya.database.StudentEnrollment;
 import com.zukunftai.evidyalaya.database.User;
-import com.zukunftai.evidyalaya.database.Section;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -78,5 +81,32 @@ public interface StudentEnrollmentRepository
     List<StudentEnrollment>
     findByAcademicYearAndActiveTrue(
             AcademicYear academicYear
+    );
+
+
+    /*
+     * Get active enrollments for an
+     * Academic Year, Grade, Section
+     */
+    List<StudentEnrollment>
+    findByAcademicYearAndGradeAndSectionAndActiveTrue(
+            AcademicYear academicYear,
+            Grade grade,
+            Section section
+    );
+
+    @Query("""
+        SELECT COUNT(DISTINCT enrollment.student.id)
+        FROM StudentEnrollment enrollment
+        JOIN enrollment.grade grade
+        JOIN grade.subjects subject
+        JOIN subject.faculties faculty
+        WHERE enrollment.academicYear.id = :academicYearId
+          AND enrollment.active = true
+          AND faculty.id = :facultyId
+        """)
+    long countDistinctActiveStudentsForFaculty(
+            @Param("facultyId") Long facultyId,
+            @Param("academicYearId") Long academicYearId
     );
 }

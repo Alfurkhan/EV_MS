@@ -59,7 +59,7 @@ export default function QuickActions() {
             : isStudent
                 ? [
                     {
-                        title: "My Courses",
+                        title: "My Subjects",
                         icon: BookOpen,
                     },
                     {
@@ -79,7 +79,9 @@ export default function QuickActions() {
 
     return (
         <div className="mt-8">
+
             <div className="mb-5">
+
                 <h2 className="text-xl font-semibold text-slate-800">
                     Quick Actions
                 </h2>
@@ -87,10 +89,14 @@ export default function QuickActions() {
                 <p className="text-sm text-slate-500 mt-1">
                     Quickly access your frequently used features.
                 </p>
+
             </div>
 
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+
                 {actions.map((action) => {
+
                     const Icon = action.icon;
 
                     return (
@@ -108,6 +114,7 @@ export default function QuickActions() {
                                 duration-200
                             "
                         >
+
                             <Icon
                                 size={30}
                                 className="mx-auto text-blue-600"
@@ -116,10 +123,13 @@ export default function QuickActions() {
                             <p className="mt-4 font-medium text-slate-700">
                                 {action.title}
                             </p>
+
                         </button>
                     );
                 })}
+
             </div>
+
         </div>
     );
 }

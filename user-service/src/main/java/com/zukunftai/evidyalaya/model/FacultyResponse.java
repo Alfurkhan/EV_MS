@@ -12,4 +12,14 @@ public class FacultyResponse {
     private String fullName;
 
     private String email;
+
+    private String countryCode;
+
+    private String phoneNumber;
+
+    private boolean accountEnabled;
+
+    private boolean accountLocked;
+
+    private boolean emailVerified;
 }

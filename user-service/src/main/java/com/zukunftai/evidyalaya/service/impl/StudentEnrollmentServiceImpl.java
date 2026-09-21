@@ -16,6 +16,8 @@ import com.zukunftai.evidyalaya.service.StudentEnrollmentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Instant;
 import java.util.List;
@@ -730,6 +732,72 @@ public class StudentEnrollmentServiceImpl
                                 HttpStatus.NOT_FOUND,
                                 "SECTION_NOT_FOUND"
                         )
+                );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countMyStudents() {
+
+        Authentication authentication =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        if (authentication == null ||
+                !authentication.isAuthenticated()) {
+
+            throw new APIException(
+                    "User is not authenticated.",
+                    HttpStatus.UNAUTHORIZED,
+                    "USER_NOT_AUTHENTICATED"
+            );
+        }
+
+        User faculty =
+                userRepository
+                        .findByUsername(authentication.getName())
+                        .orElseThrow(() ->
+                                new APIException(
+                                        "Authenticated user not found.",
+                                        HttpStatus.NOT_FOUND,
+                                        "AUTHENTICATED_USER_NOT_FOUND"
+                                )
+                        );
+
+        boolean isFaculty =
+                faculty.getRoles() != null &&
+                        faculty.getRoles()
+                                .stream()
+                                .anyMatch(role ->
+                                        role.getName() ==
+                                                RoleName.ROLE_FACULTY
+                                );
+
+        if (!isFaculty) {
+
+            throw new APIException(
+                    "Authenticated user is not a Faculty member.",
+                    HttpStatus.FORBIDDEN,
+                    "USER_IS_NOT_FACULTY"
+            );
+        }
+
+        AcademicYear activeAcademicYear =
+                academicYearRepository
+                        .findByActiveTrue()
+                        .orElseThrow(() ->
+                                new APIException(
+                                        "No active academic year is configured.",
+                                        HttpStatus.NOT_FOUND,
+                                        "ACTIVE_ACADEMIC_YEAR_NOT_FOUND"
+                                )
+                        );
+
+        return enrollmentRepository
+                .countDistinctActiveStudentsForFaculty(
+                        faculty.getId(),
+                        activeAcademicYear.getId()
                 );
     }
 }

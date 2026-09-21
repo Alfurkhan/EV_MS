@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
-import com.zukunftai.evidyalaya.model.UpdateProfileRequest;
-import com.zukunftai.evidyalaya.model.UserResponse;
 import com.zukunftai.evidyalaya.database.User;
-import com.zukunftai.evidyalaya.model.FacultyResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
@@ -102,6 +99,95 @@ public class UserController {
         return ResponseEntity.ok(
                 userService.getAllFaculties()
         );
+    }
+
+    @PostMapping("/faculties")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<FacultyResponse> createFaculty(
+            @Valid @RequestBody AdminFacultyRequest request) {
+
+        User user =
+                userService.createFacultyByAdmin(request);
+
+        FacultyResponse response =
+                FacultyResponse.builder()
+                        .id(user.getId())
+                        .fullName(user.getFullName())
+                        .email(user.getEmail())
+                        .countryCode(user.getCountryCode())
+                        .phoneNumber(user.getPhoneNumber())
+                        .accountEnabled(user.isAccountEnabled())
+                        .accountLocked(user.isAccountLocked())
+                        .emailVerified(user.isEmailVerified())
+                        .build();
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    @PutMapping("/faculties/{facultyId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateFaculty(
+            @PathVariable Long facultyId,
+            @Valid @RequestBody UpdateFacultyRequest request) {
+
+        return ResponseEntity.ok(
+                userService.updateFacultyByAdmin(
+                        facultyId,
+                        request
+                )
+        );
+    }
+
+    @PutMapping("/faculties/{facultyId}/disable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> disableFaculty(
+            @PathVariable Long facultyId) {
+
+        userService.disableFaculty(facultyId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/faculties/{facultyId}/enable")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> enableFaculty(
+            @PathVariable Long facultyId) {
+
+        userService.enableFaculty(facultyId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/faculties/{facultyId}/lock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> lockFaculty(
+            @PathVariable Long facultyId) {
+
+        userService.lockFaculty(facultyId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/faculties/{facultyId}/unlock")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> unlockFaculty(
+            @PathVariable Long facultyId) {
+
+        userService.unlockFaculty(facultyId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/faculties/{facultyId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteFaculty(
+            @PathVariable Long facultyId) {
+
+        userService.deleteFaculty(facultyId);
+
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/students")

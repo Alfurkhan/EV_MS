@@ -33,6 +33,8 @@ public interface StudentEnrollmentService {
             Long sectionId
     );
 
+    long countMyStudents();
+
     StudentEnrollment getEnrollmentById(
             Long id
     );

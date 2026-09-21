@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleProtectedRoute from "./routes/RoleProtectedRoute";
 
-import Faculty from "./pages/Faculty";
+import FacultyPage from "./features/faculty/pages/FacultyPage";
 import Attendance from "./pages/Attendance";
 import Courses from "./pages/Courses";
 import Notifications from "./pages/Notifications";
@@ -22,6 +22,15 @@ import UnauthorizedPage from "./pages/UnauthorizedPage";
 
 import AcademicManagementPage
     from "./features/academic/pages/AcademicManagementPage";
+
+import TimetablePage from "./features/timetable/pages/TimetablePage";
+import StudentTimetablePage
+    from "./features/timetable/pages/StudentTimetablePage";
+
+import MySubjectsPage
+    from "./features/courses/pages/MySubjectsPage";
+
+import MyClassesPage from "./features/faculty/pages/MyClassesPage";
 
 export default function App() {
     return (
@@ -58,11 +67,6 @@ export default function App() {
                     <Route
                         path="/profile"
                         element={<ProfilePage />}
-                    />
-
-                    <Route
-                        path="/courses"
-                        element={<Courses />}
                     />
 
                     <Route
@@ -104,7 +108,22 @@ export default function App() {
                             <RoleProtectedRoute
                                 allowedRoles={["ROLE_ADMIN"]}
                             >
-                                <Faculty />
+                                <FacultyPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    {/* Admin and Faculty */}
+                    <Route
+                        path="/courses"
+                        element={
+                            <RoleProtectedRoute
+                                allowedRoles={[
+                                    "ROLE_FACULTY",
+                                    "ROLE_ADMIN",
+                                ]}
+                            >
+                                <Courses />
                             </RoleProtectedRoute>
                         }
                     />
@@ -121,12 +140,56 @@ export default function App() {
                     />
 
                     <Route
+                        path="/timetable"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                                <TimetablePage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    <Route
                         path="/settings"
                         element={
                             <RoleProtectedRoute
                                 allowedRoles={["ROLE_ADMIN"]}
                             >
                                 <Settings />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    {/* Faculty only */}
+                    <Route
+                        path="/my-classes"
+                        element={
+                            <RoleProtectedRoute
+                                allowedRoles={["ROLE_FACULTY"]}
+                            >
+                                <MyClassesPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    {/* Student only */}
+                    <Route
+                        path="/my-timetable"
+                        element={
+                            <RoleProtectedRoute
+                                allowedRoles={["ROLE_STUDENT"]}
+                            >
+                                <StudentTimetablePage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    <Route
+                        path="/my-subjects"
+                        element={
+                            <RoleProtectedRoute
+                                allowedRoles={["ROLE_STUDENT"]}
+                            >
+                                <MySubjectsPage />
                             </RoleProtectedRoute>
                         }
                     />

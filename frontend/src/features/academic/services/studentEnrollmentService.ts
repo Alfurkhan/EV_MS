@@ -167,6 +167,21 @@ export async function getActiveEnrollment(
 
 /*
  * ============================================================
+ * GET MY STUDENTS
+ * ============================================================
+ */
+
+export async function getMyStudentsCount(): Promise<number> {
+    const response = await api.get<number>(
+        "/student-enrollment/my-students/count"
+    );
+
+    return response.data;
+}
+
+
+/*
+ * ============================================================
  * DEACTIVATE ENROLLMENT
  * ============================================================
  */
