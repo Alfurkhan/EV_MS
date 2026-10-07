@@ -29,9 +29,7 @@ public class GatewayConfig {
                 .route(
                         "user-service-user",
                         r -> r.path("/user/**")
-                                .filters(f ->
-                                        f.filter(filter)
-                                )
+                                .filters(f -> f.filter(filter))
                                 .uri(userServiceUrl)
                 )
 
@@ -41,9 +39,7 @@ public class GatewayConfig {
                 .route(
                         "user-service-auth",
                         r -> r.path("/auth/**")
-                                .filters(f ->
-                                        f.filter(filter)
-                                )
+                                .filters(f -> f.filter(filter))
                                 .uri(userServiceUrl)
                 )
 
@@ -53,9 +49,7 @@ public class GatewayConfig {
                 .route(
                         "user-service-subject",
                         r -> r.path("/subject/**")
-                                .filters(f ->
-                                        f.filter(filter)
-                                )
+                                .filters(f -> f.filter(filter))
                                 .uri(userServiceUrl)
                 )
 
@@ -65,9 +59,7 @@ public class GatewayConfig {
                 .route(
                         "user-service-academic-year",
                         r -> r.path("/academic-year/**")
-                                .filters(f ->
-                                        f.filter(filter)
-                                )
+                                .filters(f -> f.filter(filter))
                                 .uri(userServiceUrl)
                 )
 
@@ -77,9 +69,7 @@ public class GatewayConfig {
                 .route(
                         "user-service-grade",
                         r -> r.path("/grade/**")
-                                .filters(f ->
-                                        f.filter(filter)
-                                )
+                                .filters(f -> f.filter(filter))
                                 .uri(userServiceUrl)
                 )
 
@@ -89,9 +79,7 @@ public class GatewayConfig {
                 .route(
                         "user-service-section",
                         r -> r.path("/section/**")
-                                .filters(f ->
-                                        f.filter(filter)
-                                )
+                                .filters(f -> f.filter(filter))
                                 .uri(userServiceUrl)
                 )
 
@@ -101,13 +89,40 @@ public class GatewayConfig {
                 .route(
                         "user-service-student-enrollment",
                         r -> r.path("/student-enrollment/**")
-                                .filters(f ->
-                                        f.filter(filter)
-                                )
+                                .filters(f -> f.filter(filter))
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Timetable APIs
+                 */
+                .route(
+                        "user-service-timetable",
+                        r -> r.path("/timetable/**")
+                                .filters(f -> f.filter(filter))
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Class Session APIs
+                 */
+                .route(
+                        "user-service-class-session",
+                        r -> r.path("/class-session/**")
+                                .filters(f -> f.filter(filter))
+                                .uri(userServiceUrl)
+                )
+
+                /*
+                 * Attendance APIs
+                 */
+                .route(
+                        "user-service-attendance",
+                        r -> r.path("/attendance/**")
+                                .filters(f -> f.filter(filter))
                                 .uri(userServiceUrl)
                 )
 
                 .build();
     }
-
 }

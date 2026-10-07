@@ -1,0 +1,161 @@
+services:
+
+  # ==========================================
+  # PostgreSQL
+  # ==========================================
+  postgres:
+    image: postgres:17
+    container_name: evidyalaya-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - evidyalaya-network
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  # ==========================================
+  # Email Service
+  # ==========================================
+  email-service:
+    build:
+      context: .
+      dockerfile: email-service/Dockerfile
+
+    container_name: evidyalaya-email-service
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: render
+      PORT: 9091
+
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+
+    networks:
+      - evidyalaya-network
+
+
+  # ==========================================
+  # User Service
+  # ==========================================
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+
+    container_name: evidyalaya-user-service
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: render
+      PORT: 8080
+
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${POSTGRES_DB}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-172800000}
+
+      CORS_ORIGIN: ${CORS_ORIGIN}
+
+      EMAIL_SERVICE_URL: http://email-service:9091/email/send
+
+    networks:
+      - evidyalaya-network
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      email-service:
+        condition: service_started
+
+
+  # ==========================================
+  # API Gateway
+  # ==========================================
+  gateway-service:
+    build:
+      context: .
+      dockerfile: gateway-service/Dockerfile
+
+    container_name: evidyalaya-gateway
+    restart: unless-stopped
+
+    environment:
+      SPRING_PROFILES_ACTIVE: render
+      PORT: 9095
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+
+      CORS_ORIGIN: ${CORS_ORIGIN}
+
+      USER_SERVICE_URL: http://user-service:8080
+
+    networks:
+      - evidyalaya-network
+
+    depends_on:
+      user-service:
+        condition: service_started
+
+
+  # ==========================================
+  # Frontend + Nginx
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+      args:
+        VITE_API_BASE_URL: /api
+
+    container_name: evidyalaya-frontend
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+
+    networks:
+      - evidyalaya-network
+
+    depends_on:
+      - gateway-service
+
+
+# ==========================================
+# Persistent PostgreSQL storage
+# ==========================================
+volumes:
+  postgres_data:
+
+
+# ==========================================
+# Internal Docker network
+# ==========================================
+networks:
+  evidyalaya-network:
+    driver: bridge

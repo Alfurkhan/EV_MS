@@ -1,6 +1,7 @@
 package com.zukunftai.evidyalaya.model;
 
 import com.zukunftai.evidyalaya.database.ClassType;
+import com.zukunftai.evidyalaya.database.MeetingPlatform;
 import lombok.Builder;
 import lombok.Data;
 
@@ -38,6 +39,8 @@ public class TimetableResponse {
     private LocalTime endTime;
 
     private ClassType classType;
+
+    private MeetingPlatform meetingPlatform;
 
     private LocalDate startDate;
     private LocalDate endDate;

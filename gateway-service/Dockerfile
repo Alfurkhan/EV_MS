@@ -1,23 +1,35 @@
-# Use lightweight official OpenJDK 21 base image (community edition)
-FROM eclipse-temurin:21-jdk-jammy
+# ================================
+# Stage 1: Build the application
+# ================================
+FROM eclipse-temurin:21-jdk-jammy AS build
 
-# Set environment variables for JVM
-# -XX:+UseContainerSupport → JVM respects container (Pod/EC2 memory limits)
-# -Djava.security.egd → faster startup
-ENV JAVA_OPTS="-Djava.net.preferIPv4Stack=true -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
+WORKDIR /workspace
 
-# Expose app port
-EXPOSE 8080
+# Copy the entire repository because this is a Gradle multi-module project
+COPY . .
 
-# Create and set working directory
+# Make Gradle wrapper executable
+RUN chmod +x gradlew
+
+# Build only the Gateway Service
+RUN ./gradlew :gateway-service:bootJar --no-daemon
+
+
+# ================================
+# Stage 2: Run the application
+# ================================
+FROM eclipse-temurin:21-jre-jammy
+
 WORKDIR /app
 
-# Copy Spring Boot JAR
-COPY build/libs/*.jar app.jar
+# Copy the executable Spring Boot JAR
+COPY --from=build /workspace/gateway-service/build/libs/gateway-service-0.0.1-SNAPSHOT.jar app.jar
 
-# Health check (works for EC2 and EKS)
-HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=5 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
+# JVM options
+ENV JAVA_OPTS="-Djava.net.preferIPv4Stack=true -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
 
-# Run your app
-ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-XX:+UseContainerSupport", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app/app.jar"]
+# Gateway runs on 9095
+EXPOSE 9095
+
+# Start the application
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

@@ -52,3 +52,10 @@ Thumbs.db
 logs/
 *.log
 hs_err_pid*
+
+# Google OAuth credentials
+user-service/src/main/resources/google/
+
+# Google OAuth tokens
+user-service/tokens/
+tokens/

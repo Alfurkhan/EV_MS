@@ -12,6 +12,8 @@ public class RouterValidator {
     public static final List<String> openApiEndpoints = List.of(
             "/auth/register/user",
             "/auth/check/email",
+            "/auth/send/email",
+            "/auth/verify-registration-otp",
             "/auth/login"
     );
 

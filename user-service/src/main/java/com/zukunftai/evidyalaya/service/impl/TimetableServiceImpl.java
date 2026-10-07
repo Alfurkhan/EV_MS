@@ -9,6 +9,7 @@ import com.zukunftai.evidyalaya.database.StudentEnrollment;
 import com.zukunftai.evidyalaya.database.Subject;
 import com.zukunftai.evidyalaya.database.Timetable;
 import com.zukunftai.evidyalaya.database.User;
+import com.zukunftai.evidyalaya.database.MeetingPlatform;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.TimetableRequest;
 import com.zukunftai.evidyalaya.repository.AcademicYearRepository;
@@ -29,6 +30,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 @Service
 @Transactional
@@ -95,6 +99,9 @@ public class TimetableServiceImpl implements TimetableService {
 
         validateClassType(request);
 
+        MeetingPlatform meetingPlatform =
+                detectMeetingPlatform(request);
+
         boolean active =
                 request.getActive() == null
                         || request.getActive();
@@ -133,6 +140,7 @@ public class TimetableServiceImpl implements TimetableService {
                         .startTime(request.getStartTime())
                         .endTime(request.getEndTime())
                         .classType(request.getClassType())
+                        .meetingPlatform(meetingPlatform)
                         .startDate(request.getStartDate())
                         .endDate(request.getEndDate())
                         .room(normalizeOptional(request.getRoom()))
@@ -208,6 +216,9 @@ public class TimetableServiceImpl implements TimetableService {
 
         validateClassType(request);
 
+        MeetingPlatform meetingPlatform =
+                detectMeetingPlatform(request);
+
         boolean active =
                 request.getActive() == null
                         ? timetable.isActive()
@@ -247,6 +258,7 @@ public class TimetableServiceImpl implements TimetableService {
         timetable.setStartTime(request.getStartTime());
         timetable.setEndTime(request.getEndTime());
         timetable.setClassType(request.getClassType());
+        timetable.setMeetingPlatform(meetingPlatform);
         timetable.setStartDate(request.getStartDate());
         timetable.setEndDate(request.getEndDate());
         timetable.setRoom(
@@ -1006,6 +1018,83 @@ public class TimetableServiceImpl implements TimetableService {
                     "This Subject is already assigned to a different Faculty for this Grade and Section during the selected recurring period.",
                     HttpStatus.CONFLICT,
                     "SUBJECT_DIFFERENT_FACULTY_CONFLICT"
+            );
+        }
+    }
+
+    private MeetingPlatform detectMeetingPlatform(
+            TimetableRequest request
+    ) {
+
+        if (request.getClassType() == ClassType.OFFLINE) {
+            return null;
+        }
+
+        String meetingLink =
+                normalizeOptional(request.getMeetingLink());
+
+        if (meetingLink == null) {
+
+            throw new APIException(
+                    "Meeting link is required for an online class.",
+                    HttpStatus.BAD_REQUEST,
+                    "ONLINE_MEETING_LINK_REQUIRED"
+            );
+        }
+
+        try {
+
+            URI uri =
+                    new URI(meetingLink);
+
+            String host =
+                    uri.getHost();
+
+            if (host == null) {
+
+                throw new APIException(
+                        "Invalid meeting link.",
+                        HttpStatus.BAD_REQUEST,
+                        "INVALID_MEETING_LINK"
+                );
+            }
+
+            String normalizedHost =
+                    host.toLowerCase();
+
+            if (
+                    normalizedHost.equals("meet.google.com")
+                            || normalizedHost.endsWith(".meet.google.com")
+            ) {
+                return MeetingPlatform.GOOGLE_MEET;
+            }
+
+            if (
+                    normalizedHost.equals("zoom.us")
+                            || normalizedHost.endsWith(".zoom.us")
+            ) {
+                return MeetingPlatform.ZOOM;
+            }
+
+            if (
+                    normalizedHost.equals("teams.microsoft.com")
+                            || normalizedHost.endsWith(".teams.microsoft.com")
+            ) {
+                return MeetingPlatform.MICROSOFT_TEAMS;
+            }
+
+            throw new APIException(
+                    "Unsupported online meeting platform. Supported platforms are Google Meet, Zoom, and Microsoft Teams.",
+                    HttpStatus.BAD_REQUEST,
+                    "UNSUPPORTED_MEETING_PLATFORM"
+            );
+
+        } catch (URISyntaxException exception) {
+
+            throw new APIException(
+                    "Invalid meeting link.",
+                    HttpStatus.BAD_REQUEST,
+                    "INVALID_MEETING_LINK"
             );
         }
     }

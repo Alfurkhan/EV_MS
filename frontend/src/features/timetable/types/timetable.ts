@@ -1,5 +1,10 @@
 export type ClassType = "ONLINE" | "OFFLINE";
 
+export type MeetingPlatform =
+    | "GOOGLE_MEET"
+    | "ZOOM"
+    | "MICROSOFT_TEAMS";
+
 export interface Timetable {
     id: number;
 
@@ -29,6 +34,7 @@ export interface Timetable {
     endTime: string;
 
     classType: ClassType;
+    meetingPlatform: MeetingPlatform | null;
 
     room: string | null;
     meetingLink: string | null;

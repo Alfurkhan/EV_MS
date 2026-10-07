@@ -387,6 +387,10 @@ public class TimetableController {
                         timetable.getClassType()
                 )
 
+                .meetingPlatform(
+                        timetable.getMeetingPlatform()
+                )
+
                 .startDate(
                         timetable.getStartDate()
                 )

@@ -100,6 +100,17 @@ public class Timetable {
     private ClassType classType;
 
     /**
+     * Meeting platform detected from the online meeting link.
+     * Null for offline classes.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "meeting_platform",
+            length = 30
+    )
+    private MeetingPlatform meetingPlatform;
+
+    /**
      * First date on which this recurring timetable rule is valid.
      */
     @Column(
