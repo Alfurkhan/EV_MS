@@ -57,6 +57,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.13.2'
     implementation 'org.json:json:20250517'
 
+    // Excel import
+    implementation 'org.apache.poi:poi-ooxml:5.5.1'
+
     // Swagger/OpenAPI
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 

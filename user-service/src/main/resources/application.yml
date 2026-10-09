@@ -93,7 +93,7 @@ cors:
 
 springdoc:
   packagesToScan: com.zukunftai.evidyalaya.controller
-  pathsToMatch: /auth/**,/user/**,/subject/**,/academic-year/**,/grade/**,/section/**,/student-enrollment/**,/timetable/**,/class-session/**,/attendance/**
+  pathsToMatch: /auth/**,/user/**,/subject/**,/academic-year/**,/grade/**,/section/**,/student-enrollment/**,/timetable/**,/class-session/**,/attendance/**,/admin/test-accounts/**
 
 service:
   api:
