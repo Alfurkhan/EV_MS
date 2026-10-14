@@ -17,11 +17,7 @@ export const registerDetailsSchema = z
         fullName: z
             .string()
             .min(4, "Full name must be at least 4 characters")
-            .max(200, "Full name is too long")
-            .regex(
-                /^[A-Za-z ]+$/,
-                "Full name can contain only letters and spaces"
-            ),
+            .max(200, "Full name is too long"),
 
         countryCode: z
             .string()

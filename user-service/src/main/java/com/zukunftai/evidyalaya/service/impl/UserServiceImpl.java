@@ -156,8 +156,13 @@ public class UserServiceImpl implements UserService {
             throw new APIException(ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME, HttpStatus.BAD_REQUEST, ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME);
         }
         String fullName = registrationRequest.getFullName();
-        if (!fullName.matches("^[A-Za-z ]+$")) {
-            throw new APIException(ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME, HttpStatus.BAD_REQUEST, ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME);
+        // Allow letters, numbers, special characters, and spaces.
+        if (fullName == null || fullName.trim().length() < 4) {
+            throw new APIException(
+                    ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCodesAndMessages.ERROR_MESSAGE_INVALID_FULL_NAME
+            );
         }
         Set<Role> roles = fetchRolesFor(registrationRequest.getRoleName());
         User user = new User(
@@ -553,7 +558,7 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        if (!fullName.matches("^[A-Za-z ]+$")) {
+        if (fullName == null || fullName.trim().length() < 4) {
             throw new APIException(
                     ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
                     HttpStatus.BAD_REQUEST,
@@ -657,7 +662,7 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        if (!fullName.matches("^[A-Za-z ]+$")) {
+        if (fullName == null || fullName.trim().length() < 4) {
             throw new APIException(
                     ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
                     HttpStatus.BAD_REQUEST,
@@ -961,7 +966,7 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        if (!fullName.matches("^[A-Za-z ]+$")) {
+        if (fullName == null || fullName.trim().length() < 4) {
             throw new APIException(
                     ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
                     HttpStatus.BAD_REQUEST,
@@ -1065,7 +1070,7 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        if (!fullName.matches("^[A-Za-z ]+$")) {
+        if (fullName == null || fullName.trim().length() < 4) {
             throw new APIException(
                     ErrorCodesAndMessages.ERROR_CODE_INVALID_FULL_NAME,
                     HttpStatus.BAD_REQUEST,

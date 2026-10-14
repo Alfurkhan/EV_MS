@@ -68,11 +68,6 @@ export default function EditFacultyModal({
             return false;
         }
 
-        if (!/^[A-Za-z ]+$/.test(trimmedFullName)) {
-            toast.error("Full name can contain only letters and spaces.");
-            return false;
-        }
-
         if (!/^\+\d{1,3}$/.test(trimmedCountryCode)) {
             toast.error(
                 "Country code must start with + and contain 1 to 3 digits."

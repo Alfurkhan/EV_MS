@@ -164,13 +164,6 @@ export default function EditStudentModal({
             return;
         }
 
-        if (!/^[A-Za-z ]+$/.test(fullName)) {
-            setError(
-                "Full name can contain only letters and spaces."
-            );
-            return;
-        }
-
         if (!/^\+\d{1,3}$/.test(countryCode)) {
             setError(
                 "Enter a valid country code such as +91."

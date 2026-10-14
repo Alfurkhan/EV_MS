@@ -354,19 +354,22 @@ public class TestAccountExcelImporter {
                 academicYear
         );
 
-        validateRequired(
-                sheetName,
-                rowNumber,
-                "Grade",
-                grade
-        );
+        if ("Students".equalsIgnoreCase(sheetName)) {
 
-        validateRequired(
-                sheetName,
-                rowNumber,
-                "Section",
-                section
-        );
+            validateRequired(
+                    sheetName,
+                    rowNumber,
+                    "Grade",
+                    grade
+            );
+
+            validateRequired(
+                    sheetName,
+                    rowNumber,
+                    "Section",
+                    section
+            );
+        }
     }
 
     private void validateRequired(

@@ -307,10 +307,6 @@ export default function AddStudentModal({
             return "Full name must be at least 4 characters.";
         }
 
-        if (!/^[A-Za-z ]+$/.test(form.fullName.trim())) {
-            return "Full name can contain only letters and spaces.";
-        }
-
         if (!form.email.trim()) {
             return "Email is required.";
         }

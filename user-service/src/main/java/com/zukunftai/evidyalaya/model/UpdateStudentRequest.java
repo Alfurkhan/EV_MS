@@ -16,10 +16,6 @@ public class UpdateStudentRequest {
 
     @NotBlank(message = "Full name is required")
     @Size(min = 4, max = 200, message = "Full name must be between 4 and 200 characters")
-    @Pattern(
-            regexp = "^[A-Za-z ]+$",
-            message = "Full name can contain only letters and spaces"
-    )
     private String fullName;
 
     @Size(max = 10, message = "Country code must not exceed 10 characters")

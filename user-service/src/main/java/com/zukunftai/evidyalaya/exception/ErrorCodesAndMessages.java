@@ -30,8 +30,7 @@ public final class ErrorCodesAndMessages {
     public static final String ERROR_MESSAGE_MISSING_FULL_NAME = "Full Name is required.";
 
     public static final String ERROR_CODE_INVALID_FULL_NAME = "ERROR_CODE_INVALID_FULL_NAME";
-    public static final String ERROR_MESSAGE_INVALID_FULL_NAME = "Full Name must contain more than 3 characters and does not contain special characters.";
-
+    public static final String ERROR_MESSAGE_INVALID_FULL_NAME = "Full Name must contain at least 4 characters.";
 }
 
 

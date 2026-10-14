@@ -75,11 +75,6 @@ export default function AddFacultyModal({
             return false;
         }
 
-        if (!/^[A-Za-z ]+$/.test(trimmedFullName)) {
-            toast.error("Full name can contain only letters and spaces.");
-            return false;
-        }
-
         if (!email.trim()) {
             toast.error("Email is required.");
             return false;

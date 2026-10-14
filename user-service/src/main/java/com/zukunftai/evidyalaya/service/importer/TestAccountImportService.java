@@ -105,6 +105,30 @@ public class TestAccountImportService {
         return result;
     }
 
+
+    public Map<String, Object> validateAccounts(MultipartFile file) {
+        List<TestAccountExcelRow> rows = excelImporter.read(file);
+
+        // Run the existing database and workbook validation only.
+        // Do not create users, enrollments, or faculty assignments.
+        validateDatabaseState(rows);
+
+        long students = rows.stream()
+                .filter(row -> "Students".equals(row.getSheetName()))
+                .count();
+
+        long faculty = rows.stream()
+                .filter(row -> "Faculties".equals(row.getSheetName()))
+                .count();
+
+        return Map.of(
+                "valid", true,
+                "studentsToCreate", students,
+                "facultyToCreate", faculty,
+                "totalToCreate", students + faculty
+        );
+    }
+
     private void validateDatabaseState(
             List<TestAccountExcelRow> rows
     ) {
@@ -158,19 +182,19 @@ public class TestAccountImportService {
             AcademicYear academicYear =
                     findAcademicYear(row);
 
-            Grade grade =
-                    findGrade(
-                            academicYear,
-                            row.getGrade()
-                    );
-
-            Section section =
-                    findSection(
-                            grade,
-                            row.getSection()
-                    );
-
             if ("Students".equals(row.getSheetName())) {
+
+                Grade grade =
+                        findGrade(
+                                academicYear,
+                                row.getGrade()
+                        );
+
+                Section section =
+                        findSection(
+                                grade,
+                                row.getSection()
+                        );
 
                 validateStudentEnrollment(
                         academicYear,
@@ -253,10 +277,17 @@ public class TestAccountImportService {
                             row
                     );
 
+            String gradeName =
+                    parsed.grade().trim();
+
+            if (!gradeName.toLowerCase().startsWith("grade ")) {
+                gradeName = "Grade " + gradeName;
+            }
+
             Grade grade =
                     findGrade(
                             academicYear,
-                            parsed.grade()
+                            gradeName
                     );
 
             // Make sure the section from the Excel assignment
@@ -490,10 +521,17 @@ public class TestAccountImportService {
                                 row
                         );
 
+                String gradeName =
+                        parsed.grade().trim();
+
+                if (!gradeName.toLowerCase().startsWith("grade ")) {
+                    gradeName = "Grade " + gradeName;
+                }
+
                 Grade grade =
                         findGrade(
                                 academicYear,
-                                parsed.grade()
+                                gradeName
                         );
 
                 // Validate the exact section as well.

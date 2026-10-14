@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.zukunftai.evidyalaya.service.importer.TestAccountImportException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.dao.DataAccessException;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +26,32 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleConflict(UserServiceException ex) {
         return buildResponseEntity(new ApiError(ex.getResponseHttpStatus(), ex.getMessage(), ex.getResponseErrorCode() , ex.getResponseParam()));
     }
+    @ExceptionHandler(TestAccountImportException.class)
+    protected ResponseEntity<Object> handleTestAccountImportException(
+            TestAccountImportException ex) {
+
+        String message = ex.getMessage() != null
+                ? ex.getMessage()
+                : "The Excel file could not be validated.";
+
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        String errorCode = "INVALID_EXCEL_IMPORT";
+
+        if (message.contains("already exists")) {
+            status = HttpStatus.CONFLICT;
+            errorCode = "ACCOUNT_ALREADY_EXISTS";
+        }
+
+        ApiError apiError = new ApiError(
+                status,
+                message,
+                errorCode,
+                null
+        );
+
+        return buildResponseEntity(apiError);
+    }
+
     private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }

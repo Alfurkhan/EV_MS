@@ -44,7 +44,6 @@ public class AuthenticationFilter implements GatewayFilter {
             }
 
             final String token = this.getAuthHeader(request);
-            log.info("request---token-"+token);
             if (token == null || token.isBlank()) {
                 return this.onError(exchange, HttpStatus.UNAUTHORIZED);
             }
