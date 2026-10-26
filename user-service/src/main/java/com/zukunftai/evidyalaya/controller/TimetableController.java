@@ -52,6 +52,12 @@ public class TimetableController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(timetableService.createFacultyDraft(request)));
     }
 
+    @PutMapping("/draft/id/{id}")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<TimetableResponse> updateFacultyDraft(@PathVariable Long id, @Valid @RequestBody TimetableRequest request) {
+        return ResponseEntity.ok(toResponse(timetableService.updateFacultyDraft(id, request)));
+    }
+
     @GetMapping("/my/drafts")
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<List<TimetableResponse>> getMyDrafts() {
