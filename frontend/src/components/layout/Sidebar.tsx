@@ -81,6 +81,12 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_ADMIN"],
             },
             {
+                icon: CalendarCheck,
+                label: "Timetable Approvals",
+                path: "/timetable-approvals",
+                allowedRoles: ["ROLE_ADMIN"],
+            },
+            {
                 icon: CalendarDays,
                 label: "My Timetable",
                 path: "/my-timetable",
@@ -96,6 +102,12 @@ const menu: MenuSection[] = [
                 icon: GraduationCap,
                 label: "My Classes",
                 path: "/my-classes",
+                allowedRoles: ["ROLE_FACULTY"],
+            },
+            {
+                icon: CalendarDays,
+                label: "Timetable Drafts",
+                path: "/faculty-timetable-drafts",
                 allowedRoles: ["ROLE_FACULTY"],
             },
             {
