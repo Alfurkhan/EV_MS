@@ -56,7 +56,7 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
      * Active timetable entries that are valid on the supplied date.
      */
     List<Timetable>
-    findByAcademicYearAndGradeAndSectionAndActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+    findByAcademicYearAndGradeAndSectionAndActiveTrueAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
             AcademicYear academicYear,
             Grade grade,
             Section section,
@@ -128,7 +128,7 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
         FROM Timetable t
         WHERE t.faculty = :faculty
           AND t.dayOfWeek = :dayOfWeek
-          AND t.active = true
+          AND t.active = true AND t.status = com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED
           AND t.id <> :id
           AND t.startTime < :endTime
           AND t.endTime > :startTime
@@ -212,7 +212,7 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
           AND t.section = :section
           AND t.subject = :subject
           AND t.faculty <> :faculty
-          AND t.active = true
+          AND t.active = true AND t.status = com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED
           AND t.startDate <= :endDate
           AND t.endDate >= :startDate
         """)
