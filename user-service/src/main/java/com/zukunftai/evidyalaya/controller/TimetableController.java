@@ -1,6 +1,7 @@
 package com.zukunftai.evidyalaya.controller;
 
 import com.zukunftai.evidyalaya.database.Timetable;
+import com.zukunftai.evidyalaya.database.TimetableStatus;
 import com.zukunftai.evidyalaya.model.TimetableRequest;
 import com.zukunftai.evidyalaya.model.TimetableResponse;
 import com.zukunftai.evidyalaya.service.TimetableService;
@@ -44,6 +45,42 @@ public class TimetableController {
                 .body(toResponse(timetable));
     }
 
+
+    @PostMapping("/draft")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<TimetableResponse> createFacultyDraft(@Valid @RequestBody TimetableRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(timetableService.createFacultyDraft(request)));
+    }
+
+    @GetMapping("/my/drafts")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<List<TimetableResponse>> getMyDrafts() {
+        return ResponseEntity.ok(timetableService.getMyTimetableDrafts().stream().map(this::toResponse).toList());
+    }
+
+    @PutMapping("/id/{id}/submit")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<TimetableResponse> submitForApproval(@PathVariable Long id) {
+        return ResponseEntity.ok(toResponse(timetableService.submitTimetableForApproval(id)));
+    }
+
+    @GetMapping("/pending-approval")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<TimetableResponse>> getPendingApprovals() {
+        return ResponseEntity.ok(timetableService.getPendingTimetableApprovals().stream().map(this::toResponse).toList());
+    }
+
+    @PutMapping("/id/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TimetableResponse> approveTimetable(@PathVariable Long id) {
+        return ResponseEntity.ok(toResponse(timetableService.approveTimetable(id)));
+    }
+
+    @PutMapping("/id/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TimetableResponse> rejectTimetable(@PathVariable Long id, @RequestParam String reason) {
+        return ResponseEntity.ok(toResponse(timetableService.rejectTimetable(id, reason)));
+    }
 
     /*
      * ============================================================
@@ -414,6 +451,8 @@ public class TimetableController {
                 .active(
                         timetable.isActive()
                 )
+
+                .status(timetable.getStatus())
 
                 .createdAt(
                         timetable.getCreatedAt()
