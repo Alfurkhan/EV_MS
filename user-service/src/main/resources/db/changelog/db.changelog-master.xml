@@ -791,4 +791,19 @@
 
     </changeSet>
 
+
+    <changeSet id="10102026-001" author="Furkhan">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="timetable"/>
+        </preConditions>
+        <comment>Add approval workflow status to existing timetable entries</comment>
+        <sql>
+            ALTER TABLE "timetable"
+                ADD COLUMN IF NOT EXISTS status VARCHAR(30) NOT NULL DEFAULT 'APPROVED';
+            UPDATE "timetable" SET status = 'APPROVED' WHERE status IS NULL;
+            ALTER TABLE "timetable"
+                ALTER COLUMN status SET DEFAULT 'APPROVED';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
