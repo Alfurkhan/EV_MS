@@ -8,6 +8,7 @@ import com.zukunftai.evidyalaya.database.Section;
 import com.zukunftai.evidyalaya.database.StudentEnrollment;
 import com.zukunftai.evidyalaya.database.Subject;
 import com.zukunftai.evidyalaya.database.Timetable;
+import com.zukunftai.evidyalaya.database.TimetableStatus;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.database.MeetingPlatform;
 import com.zukunftai.evidyalaya.exception.APIException;
@@ -147,10 +148,100 @@ public class TimetableServiceImpl implements TimetableService {
                         .meetingLink(normalizeOptional(request.getMeetingLink()))
                         .notes(normalizeOptional(request.getNotes()))
                         .active(active)
+                        .status(TimetableStatus.APPROVED)
                         .createdAt(now)
                         .updatedAt(now)
                         .build();
 
+        return timetableRepository.save(timetable);
+    }
+
+    @Override
+    public Timetable createFacultyDraft(TimetableRequest request) {
+        User faculty = getCurrentFaculty();
+        request.setFacultyId(faculty.getId());
+        request.setActive(false);
+        Timetable timetable = createTimetable(request);
+        timetable.setStatus(TimetableStatus.DRAFT);
+        timetable.setActive(false);
+        timetable.setUpdatedAt(Instant.now());
+        return timetableRepository.save(timetable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Timetable> getMyTimetableDrafts() {
+        return timetableRepository.findByFacultyAndStatusOrderByCreatedAtDesc(
+                getCurrentFaculty(), TimetableStatus.DRAFT
+        );
+    }
+
+    @Override
+    public Timetable submitTimetableForApproval(Long id) {
+        Timetable timetable = getTimetableById(id);
+        User faculty = getCurrentFaculty();
+        if (!timetable.getFaculty().getId().equals(faculty.getId())) {
+            throw new APIException("You can only submit your own timetable.", HttpStatus.FORBIDDEN, "TIMETABLE_NOT_OWNED");
+        }
+        if (timetable.getStatus() != TimetableStatus.DRAFT && timetable.getStatus() != TimetableStatus.REJECTED) {
+            throw new APIException("Only draft or rejected timetables can be submitted.", HttpStatus.CONFLICT, "TIMETABLE_NOT_SUBMITTABLE");
+        }
+        timetable.setStatus(TimetableStatus.PENDING_APPROVAL);
+        timetable.setActive(false);
+        timetable.setUpdatedAt(Instant.now());
+        return timetableRepository.save(timetable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Timetable> getPendingTimetableApprovals() {
+        return timetableRepository.findByStatusOrderByCreatedAtDesc(TimetableStatus.PENDING_APPROVAL);
+    }
+
+    @Override
+    public Timetable approveTimetable(Long id) {
+        Timetable timetable = getTimetableById(id);
+        if (timetable.getStatus() != TimetableStatus.PENDING_APPROVAL) {
+            throw new APIException("Only pending timetables can be approved.", HttpStatus.CONFLICT, "TIMETABLE_NOT_PENDING");
+        }
+        TimetableRequest request = new TimetableRequest();
+        request.setAcademicYearId(timetable.getAcademicYear().getId());
+        request.setGradeId(timetable.getGrade().getId());
+        request.setSectionId(timetable.getSection().getId());
+        request.setSubjectId(timetable.getSubject().getId());
+        request.setFacultyId(timetable.getFaculty().getId());
+        request.setDayOfWeek(timetable.getDayOfWeek());
+        request.setStartTime(timetable.getStartTime());
+        request.setEndTime(timetable.getEndTime());
+        request.setClassType(timetable.getClassType());
+        request.setStartDate(timetable.getStartDate());
+        request.setEndDate(timetable.getEndDate());
+        request.setRoom(timetable.getRoom());
+        request.setMeetingLink(timetable.getMeetingLink());
+        request.setNotes(timetable.getNotes());
+        validateFacultyOverlapForUpdate(timetable.getFaculty(), request, id);
+        validateSectionOverlapForUpdate(timetable.getSection(), request, id);
+        validateSubjectFacultyConflictForUpdate(timetable.getAcademicYear(), timetable.getGrade(), timetable.getSection(), timetable.getSubject(), timetable.getFaculty(), request, id);
+        timetable.setStatus(TimetableStatus.APPROVED);
+        timetable.setActive(true);
+        timetable.setUpdatedAt(Instant.now());
+        return timetableRepository.save(timetable);
+    }
+
+    @Override
+    public Timetable rejectTimetable(Long id, String reason) {
+        Timetable timetable = getTimetableById(id);
+        if (timetable.getStatus() != TimetableStatus.PENDING_APPROVAL) {
+            throw new APIException("Only pending timetables can be rejected.", HttpStatus.CONFLICT, "TIMETABLE_NOT_PENDING");
+        }
+        String normalizedReason = normalizeOptional(reason);
+        if (normalizedReason == null) {
+            throw new APIException("A rejection reason is required.", HttpStatus.BAD_REQUEST, "REJECTION_REASON_REQUIRED");
+        }
+        timetable.setNotes((timetable.getNotes() == null ? "" : timetable.getNotes() + "\\n") + "Rejection reason: " + normalizedReason);
+        timetable.setStatus(TimetableStatus.REJECTED);
+        timetable.setActive(false);
+        timetable.setUpdatedAt(Instant.now());
         return timetableRepository.save(timetable);
     }
 
@@ -441,6 +532,7 @@ public class TimetableServiceImpl implements TimetableService {
         return timetableRepository
                 .findByFacultyAndActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
                         faculty,
+                        TimetableStatus.APPROVED,
                         today,
                         today
                 )
@@ -486,10 +578,11 @@ public class TimetableServiceImpl implements TimetableService {
                         );
 
         return timetableRepository
-                .findByAcademicYearAndGradeAndSectionAndActiveTrue(
+                .findByAcademicYearAndGradeAndSectionAndActiveTrueAndStatus(
                         activeAcademicYear,
                         enrollment.getGrade(),
-                        enrollment.getSection()
+                        enrollment.getSection(),
+                        TimetableStatus.APPROVED
                 )
                 .stream()
                 .sorted(
