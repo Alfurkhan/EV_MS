@@ -1,5 +1,7 @@
 export type ClassType = "ONLINE" | "OFFLINE";
 
+export type TimetableStatus = "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
+
 export type MeetingPlatform =
     | "GOOGLE_MEET"
     | "ZOOM"
@@ -41,6 +43,7 @@ export interface Timetable {
     notes: string | null;
 
     active: boolean;
+    status: TimetableStatus;
 
     createdAt: string;
     updatedAt: string;
