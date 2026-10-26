@@ -153,6 +153,10 @@ public class Timetable {
     )
     private String notes;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 30)
+    private TimetableStatus status;
+
     @Column(
             name = "active",
             nullable = false
