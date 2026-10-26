@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { createTimetableDraft, getMyTimetableDrafts, submitTimetableForApproval } from "../services/timetableService";
+import type { FormEvent } from "react";
+import { createTimetableDraft, getMyTimetableDrafts, submitTimetableForApproval, updateFacultyDraft } from "../services/timetableService";
 import type { Timetable } from "../types/timetable";
 import type { TimetableRequest } from "../services/timetableService";
 import toast from "react-hot-toast";
@@ -15,6 +16,7 @@ export default function FacultyTimetableDraftPage() {
     const [items, setItems] = useState<Timetable[]>([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [editingId, setEditingId] = useState<number | null>(null);
 
     const refresh = async () => {
         setLoading(true);
@@ -28,7 +30,7 @@ export default function FacultyTimetableDraftPage() {
         setForm(old => ({ ...old, [key]: ["academicYearId","gradeId","sectionId","subjectId"].includes(key) ? Number(value) : value }));
     };
 
-    const saveDraft = async (event: React.FormEvent<HTMLFormElement>) => {
+    const saveDraft = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setSaving(true);
         try {
@@ -41,7 +43,7 @@ export default function FacultyTimetableDraftPage() {
         } finally { setSaving(false); }
     };
 
-    const submit = async (id: number) => {
+    const editDraft = (item: Timetable) => {\n        setEditingId(item.id);\n        setForm({ academicYearId: item.academicYearId, gradeId: item.gradeId, sectionId: item.sectionId, subjectId: item.subjectId, facultyId: item.facultyId, dayOfWeek: item.dayOfWeek, startDate: item.startDate, endDate: item.endDate, startTime: item.startTime, endTime: item.endTime, classType: item.classType, room: item.room ?? "", meetingLink: item.meetingLink ?? "", notes: item.notes ?? "", active: false });\n        window.scrollTo({ top: 0, behavior: "smooth" });\n    };\n\n    const submit = async (id: number) => {
         try {
             await submitTimetableForApproval(id);
             toast.success("Submitted to the administrator for approval.");
@@ -88,14 +90,14 @@ export default function FacultyTimetableDraftPage() {
             <label className="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">Notes (optional)
                 <input className={field} value={form.notes ?? ""} onChange={e=>update("notes",e.target.value)} />
             </label>
-            <div className="flex items-end"><button disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white disabled:opacity-60">{saving ? "Saving…" : "Save draft"}</button></div>
+            <div className="flex items-end"><button disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white disabled:opacity-60">{saving ? "Saving…" : editingId !== null ? "Update draft" : "Save draft"} {editingId !== null && <span className="ml-2 cursor-pointer text-sm underline" onClick={() => { setEditingId(null); setForm(initial); }}>Cancel edit</span>}</button></div>
         </form>
         <section className="rounded-2xl border bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold">Your drafts</h2>
             {loading ? <p className="text-sm text-slate-500">Loading…</p> : items.length === 0 ? <p className="text-sm text-slate-500">No drafts yet.</p> :
                 <div className="space-y-3">{items.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
                     <div><p className="font-semibold text-slate-900">{item.subjectName} · {item.dayOfWeek}</p><p className="text-sm text-slate-600">Grade {item.gradeName}, Section {item.sectionName} · {item.startTime}–{item.endTime}</p><p className="text-xs text-slate-500">{item.status}</p></div>
-                    <button onClick={()=>void submit(item.id)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Submit for approval</button>
+                    <div className="flex gap-2"><button onClick={()=>editDraft(item)} className="rounded-lg border px-4 py-2 text-sm font-semibold text-slate-700">Edit</button><button onClick={()=>void submit(item.id)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Submit for approval</button></div>
                 </div>)}</div>}
         </section>
     </div>;
