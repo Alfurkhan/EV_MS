@@ -34,8 +34,14 @@ export default function FacultyTimetableDraftPage() {
         event.preventDefault();
         setSaving(true);
         try {
-            await createTimetableDraft(form);
-            toast.success("Draft saved. It is not visible to students.");
+            if (editingId !== null) {
+                await updateFacultyDraft(editingId, form);
+                toast.success("Draft updated.");
+            } else {
+                await createTimetableDraft(form);
+                toast.success("Draft saved. It is not visible to students.");
+            }
+            setEditingId(null);
             setForm(initial);
             await refresh();
         } catch (error: any) {
@@ -43,7 +49,13 @@ export default function FacultyTimetableDraftPage() {
         } finally { setSaving(false); }
     };
 
-    const editDraft = (item: Timetable) => {\n        setEditingId(item.id);\n        setForm({ academicYearId: item.academicYearId, gradeId: item.gradeId, sectionId: item.sectionId, subjectId: item.subjectId, facultyId: item.facultyId, dayOfWeek: item.dayOfWeek, startDate: item.startDate, endDate: item.endDate, startTime: item.startTime, endTime: item.endTime, classType: item.classType, room: item.room ?? "", meetingLink: item.meetingLink ?? "", notes: item.notes ?? "", active: false });\n        window.scrollTo({ top: 0, behavior: "smooth" });\n    };\n\n    const submit = async (id: number) => {
+    const editDraft = (item: Timetable) => {
+        setEditingId(item.id);
+        setForm({ academicYearId: item.academicYearId, gradeId: item.gradeId, sectionId: item.sectionId, subjectId: item.subjectId, facultyId: item.facultyId, dayOfWeek: item.dayOfWeek, startDate: item.startDate, endDate: item.endDate, startTime: item.startTime, endTime: item.endTime, classType: item.classType, room: item.room ?? "", meetingLink: item.meetingLink ?? "", notes: item.notes ?? "", active: false });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const submit = async (id: number) => {
         try {
             await submitTimetableForApproval(id);
             toast.success("Submitted to the administrator for approval.");
