@@ -168,11 +168,29 @@ public class TimetableServiceImpl implements TimetableService {
         return timetableRepository.save(timetable);
     }
 
+    public Timetable updateFacultyDraft(Long id, TimetableRequest request) {
+        Timetable existing = getTimetableById(id);
+        User faculty = getCurrentFaculty();
+        if (!existing.getFaculty().getId().equals(faculty.getId())) {
+            throw new APIException("You can only edit your own timetable.", HttpStatus.FORBIDDEN, "TIMETABLE_NOT_OWNED");
+        }
+        if (existing.getStatus() != TimetableStatus.DRAFT && existing.getStatus() != TimetableStatus.REJECTED) {
+            throw new APIException("Only draft or rejected timetables can be edited.", HttpStatus.CONFLICT, "TIMETABLE_NOT_EDITABLE");
+        }
+        request.setFacultyId(faculty.getId());
+        request.setActive(false);
+        Timetable updated = updateTimetable(id, request);
+        updated.setStatus(TimetableStatus.DRAFT);
+        updated.setActive(false);
+        updated.setUpdatedAt(Instant.now());
+        return timetableRepository.save(updated);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<Timetable> getMyTimetableDrafts() {
-        return timetableRepository.findByFacultyAndStatusOrderByCreatedAtDesc(
-                getCurrentFaculty(), TimetableStatus.DRAFT
+        return timetableRepository.findByFacultyAndStatusInOrderByCreatedAtDesc(
+                getCurrentFaculty(), List.of(TimetableStatus.DRAFT, TimetableStatus.REJECTED)
         );
     }
 
@@ -238,7 +256,7 @@ public class TimetableServiceImpl implements TimetableService {
         if (normalizedReason == null) {
             throw new APIException("A rejection reason is required.", HttpStatus.BAD_REQUEST, "REJECTION_REASON_REQUIRED");
         }
-        timetable.setNotes((timetable.getNotes() == null ? "" : timetable.getNotes() + "\\n") + "Rejection reason: " + normalizedReason);
+        timetable.setNotes((timetable.getNotes() == null ? "" : timetable.getNotes() + "\n") + "Rejection reason: " + normalizedReason);
         timetable.setStatus(TimetableStatus.REJECTED);
         timetable.setActive(false);
         timetable.setUpdatedAt(Instant.now());
