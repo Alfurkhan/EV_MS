@@ -13,6 +13,8 @@ public interface TimetableService {
 
     List<Timetable> getMyTimetableDrafts();
 
+    Timetable updateFacultyDraft(Long id, TimetableRequest request);
+
     Timetable submitTimetableForApproval(Long id);
 
     List<Timetable> getPendingTimetableApprovals();
