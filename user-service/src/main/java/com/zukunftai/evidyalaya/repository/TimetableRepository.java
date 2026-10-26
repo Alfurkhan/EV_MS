@@ -5,6 +5,7 @@ import com.zukunftai.evidyalaya.database.Grade;
 import com.zukunftai.evidyalaya.database.Section;
 import com.zukunftai.evidyalaya.database.Subject;
 import com.zukunftai.evidyalaya.database.Timetable;
+import com.zukunftai.evidyalaya.database.TimetableStatus;
 import com.zukunftai.evidyalaya.database.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,6 +28,10 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
 
     List<Timetable> findByFaculty(User faculty);
 
+    List<Timetable> findByFacultyAndStatusOrderByCreatedAtDesc(User faculty, TimetableStatus status);
+
+    List<Timetable> findByStatusOrderByCreatedAtDesc(TimetableStatus status);
+
     List<Timetable> findByDayOfWeek(DayOfWeek dayOfWeek);
 
     List<Timetable> findByAcademicYearAndGrade(
@@ -40,10 +45,11 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
             Section section
     );
 
-    List<Timetable> findByAcademicYearAndGradeAndSectionAndActiveTrue(
+    List<Timetable> findByAcademicYearAndGradeAndSectionAndActiveTrueAndStatus(
             AcademicYear academicYear,
             Grade grade,
-            Section section
+            Section section,
+            TimetableStatus status
     );
 
     /*
@@ -54,6 +60,7 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
             AcademicYear academicYear,
             Grade grade,
             Section section,
+            TimetableStatus status,
             LocalDate date1,
             LocalDate date2
     );
@@ -62,8 +69,9 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
      * Faculty timetable entries that are active and currently valid.
      */
     List<Timetable>
-    findByFacultyAndActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+    findByFacultyAndActiveTrueAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
             User faculty,
+            TimetableStatus status,
             LocalDate startDate,
             LocalDate endDate
     );
@@ -97,7 +105,7 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
         FROM Timetable t
         WHERE t.faculty = :faculty
           AND t.dayOfWeek = :dayOfWeek
-          AND t.active = true
+          AND t.active = true AND t.status = com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED
           AND t.startTime < :endTime
           AND t.endTime > :startTime
           AND t.startDate <= :endDate
