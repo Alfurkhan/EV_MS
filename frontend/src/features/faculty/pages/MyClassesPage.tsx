@@ -103,11 +103,15 @@ export default function MyClassesPage() {
                     </h1>
 
                     <p className="mt-1 text-slate-500">
-                        View and manage your classes for today
+                        {activeView === "classes"
+                            ? "View and manage your classes for today"
+                            : activeView === "create"
+                                ? "Create a class schedule and save it as a draft for admin approval"
+                                : "Review your class drafts and track their approval status"}
                     </p>
                 </div>
 
-                <button
+                {activeView === "classes" && <button
                     type="button"
                     onClick={() => void refresh()}
                     disabled={loading}
@@ -142,7 +146,7 @@ export default function MyClassesPage() {
                     />
 
                     Refresh
-                </button>
+                </button>}
             </div>
 
             <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" role="tablist" aria-label="Class management views">
