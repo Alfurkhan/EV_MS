@@ -81,12 +81,6 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_ADMIN"],
             },
             {
-                icon: CalendarCheck,
-                label: "Timetable Approvals",
-                path: "/timetable-approvals",
-                allowedRoles: ["ROLE_ADMIN"],
-            },
-            {
                 icon: CalendarDays,
                 label: "My Timetable",
                 path: "/my-timetable",
