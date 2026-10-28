@@ -51,14 +51,11 @@ export async function getStudentAssignmentSubmissions(): Promise<AssignmentSubmi
     return (await api.get<AssignmentSubmission[]>("/assignments/student/submissions")).data;
 }
 
-export async function submitAssignment(id: number, data: AssignmentSubmissionRequest): Promise<AssignmentSubmission> {
-    return (await api.post<AssignmentSubmission>(`/assignments/student/${id}/submit`, data)).data;
-}
-
-export async function uploadSubmissionAttachment(id: number, file: File): Promise<AssignmentSubmission> {
+export async function submitAssignment(id: number, data: AssignmentSubmissionRequest, file?: File | null): Promise<AssignmentSubmission> {
     const form = new FormData();
-    form.append("file", file);
-    return (await api.post<AssignmentSubmission>(`/assignments/student/${id}/attachment`, form, {
+    form.append("responseText", data.responseText);
+    if (file) form.append("file", file);
+    return (await api.post<AssignmentSubmission>(`/assignments/student/${id}/submit`, form, {
         headers: { "Content-Type": "multipart/form-data" },
     })).data;
 }
