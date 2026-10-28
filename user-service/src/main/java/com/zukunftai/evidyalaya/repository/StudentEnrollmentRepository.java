@@ -74,6 +74,8 @@ public interface StudentEnrollmentRepository
     );
 
 
+    List<StudentEnrollment> findByStudentAndActiveTrue(User student);
+
     /*
      * Get active enrollments for an
      * Academic Year.
