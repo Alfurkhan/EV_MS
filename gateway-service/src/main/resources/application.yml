@@ -55,7 +55,7 @@ spring:
             - id: user-service
               uri: ${USER_SERVICE_URL:http://localhost:8080}
               predicates:
-                - Path=/auth/**,/user/**,/subject/**,/timetable/**,/class-session/**,/attendance/**,/admin/test-accounts/**
+                - Path=/auth/**,/user/**,/subject/**,/timetable/**,/assignments/**,/class-session/**,/attendance/**,/admin/test-accounts/**
 
 
 application:
