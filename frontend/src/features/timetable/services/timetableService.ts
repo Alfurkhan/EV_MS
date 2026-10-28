@@ -19,6 +19,41 @@ export interface TimetableRequest {
     active?: boolean;
 }
 
+export async function createTimetableDraft(data: TimetableRequest): Promise<Timetable> {
+    const response = await api.post<Timetable>("/timetable/draft", data);
+    return response.data;
+}
+
+export async function updateFacultyDraft(id: number, data: TimetableRequest): Promise<Timetable> {
+    const response = await api.put<Timetable>(`/timetable/draft/id/${id}`, data);
+    return response.data;
+}
+
+export async function getMyTimetableDrafts(): Promise<Timetable[]> {
+    const response = await api.get<Timetable[]>("/timetable/my/drafts");
+    return response.data;
+}
+
+export async function submitTimetableForApproval(id: number): Promise<Timetable> {
+    const response = await api.put<Timetable>(`/timetable/id/${id}/submit`);
+    return response.data;
+}
+
+export async function getPendingTimetableApprovals(): Promise<Timetable[]> {
+    const response = await api.get<Timetable[]>("/timetable/pending-approval");
+    return response.data;
+}
+
+export async function approveTimetable(id: number): Promise<Timetable> {
+    const response = await api.put<Timetable>(`/timetable/id/${id}/approve`);
+    return response.data;
+}
+
+export async function rejectTimetable(id: number, reason: string): Promise<Timetable> {
+    const response = await api.put<Timetable>(`/timetable/id/${id}/reject`, null, { params: { reason } });
+    return response.data;
+}
+
 export async function getTimetables(): Promise<Timetable[]> {
     const response = await api.get<Timetable[]>("/timetable");
     return response.data;

@@ -7,6 +7,7 @@ import com.zukunftai.evidyalaya.database.Section;
 import com.zukunftai.evidyalaya.database.StudentEnrollment;
 import com.zukunftai.evidyalaya.database.Subject;
 import com.zukunftai.evidyalaya.database.Timetable;
+import com.zukunftai.evidyalaya.database.TimetableStatus;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.StudentSubjectResponse;
@@ -501,10 +502,11 @@ public class SubjectServiceImpl implements SubjectService {
          */
         List<Timetable> timetableEntries =
                 timetableRepository
-                        .findByAcademicYearAndGradeAndSectionAndActiveTrue(
+                        .findByAcademicYearAndGradeAndSectionAndActiveTrueAndStatus(
                                 activeAcademicYear,
                                 grade,
-                                section
+                                section,
+                                TimetableStatus.APPROVED
                         );
 
 

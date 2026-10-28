@@ -9,6 +9,20 @@ public interface TimetableService {
 
     Timetable createTimetable(TimetableRequest request);
 
+    Timetable createFacultyDraft(TimetableRequest request);
+
+    List<Timetable> getMyTimetableDrafts();
+
+    Timetable updateFacultyDraft(Long id, TimetableRequest request);
+
+    Timetable submitTimetableForApproval(Long id);
+
+    List<Timetable> getPendingTimetableApprovals();
+
+    Timetable approveTimetable(Long id);
+
+    Timetable rejectTimetable(Long id, String reason);
+
     List<Timetable> getAllTimetables();
 
     Timetable getTimetableById(Long id);

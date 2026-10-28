@@ -1,6 +1,8 @@
 import {
     AlertCircle,
     CalendarDays,
+    Check,
+    ClipboardCheck,
     Filter,
     List,
     Plus,
@@ -9,7 +11,7 @@ import {
     X,
 } from "lucide-react";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useTimetable } from "../hooks/useTimetable";
 
@@ -21,8 +23,11 @@ import ScheduleDetailsModal from "../components/ScheduleDetailsModal";
 import TimetableGrid from "../components/TimetableGrid";
 
 import {
+    approveTimetable,
     disableTimetable,
     enableTimetable,
+    getPendingTimetableApprovals,
+    rejectTimetable,
 } from "../services/timetableService";
 
 import type { Timetable } from "../types/timetable";
@@ -85,6 +90,56 @@ export default function TimetablePage() {
         type: "success" | "error";
         message: string;
     } | null>(null);
+    const [pendingRequests, setPendingRequests] = useState<Timetable[]>([]);
+    const [requestsOpen, setRequestsOpen] = useState(false);
+    const [requestsLoading, setRequestsLoading] = useState(false);
+
+    const refreshPendingRequests = async () => {
+        setRequestsLoading(true);
+        try {
+            setPendingRequests(await getPendingTimetableApprovals());
+        } catch (error) {
+            console.error("Failed to load timetable requests:", error);
+            setToast({ type: "error", message: "Could not load faculty timetable requests. Please try again." });
+        } finally {
+            setRequestsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        void refreshPendingRequests();
+    }, []);
+
+    const handleApproveRequest = async (item: Timetable) => {
+        try {
+            await approveTimetable(item.id);
+            setToast({ type: "success", message: "Faculty class schedule approved and published." });
+            await Promise.all([refreshPendingRequests(), refresh()]);
+        } catch (error) {
+            const response = typeof error === "object" && error !== null && "response" in error
+                ? (error as { response?: { data?: { message?: string } } }).response
+                : undefined;
+            setToast({ type: "error", message: response?.data?.message ?? "Could not approve this request. Check for timetable conflicts." });
+        }
+    };
+
+    const handleRejectRequest = async (item: Timetable) => {
+        const reason = window.prompt("Enter a reason for rejecting this class schedule:");
+        if (!reason?.trim()) {
+            if (reason !== null) setToast({ type: "error", message: "A rejection reason is required." });
+            return;
+        }
+        try {
+            await rejectTimetable(item.id, reason.trim());
+            setToast({ type: "success", message: "Faculty class schedule rejected." });
+            await refreshPendingRequests();
+        } catch (error) {
+            const response = typeof error === "object" && error !== null && "response" in error
+                ? (error as { response?: { data?: { message?: string } } }).response
+                : undefined;
+            setToast({ type: "error", message: response?.data?.message ?? "Could not reject this request. Please try again." });
+        }
+    };
 
     const academicYears = useMemo(() => {
         return Array.from(
@@ -453,6 +508,18 @@ export default function TimetablePage() {
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         type="button"
+                        onClick={() => {
+                            setRequestsOpen((current) => !current);
+                            if (!requestsOpen) void refreshPendingRequests();
+                        }}
+                        className={`relative inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition ${requestsOpen ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+                    >
+                        <ClipboardCheck size={17} />
+                        Requests
+                        {pendingRequests.length > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1.5 text-[11px] font-bold text-white">{pendingRequests.length}</span>}
+                    </button>
+                    <button
+                        type="button"
                         onClick={() =>
                             setAddScheduleOpen(true)
                         }
@@ -505,6 +572,44 @@ export default function TimetablePage() {
                     </button>
                 </div>
             </div>
+
+            {/* Faculty timetable approval requests */}
+            {requestsOpen && (
+                <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 className="text-base font-semibold text-slate-900">Faculty schedule requests</h2>
+                            <p className="mt-1 text-sm text-slate-500">Review submitted class schedules. Approved schedules become available to students.</p>
+                        </div>
+                        <button type="button" onClick={() => void refreshPendingRequests()} disabled={requestsLoading} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                            {requestsLoading ? "Refreshing…" : "Refresh requests"}
+                        </button>
+                    </div>
+                    {requestsLoading ? <p className="py-8 text-center text-sm text-slate-500">Loading faculty requests…</p> :
+                        pendingRequests.length === 0 ? <div className="rounded-xl bg-slate-50 px-5 py-10 text-center">
+                            <ClipboardCheck className="mx-auto text-slate-400" size={28} />
+                            <h3 className="mt-3 font-semibold text-slate-800">No pending requests</h3>
+                            <p className="mt-1 text-sm text-slate-500">New faculty-submitted class schedules will appear here for review.</p>
+                        </div> :
+                        <div className="space-y-3">{pendingRequests.map(item => (
+                            <article key={item.id} className="rounded-xl border border-slate-200 p-4">
+                                <div className="flex flex-wrap items-start justify-between gap-4">
+                                    <div className="min-w-0">
+                                        <h3 className="font-semibold text-slate-900">{item.subjectName} <span className="font-normal text-slate-500">({item.subjectCode})</span></h3>
+                                        <p className="mt-1 text-sm text-slate-600">{item.facultyName} · Grade {item.gradeName}, Section {item.sectionName} · {item.academicYearName}</p>
+                                        <p className="text-sm text-slate-600">{item.dayOfWeek}, {item.startTime}–{item.endTime} · {formatDateRange(item.startDate, item.endDate)}</p>
+                                        <p className="text-sm text-slate-600">{item.classType === "ONLINE" ? item.meetingLink : item.room}</p>
+                                        {item.notes && <p className="mt-1 whitespace-pre-wrap text-sm text-slate-500">Notes: {item.notes}</p>}
+                                    </div>
+                                    <div className="flex shrink-0 gap-2">
+                                        <button type="button" onClick={() => void handleApproveRequest(item)} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"><Check size={15} />Approve</button>
+                                        <button type="button" onClick={() => void handleRejectRequest(item)} className="rounded-lg border border-rose-200 px-3.5 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50">Reject</button>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}</div>}
+                </section>
+            )}
 
             {/* Search */}
             <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
