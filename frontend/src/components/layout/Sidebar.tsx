@@ -105,12 +105,6 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_FACULTY"],
             },
             {
-                icon: CalendarDays,
-                label: "Timetable Drafts",
-                path: "/faculty-timetable-drafts",
-                allowedRoles: ["ROLE_FACULTY"],
-            },
-            {
                 icon: BookOpen,
                 label: "My Courses",
                 path: "/courses",
