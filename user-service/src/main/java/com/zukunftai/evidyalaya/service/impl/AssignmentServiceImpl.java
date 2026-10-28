@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.nio.file.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -40,6 +41,9 @@ public class AssignmentServiceImpl implements AssignmentService {
 
     @Value("${app.assignment-storage-dir:uploads/assignments}")
     private String storageDirectory;
+
+    @Value("${app.assignment-time-zone:Asia/Kolkata}")
+    private String assignmentTimeZone;
 
     public AssignmentServiceImpl(
             AssignmentRepository assignmentRepository,
@@ -164,7 +168,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         AssignmentSubmission submission = submissionRepository.findByAssignmentAndStudent(assignment, student)
                 .orElseGet(() -> AssignmentSubmission.builder().assignment(assignment).student(student)
                         .createdAt(Instant.now()).build());
-        if (submission.getSubmittedAt() != null && LocalDateTime.now().isAfter(assignment.getDueAt())) {
+        if (submission.getSubmittedAt() != null && LocalDateTime.now(assignmentZone()).isAfter(assignment.getDueAt())) {
             throw error("Resubmissions are closed after the due date.", HttpStatus.CONFLICT, "ASSIGNMENT_RESUBMISSION_CLOSED");
         }
         submission.setResponseText(request.getResponseText() == null ? "" : request.getResponseText().trim());
@@ -189,7 +193,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 .orElseThrow(() -> error("Submit your response before uploading an attachment.", HttpStatus.CONFLICT, "SUBMISSION_REQUIRED"));
         if (LocalDateTime.now().isAfter(assignment.getDueAt())) {
             boolean wasSubmittedOnTime = submission.getSubmittedAt() != null
-                    && !submission.getSubmittedAt().isAfter(assignment.getDueAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
+                    && !submission.getSubmittedAt().isAfter(assignment.getDueAt().atZone(assignmentZone()).toInstant());
             if (wasSubmittedOnTime || submission.getAttachmentPath() != null) {
                 throw error("Resubmissions are closed after the due date.", HttpStatus.CONFLICT, "ASSIGNMENT_RESUBMISSION_CLOSED");
             }
@@ -329,6 +333,17 @@ public class AssignmentServiceImpl implements AssignmentService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isLate(AssignmentSubmission submission) {
+        return submission.getSubmittedAt() != null && submission.getSubmittedAt()
+                .isAfter(submission.getAssignment().getDueAt().atZone(assignmentZone()).toInstant());
+    }
+
+    private ZoneId assignmentZone() {
+        return ZoneId.of(assignmentTimeZone);
     }
 
     private void validateDueDate(LocalDateTime dueAt) {
