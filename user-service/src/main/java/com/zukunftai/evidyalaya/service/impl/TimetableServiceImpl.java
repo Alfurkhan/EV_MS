@@ -179,7 +179,7 @@ public class TimetableServiceImpl implements TimetableService {
         }
         request.setFacultyId(faculty.getId());
         request.setActive(false);
-        Timetable updated = updateTimetable(id, request);
+        Timetable updated = updateTimetableInternal(id, request);
         updated.setStatus(TimetableStatus.DRAFT);
         updated.setActive(false);
         updated.setUpdatedAt(Instant.now());
@@ -286,6 +286,21 @@ public class TimetableServiceImpl implements TimetableService {
 
     @Override
     public Timetable updateTimetable(
+            Long id,
+            TimetableRequest request
+    ) {
+        Timetable existing = getTimetableById(id);
+        if (existing.getStatus() != TimetableStatus.APPROVED) {
+            throw new APIException(
+                    "Only approved timetables can be edited here. Faculty drafts must be edited through the draft workflow.",
+                    HttpStatus.CONFLICT,
+                    "TIMETABLE_NOT_APPROVED"
+            );
+        }
+        return updateTimetableInternal(id, request);
+    }
+
+    private Timetable updateTimetableInternal(
             Long id,
             TimetableRequest request
     ) {
