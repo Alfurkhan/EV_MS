@@ -26,5 +26,6 @@ public interface AssignmentService {
     Assignment uploadAssignmentAttachment(Long assignmentId, MultipartFile file);
     Assignment getAssignmentForAttachment(Long assignmentId);
     AssignmentSubmission getSubmissionForAttachment(Long submissionId);
+    boolean isLate(AssignmentSubmission submission);
     Path resolveStoredAttachment(String storedPath);
 }
