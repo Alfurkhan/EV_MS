@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - deployment/aws-dev
+      - feature/faculty-timetable-approval
   push:
     branches:
       - feature/faculty-timetable-approval
