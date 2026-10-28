@@ -109,6 +109,7 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
 
     const editDraft = async (item: Timetable) => {
         setEditingId(item.id);
+        onViewChange("create");
         setForm({ academicYearId: item.academicYearId, gradeId: item.gradeId, sectionId: item.sectionId, subjectId: item.subjectId, facultyId: item.facultyId, dayOfWeek: item.dayOfWeek, startDate: item.startDate, endDate: item.endDate, startTime: item.startTime, endTime: item.endTime, classType: item.classType, room: item.room ?? "", meetingLink: item.meetingLink ?? "", notes: item.notes ?? "", active: false });
         try {
             const gradeResults = await getGradesByAcademicYear(item.academicYearId);
