@@ -421,6 +421,14 @@ public class TimetableServiceImpl implements TimetableService {
         Timetable timetable =
                 getTimetableById(id);
 
+        if (timetable.getStatus() != TimetableStatus.APPROVED) {
+            throw new APIException(
+                    "Only approved timetables can be enabled.",
+                    HttpStatus.CONFLICT,
+                    "TIMETABLE_NOT_APPROVED"
+            );
+        }
+
         if (timetable.isActive()) {
 
             throw new APIException(
@@ -548,7 +556,7 @@ public class TimetableServiceImpl implements TimetableService {
                 LocalDate.now();
 
         return timetableRepository
-                .findByFacultyAndActiveTrueAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
+                .findByFacultyAndActiveTrueAndStatusAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
                         faculty,
                         TimetableStatus.APPROVED,
                         today,
