@@ -31,6 +31,9 @@ import MySubjectsPage
     from "./features/courses/pages/MySubjectsPage";
 
 import MyClassesPage from "./features/faculty/pages/MyClassesPage";
+import FacultyAssignmentsPage from "./features/assignments/pages/FacultyAssignmentsPage";
+import StudentAssignmentsPage from "./features/assignments/pages/StudentAssignmentsPage";
+import AdminAssignmentsPage from "./features/assignments/pages/AdminAssignmentsPage";
 
 export default function App() {
     return (
@@ -149,6 +152,15 @@ export default function App() {
                     />
 
                     <Route
+                        path="/assignments"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                                <AdminAssignmentsPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    <Route
                         path="/timetable-approvals"
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
@@ -181,6 +193,15 @@ export default function App() {
                     />
 
                     <Route
+                        path="/faculty-assignments"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_FACULTY"]}>
+                                <FacultyAssignmentsPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    <Route
                         path="/faculty-timetable-drafts"
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_FACULTY"]}>
@@ -208,6 +229,14 @@ export default function App() {
                                 allowedRoles={["ROLE_STUDENT"]}
                             >
                                 <MySubjectsPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/my-assignments"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_STUDENT"]}>
+                                <StudentAssignmentsPage />
                             </RoleProtectedRoute>
                         }
                     />
