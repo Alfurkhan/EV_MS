@@ -20,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.time.ZoneId;
 import java.util.List;
 
 @RestController
@@ -168,8 +167,7 @@ public class AssignmentController {
     }
 
     private AssignmentSubmissionResponse toSubmissionResponse(AssignmentSubmission submission) {
-        boolean late = submission.getSubmittedAt() != null && submission.getSubmittedAt()
-                .isAfter(submission.getAssignment().getDueAt().atZone(ZoneId.systemDefault()).toInstant());
+        boolean late = assignmentService.isLate(submission);
         return AssignmentSubmissionResponse.builder()
                 .id(submission.getId())
                 .assignmentId(submission.getAssignment().getId())
