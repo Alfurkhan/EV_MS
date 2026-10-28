@@ -187,8 +187,12 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
         AssignmentSubmission submission = submissionRepository.findByAssignmentAndStudent(assignment, student)
                 .orElseThrow(() -> error("Submit your response before uploading an attachment.", HttpStatus.CONFLICT, "SUBMISSION_REQUIRED"));
-        if (submission.getSubmittedAt() != null && LocalDateTime.now().isAfter(assignment.getDueAt())) {
-            throw error("Resubmissions are closed after the due date.", HttpStatus.CONFLICT, "ASSIGNMENT_RESUBMISSION_CLOSED");
+        if (LocalDateTime.now().isAfter(assignment.getDueAt())) {
+            boolean wasSubmittedOnTime = submission.getSubmittedAt() != null
+                    && !submission.getSubmittedAt().isAfter(assignment.getDueAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
+            if (wasSubmittedOnTime || submission.getAttachmentPath() != null) {
+                throw error("Resubmissions are closed after the due date.", HttpStatus.CONFLICT, "ASSIGNMENT_RESUBMISSION_CLOSED");
+            }
         }
         StoredFile stored = storeFile(file);
         deleteStoredFile(submission.getAttachmentPath());
