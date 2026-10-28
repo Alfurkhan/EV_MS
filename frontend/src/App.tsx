@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { Toaster } from "react-hot-toast";
 
@@ -26,7 +26,6 @@ import AcademicManagementPage
 import TimetablePage from "./features/timetable/pages/TimetablePage";
 import StudentTimetablePage
     from "./features/timetable/pages/StudentTimetablePage";
-import FacultyTimetableDraftPage from "./features/timetable/pages/FacultyTimetableDraftPage";
 import TimetableApprovalPage from "./features/timetable/pages/TimetableApprovalPage";
 
 import MySubjectsPage
@@ -186,7 +185,7 @@ export default function App() {
                         path="/faculty-timetable-drafts"
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_FACULTY"]}>
-                                <FacultyTimetableDraftPage />
+                                <Navigate to="/my-classes" replace />
                             </RoleProtectedRoute>
                         }
                     />
