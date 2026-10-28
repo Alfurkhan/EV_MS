@@ -67,10 +67,22 @@ export async function getAdminAssignments(): Promise<Assignment[]> {
     return (await api.get<Assignment[]>("/assignments/admin")).data;
 }
 
-export function assignmentAttachmentUrl(id: number): string {
-    return `/api/assignments/${id}/attachment`;
+async function downloadFile(url: string, filename: string): Promise<void> {
+    const response = await api.get<Blob>(url, { responseType: "blob" });
+    const objectUrl = URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename || "attachment";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
 }
 
-export function submissionAttachmentUrl(id: number): string {
-    return `/api/assignments/submissions/${id}/attachment`;
+export async function downloadAssignmentAttachment(id: number, filename: string): Promise<void> {
+    await downloadFile(`/assignments/${id}/attachment`, filename);
+}
+
+export async function downloadSubmissionAttachment(id: number, filename: string): Promise<void> {
+    await downloadFile(`/assignments/submissions/${id}/attachment`, filename);
 }
