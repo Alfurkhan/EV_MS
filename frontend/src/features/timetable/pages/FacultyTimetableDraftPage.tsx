@@ -190,28 +190,28 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
     return <div className="mx-auto max-w-5xl space-y-6">
         {view === "create" && <form noValidate onSubmit={saveDraft} className="grid grid-cols-1 gap-4 rounded-2xl border-0 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
             <label className="space-y-1 text-sm font-medium text-slate-700">Academic year
-                <select className={field} required disabled={lookupsLoading} value={form.academicYearId || ""} onChange={e => void selectAcademicYear(e.target.value)}>
+                <select className={field} required disabled={lookupsLoading} value={form.academicYearId || ""} onChange={e => { setFieldErrors(old => ({...old, academicYearId:"", gradeId:"", sectionId:""})); void selectAcademicYear(e.target.value); }}>
                     <option value="">Select academic year</option>
                     {academicYears.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
                 {errorText("academicYearId")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Grade
-                <select className={field} required disabled={!form.academicYearId || grades.length === 0} value={form.gradeId || ""} onChange={e => void selectGrade(e.target.value)}>
+                <select className={field} required disabled={!form.academicYearId || grades.length === 0} value={form.gradeId || ""} onChange={e => { setFieldErrors(old => ({...old, gradeId:"", sectionId:""})); void selectGrade(e.target.value); }}>
                     <option value="">Select grade</option>
                     {grades.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
                 {errorText("gradeId")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Section
-                <select className={field} required disabled={!form.gradeId || sections.length === 0} value={form.sectionId || ""} onChange={e => update("sectionId", e.target.value)}>
+                <select className={field} required disabled={!form.gradeId || sections.length === 0} value={form.sectionId || ""} onChange={e => { setFieldErrors(old => ({...old, sectionId:""})); update("sectionId", e.target.value); }}>
                     <option value="">Select section</option>
                     {sections.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
                 {errorText("sectionId")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Assigned subject
-                <select className={field} required disabled={lookupsLoading || subjects.length === 0} value={form.subjectId || ""} onChange={e => update("subjectId", e.target.value)}>
+                <select className={field} required disabled={lookupsLoading || subjects.length === 0} value={form.subjectId || ""} onChange={e => { setFieldErrors(old => ({...old, subjectId:""})); update("subjectId", e.target.value); }}>
                     <option value="">Select subject</option>
                     {subjects.map(item => <option key={item.id} value={item.id}>{item.name} ({item.code})</option>)}
                 </select>
@@ -224,7 +224,7 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
                 </select>
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Class type
-                <select className={field} value={form.classType} onChange={e=>setForm(old=>({...old,classType:e.target.value as "ONLINE"|"OFFLINE",room:"",meetingLink:""}))}>
+                <select className={field} value={form.classType} onChange={e=>{setFieldErrors(old=>({...old,room:"",meetingLink:""}));setForm(old=>({...old,classType:e.target.value as "ONLINE"|"OFFLINE",room:"",meetingLink:""}));}}>
                     <option value="OFFLINE">Offline</option><option value="ONLINE">Online</option>
                 </select>
             </label>
@@ -261,9 +261,10 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
                 <button type="submit" disabled={saving} className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
                     {saving ? "Saving…" : editingId !== null ? "Update draft" : "Save draft"}
                 </button>
-                {editingId !== null && <button type="button" className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-slate-700" onClick={() => { setEditingId(null); setForm(initial); }}>
+                {editingId !== null && <button type="button" className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-slate-700" onClick={() => { setEditingId(null); setForm(initial); setFieldErrors({}); }}>
                     Cancel edit
                 </button>}
+                <p className="basis-full text-xs text-slate-500">Schedule now sends the class to the administrator for approval. Save draft keeps it editable and unpublished.</p>
             </div>
         </form>}
         {view === "drafts" && <section className="rounded-2xl border bg-white p-6 shadow-sm">
