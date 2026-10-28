@@ -4,6 +4,10 @@ import { createTimetableDraft, getMyTimetableDrafts, submitTimetableForApproval,
 import type { Timetable } from "../types/timetable";
 import type { TimetableRequest } from "../services/timetableService";
 import toast from "react-hot-toast";
+import { getAcademicYears, type AcademicYear } from "../../academic/services/academicYearService";
+import { getGradesByAcademicYear, type Grade } from "../../academic/services/gradeService";
+import { getSectionsByGrade, type Section } from "../../academic/services/sectionService";
+import { getMySubjects, type Subject } from "../../courses/services/subjectService";
 
 const initial: TimetableRequest = {
     academicYearId: 0, gradeId: 0, sectionId: 0, subjectId: 0, facultyId: 0,
@@ -17,6 +21,11 @@ export default function FacultyTimetableDraftPage() {
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
+    const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+    const [grades, setGrades] = useState<Grade[]>([]);
+    const [sections, setSections] = useState<Section[]>([]);
+    const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [lookupsLoading, setLookupsLoading] = useState(true);
 
     const refresh = async () => {
         setLoading(true);
@@ -25,6 +34,55 @@ export default function FacultyTimetableDraftPage() {
         finally { setLoading(false); }
     };
     useEffect(() => { void refresh(); }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const loadLookups = async () => {
+            setLookupsLoading(true);
+            try {
+                const [yearResults, subjectResults] = await Promise.all([
+                    getAcademicYears(),
+                    getMySubjects()
+                ]);
+                if (cancelled) return;
+                setAcademicYears(yearResults.filter(item => item.active));
+                setSubjects(subjectResults.filter(item => item.active));
+            } catch {
+                if (!cancelled) toast.error("Could not load academic years or your assigned subjects.");
+            } finally {
+                if (!cancelled) setLookupsLoading(false);
+            }
+        };
+        void loadLookups();
+        return () => { cancelled = true; };
+    }, []);
+
+    const selectAcademicYear = async (value: string) => {
+        const academicYearId = Number(value);
+        setForm(old => ({ ...old, academicYearId, gradeId: 0, sectionId: 0 }));
+        setGrades([]);
+        setSections([]);
+        if (!academicYearId) return;
+        try {
+            const results = await getGradesByAcademicYear(academicYearId);
+            setGrades(results.filter(item => item.active));
+        } catch {
+            toast.error("Could not load grades for that academic year.");
+        }
+    };
+
+    const selectGrade = async (value: string) => {
+        const gradeId = Number(value);
+        setForm(old => ({ ...old, gradeId, sectionId: 0 }));
+        setSections([]);
+        if (!gradeId) return;
+        try {
+            const results = await getSectionsByGrade(gradeId);
+            setSections(results.filter(item => item.active));
+        } catch {
+            toast.error("Could not load sections for that grade.");
+        }
+    };
 
     const update = (key: keyof TimetableRequest, value: string) => {
         setForm(old => ({ ...old, [key]: ["academicYearId","gradeId","sectionId","subjectId"].includes(key) ? Number(value) : value }));
@@ -68,10 +126,31 @@ export default function FacultyTimetableDraftPage() {
         <header><h1 className="text-2xl font-bold text-slate-900">My Timetable Drafts</h1>
             <p className="mt-1 text-sm text-slate-600">Save a draft first, then submit it for admin approval. Drafts are not published to students.</p></header>
         <form onSubmit={saveDraft} className="grid grid-cols-1 gap-4 rounded-2xl border bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
-            {([["academicYearId","Academic year ID"],["gradeId","Grade ID"],["sectionId","Section ID"],["subjectId","Subject ID"]] as const).map(([key,label]) =>
-                <label key={key} className="space-y-1 text-sm font-medium text-slate-700">{label}
-                    <input className={field} type="number" min="1" required value={form[key] || ""} onChange={e=>update(key,e.target.value)} />
-                </label>)}
+            <label className="space-y-1 text-sm font-medium text-slate-700">Academic year
+                <select className={field} required disabled={lookupsLoading} value={form.academicYearId || ""} onChange={e => void selectAcademicYear(e.target.value)}>
+                    <option value="">Select academic year</option>
+                    {academicYears.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+            </label>
+            <label className="space-y-1 text-sm font-medium text-slate-700">Grade
+                <select className={field} required disabled={!form.academicYearId || grades.length === 0} value={form.gradeId || ""} onChange={e => void selectGrade(e.target.value)}>
+                    <option value="">Select grade</option>
+                    {grades.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+            </label>
+            <label className="space-y-1 text-sm font-medium text-slate-700">Section
+                <select className={field} required disabled={!form.gradeId || sections.length === 0} value={form.sectionId || ""} onChange={e => update("sectionId", e.target.value)}>
+                    <option value="">Select section</option>
+                    {sections.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+            </label>
+            <label className="space-y-1 text-sm font-medium text-slate-700">Assigned subject
+                <select className={field} required disabled={lookupsLoading || subjects.length === 0} value={form.subjectId || ""} onChange={e => update("subjectId", e.target.value)}>
+                    <option value="">Select subject</option>
+                    {subjects.map(item => <option key={item.id} value={item.id}>{item.name} ({item.code})</option>)}
+                </select>
+                {subjects.length === 0 && !lookupsLoading && <span className="block text-xs font-normal text-amber-700">No active subjects are assigned to your faculty account.</span>}
+            </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Day
                 <select className={field} value={form.dayOfWeek} onChange={e=>update("dayOfWeek",e.target.value)}>
                     {["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"].map(day=><option key={day}>{day}</option>)}
