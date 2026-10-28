@@ -90,16 +90,13 @@ public class AssignmentController {
         return assignmentService.getStudentSubmissions().stream().map(this::toSubmissionResponse).toList();
     }
 
-    @PostMapping("/student/{assignmentId}/submit")
+    @PostMapping(path = "/student/{assignmentId}/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
-    public AssignmentSubmissionResponse submit(@PathVariable Long assignmentId, @Valid @RequestBody AssignmentSubmissionRequest request) {
-        return toSubmissionResponse(assignmentService.submit(assignmentId, request));
-    }
-
-    @PostMapping(path = "/student/{assignmentId}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('STUDENT')")
-    public AssignmentSubmissionResponse uploadSubmissionAttachment(@PathVariable Long assignmentId, @RequestParam("file") MultipartFile file) {
-        return toSubmissionResponse(assignmentService.uploadSubmissionAttachment(assignmentId, file));
+    public AssignmentSubmissionResponse submit(
+            @PathVariable Long assignmentId,
+            @RequestParam(value = "responseText", required = false) String responseText,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        return toSubmissionResponse(assignmentService.submit(assignmentId, responseText, file));
     }
 
     @GetMapping("/admin")
