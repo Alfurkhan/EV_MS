@@ -8,6 +8,7 @@ import com.zukunftai.evidyalaya.model.AssignmentSubmissionRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.nio.file.Path;
 
 public interface AssignmentService {
     Assignment createDraft(AssignmentRequest request);
@@ -25,4 +26,5 @@ public interface AssignmentService {
     Assignment uploadAssignmentAttachment(Long assignmentId, MultipartFile file);
     Assignment getAssignmentForAttachment(Long assignmentId);
     AssignmentSubmission getSubmissionForAttachment(Long submissionId);
+    Path resolveStoredAttachment(String storedPath);
 }
