@@ -158,12 +158,18 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public AssignmentSubmission submit(Long assignmentId, AssignmentSubmissionRequest request) {
+    public AssignmentSubmission submit(Long assignmentId, String responseText, MultipartFile file) {
         User student = currentUser();
         Assignment assignment = findOrThrow(assignmentRepository.findById(assignmentId).orElse(null), "Assignment not found.");
         validateStudentCanAccess(student, assignment);
         if (assignment.getStatus() != AssignmentStatus.PUBLISHED) {
             throw error("This assignment is not published.", HttpStatus.CONFLICT, "ASSIGNMENT_NOT_PUBLISHED");
+        }
+        if ((responseText == null || responseText.isBlank()) && (file == null || file.isEmpty())) {
+            throw error("Write a response or attach a file before submitting.", HttpStatus.BAD_REQUEST, "ASSIGNMENT_SUBMISSION_EMPTY");
+        }
+        if (responseText != null && responseText.length() > 20000) {
+            throw error("Written responses must be 20,000 characters or fewer.", HttpStatus.BAD_REQUEST, "ASSIGNMENT_RESPONSE_TOO_LONG");
         }
         AssignmentSubmission submission = submissionRepository.findByAssignmentAndStudent(assignment, student)
                 .orElseGet(() -> AssignmentSubmission.builder().assignment(assignment).student(student)
@@ -171,40 +177,21 @@ public class AssignmentServiceImpl implements AssignmentService {
         if (submission.getSubmittedAt() != null && LocalDateTime.now(assignmentZone()).isAfter(assignment.getDueAt())) {
             throw error("Resubmissions are closed after the due date.", HttpStatus.CONFLICT, "ASSIGNMENT_RESUBMISSION_CLOSED");
         }
-        submission.setResponseText(request.getResponseText() == null ? "" : request.getResponseText().trim());
+        submission.setResponseText(responseText == null ? "" : responseText.trim());
+        if (file != null && !file.isEmpty()) {
+            StoredFile stored = storeFile(file);
+            deleteStoredFile(submission.getAttachmentPath());
+            submission.setAttachmentPath(stored.path());
+            submission.setAttachmentName(stored.name());
+            submission.setAttachmentContentType(stored.contentType());
+            submission.setAttachmentSize(stored.size());
+        }
         submission.setSubmittedAt(Instant.now());
         submission.setUpdatedAt(Instant.now());
         submission.setMarks(null);
         submission.setMaxMarks(null);
         submission.setFeedback(null);
         submission.setGradedAt(null);
-        return submissionRepository.save(submission);
-    }
-
-    @Override
-    public AssignmentSubmission uploadSubmissionAttachment(Long assignmentId, MultipartFile file) {
-        User student = currentUser();
-        Assignment assignment = findOrThrow(assignmentRepository.findById(assignmentId).orElse(null), "Assignment not found.");
-        validateStudentCanAccess(student, assignment);
-        if (assignment.getStatus() != AssignmentStatus.PUBLISHED) {
-            throw error("This assignment is not published.", HttpStatus.CONFLICT, "ASSIGNMENT_NOT_PUBLISHED");
-        }
-        AssignmentSubmission submission = submissionRepository.findByAssignmentAndStudent(assignment, student)
-                .orElseThrow(() -> error("Submit your response before uploading an attachment.", HttpStatus.CONFLICT, "SUBMISSION_REQUIRED"));
-        if (LocalDateTime.now(assignmentZone()).isAfter(assignment.getDueAt())) {
-            boolean wasSubmittedOnTime = submission.getSubmittedAt() != null
-                    && !submission.getSubmittedAt().isAfter(assignment.getDueAt().atZone(assignmentZone()).toInstant());
-            if (wasSubmittedOnTime || submission.getAttachmentPath() != null) {
-                throw error("Resubmissions are closed after the due date.", HttpStatus.CONFLICT, "ASSIGNMENT_RESUBMISSION_CLOSED");
-            }
-        }
-        StoredFile stored = storeFile(file);
-        deleteStoredFile(submission.getAttachmentPath());
-        submission.setAttachmentPath(stored.path());
-        submission.setAttachmentName(stored.name());
-        submission.setAttachmentContentType(stored.contentType());
-        submission.setAttachmentSize(stored.size());
-        submission.setUpdatedAt(Instant.now());
         return submissionRepository.save(submission);
     }
 
