@@ -26,7 +26,6 @@ import AcademicManagementPage
 import TimetablePage from "./features/timetable/pages/TimetablePage";
 import StudentTimetablePage
     from "./features/timetable/pages/StudentTimetablePage";
-import TimetableApprovalPage from "./features/timetable/pages/TimetableApprovalPage";
 
 import MySubjectsPage
     from "./features/courses/pages/MySubjectsPage";
@@ -153,7 +152,7 @@ export default function App() {
                         path="/timetable-approvals"
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
-                                <TimetableApprovalPage />
+                                <Navigate to="/timetable" replace />
                             </RoleProtectedRoute>
                         }
                     />
