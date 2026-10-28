@@ -107,9 +107,17 @@ export default function FacultyTimetableDraftPage() {
         } finally { setSaving(false); }
     };
 
-    const editDraft = (item: Timetable) => {
+    const editDraft = async (item: Timetable) => {
         setEditingId(item.id);
         setForm({ academicYearId: item.academicYearId, gradeId: item.gradeId, sectionId: item.sectionId, subjectId: item.subjectId, facultyId: item.facultyId, dayOfWeek: item.dayOfWeek, startDate: item.startDate, endDate: item.endDate, startTime: item.startTime, endTime: item.endTime, classType: item.classType, room: item.room ?? "", meetingLink: item.meetingLink ?? "", notes: item.notes ?? "", active: false });
+        try {
+            const gradeResults = await getGradesByAcademicYear(item.academicYearId);
+            setGrades(gradeResults.filter(option => option.active));
+            const sectionResults = await getSectionsByGrade(item.gradeId);
+            setSections(sectionResults.filter(option => option.active));
+        } catch {
+            toast.error("Draft loaded, but grade or section options could not be refreshed.");
+        }
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
