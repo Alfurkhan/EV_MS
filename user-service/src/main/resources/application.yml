@@ -77,6 +77,10 @@ logging:
     org.springframework.boot.autoconfigure.liquibase: DEBUG
     com.zukunftai.evidyalaya: DEBUG
 
+app:
+  assignment-storage-dir: ${ASSIGNMENT_STORAGE_DIR:uploads/assignments}
+  assignment-time-zone: ${ASSIGNMENT_TIME_ZONE:Asia/Kolkata}
+
 application:
   security:
     jwt:
