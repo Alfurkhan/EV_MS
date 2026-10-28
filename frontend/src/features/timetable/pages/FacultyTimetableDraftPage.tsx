@@ -102,13 +102,20 @@ export default function FacultyTimetableDraftPage() {
             <label className="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">Notes (optional)
                 <input className={field} value={form.notes ?? ""} onChange={e=>update("notes",e.target.value)} />
             </label>
-            <div className="flex items-end"><button disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white disabled:opacity-60">{saving ? "Saving…" : editingId !== null ? "Update draft" : "Save draft"} {editingId !== null && <span className="ml-2 cursor-pointer text-sm underline" onClick={() => { setEditingId(null); setForm(initial); }}>Cancel edit</span>}</button></div>
+            <div className="flex items-end gap-3">
+                <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white disabled:opacity-60">
+                    {saving ? "Saving…" : editingId !== null ? "Update draft" : "Save draft"}
+                </button>
+                {editingId !== null && <button type="button" className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-slate-700" onClick={() => { setEditingId(null); setForm(initial); }}>
+                    Cancel edit
+                </button>}
+            </div>
         </form>
         <section className="rounded-2xl border bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-lg font-semibold">Your drafts</h2>
             {loading ? <p className="text-sm text-slate-500">Loading…</p> : items.length === 0 ? <p className="text-sm text-slate-500">No drafts yet.</p> :
                 <div className="space-y-3">{items.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
-                    <div><p className="font-semibold text-slate-900">{item.subjectName} · {item.dayOfWeek}</p><p className="text-sm text-slate-600">Grade {item.gradeName}, Section {item.sectionName} · {item.startTime}–{item.endTime}</p><p className="text-xs text-slate-500">{item.status}</p></div>
+                    <div><p className="font-semibold text-slate-900">{item.subjectName} · {item.dayOfWeek}</p><p className="text-sm text-slate-600">Grade {item.gradeName}, Section {item.sectionName} · {item.startTime}–{item.endTime}</p><p className="text-xs text-slate-500">Status: {item.status}</p>{item.notes && <p className="mt-1 max-w-xl whitespace-pre-wrap text-sm text-amber-700">Notes / feedback: {item.notes}</p>}</div>
                     <div className="flex gap-2"><button onClick={()=>editDraft(item)} className="rounded-lg border px-4 py-2 text-sm font-semibold text-slate-700">Edit</button><button onClick={()=>void submit(item.id)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Submit for approval</button></div>
                 </div>)}</div>}
         </section>
