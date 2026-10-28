@@ -149,7 +149,7 @@ export default function MyClassesPage() {
                 </button>}
             </div>
 
-            <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" role="tablist" aria-label="Class management views">
+            <div className="flex w-fit max-w-full flex-wrap gap-1.5 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm" role="tablist" aria-label="Class management views">
                 {([
                     { id: "classes", label: "My Classes" },
                     { id: "create", label: "Schedule a Class" },
