@@ -191,7 +191,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
         AssignmentSubmission submission = submissionRepository.findByAssignmentAndStudent(assignment, student)
                 .orElseThrow(() -> error("Submit your response before uploading an attachment.", HttpStatus.CONFLICT, "SUBMISSION_REQUIRED"));
-        if (LocalDateTime.now().isAfter(assignment.getDueAt())) {
+        if (LocalDateTime.now(assignmentZone()).isAfter(assignment.getDueAt())) {
             boolean wasSubmittedOnTime = submission.getSubmittedAt() != null
                     && !submission.getSubmittedAt().isAfter(assignment.getDueAt().atZone(assignmentZone()).toInstant());
             if (wasSubmittedOnTime || submission.getAttachmentPath() != null) {
