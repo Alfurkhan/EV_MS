@@ -8,6 +8,7 @@ import {
 import toast from "react-hot-toast";
 
 import MyClassCard from "../components/MyClassCard";
+import FacultyTimetableDraftPage from "../../timetable/pages/FacultyTimetableDraftPage";
 import { useMyClasses } from "../hooks/useMyClasses";
 import {
     startClass,
@@ -26,6 +27,9 @@ export default function MyClassesPage() {
 
     const [actionLoading, setActionLoading] =
         useState<number | null>(null);
+
+    const [activeView, setActiveView] =
+        useState<"classes" | "create" | "drafts">("classes");
 
     const handleStart = async (
         classItem: FacultyClass
@@ -141,6 +145,21 @@ export default function MyClassesPage() {
                 </button>
             </div>
 
+            <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm" role="tablist" aria-label="Class management views">
+                {([
+                    { id: "classes", label: "My Classes" },
+                    { id: "create", label: "Schedule a Class" },
+                    { id: "drafts", label: "View Drafts" },
+                ] as const).map((tab) => (
+                    <button key={tab.id} type="button" role="tab" aria-selected={activeView === tab.id}
+                        onClick={() => setActiveView(tab.id)}
+                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${activeView === tab.id ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"}`}>
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {activeView === "classes" ? <>
             {/* ERROR */}
 
             {error && (
@@ -236,10 +255,13 @@ export default function MyClassesPage() {
                         No classes scheduled for today
                     </h2>
 
-                    <p className="mt-1 text-sm text-slate-400">
-                        You don't have any active classes
-                        scheduled for today.
+                    <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                        There are no active classes scheduled for you today. You can create a class schedule or review drafts awaiting administrator approval.
                     </p>
+                    <div className="mt-5 flex flex-wrap justify-center gap-3">
+                        <button type="button" onClick={() => setActiveView("create")} className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Schedule a Class</button>
+                        <button type="button" onClick={() => setActiveView("drafts")} className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">View Drafts</button>
+                    </div>
                 </div>
 
             ) : (
@@ -303,6 +325,7 @@ export default function MyClassesPage() {
                     </span>
                 </div>
             )}
+            </> : <FacultyTimetableDraftPage view={activeView} onViewChange={setActiveView} />}
         </div>
     );
 }
