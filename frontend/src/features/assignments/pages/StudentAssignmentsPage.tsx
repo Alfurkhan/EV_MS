@@ -7,7 +7,6 @@ import {
     getStudentAssignmentSubmissions,
     getStudentAssignments,
     submitAssignment,
-    uploadSubmissionAttachment,
 } from "../services/assignmentService";
 import type { Assignment, AssignmentSubmission } from "../types/assignment";
 
@@ -59,8 +58,7 @@ export default function StudentAssignmentsPage() {
         }
         setSavingId(assignment.id);
         try {
-            await submitAssignment(assignment.id, { responseText });
-            if (file) await uploadSubmissionAttachment(assignment.id, file);
+            await submitAssignment(assignment.id, { responseText }, file);
             setFiles((old) => ({ ...old, [assignment.id]: null }));
             toast.success("Your latest submission has been saved.");
             setSelectedId(null);
