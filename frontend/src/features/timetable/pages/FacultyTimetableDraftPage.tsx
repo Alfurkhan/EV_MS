@@ -20,6 +20,7 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
     const [items, setItems] = useState<Timetable[]>([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [editingId, setEditingId] = useState<number | null>(null);
     const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
     const [grades, setGrades] = useState<Grade[]>([]);
@@ -88,8 +89,33 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
         setForm(old => ({ ...old, [key]: ["academicYearId","gradeId","sectionId","subjectId"].includes(key) ? Number(value) : value }));
     };
 
+    const validateForm = () => {
+        const errors: Record<string, string> = {};
+        if (!form.academicYearId) errors.academicYearId = "Choose an academic year.";
+        if (!form.gradeId) errors.gradeId = "Choose a grade.";
+        if (!form.sectionId) errors.sectionId = "Choose a section.";
+        if (!form.subjectId) errors.subjectId = "Choose one of your assigned subjects.";
+        if (!form.startDate) errors.startDate = "Choose a start date.";
+        if (!form.endDate) errors.endDate = "Choose an end date.";
+        else if (form.startDate && form.endDate < form.startDate) errors.endDate = "End date must be on or after the start date.";
+        if (!form.startTime) errors.startTime = "Choose a start time.";
+        if (!form.endTime) errors.endTime = "Choose an end time.";
+        else if (form.startTime && form.endTime <= form.startTime) errors.endTime = "End time must be later than start time.";
+        if (form.classType === "OFFLINE" && !form.room?.trim()) errors.room = "Enter the classroom or room number.";
+        if (form.classType === "ONLINE") {
+            if (!form.meetingLink?.trim()) errors.meetingLink = "Enter the online meeting link.";
+            else {
+                try { new URL(form.meetingLink); } catch { errors.meetingLink = "Enter a valid meeting URL, including https://."; }
+            }
+        }
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0) toast.error("Please fix the highlighted fields before continuing.");
+        return Object.keys(errors).length === 0;
+    };
+
     const saveDraft = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (!validateForm()) return;
         setSaving(true);
         try {
             if (editingId !== null) {
@@ -107,7 +133,36 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
         } finally { setSaving(false); }
     };
 
+    const scheduleNow = async () => {
+        if (!validateForm()) return;
+        setSaving(true);
+        try {
+            if (editingId !== null) {
+                await updateFacultyDraft(editingId, form);
+                await submitTimetableForApproval(editingId);
+            } else {
+                const created = await createTimetableDraft(form);
+                try {
+                    await submitTimetableForApproval(created.id);
+                } catch (error: any) {
+                    toast.error(error?.response?.data?.message ?? "Your draft was saved, but submission failed. Open View Drafts and try submitting again.");
+                    await refresh();
+                    return;
+                }
+            }
+            toast.success("Class scheduled and submitted to the administrator for approval.");
+            setEditingId(null);
+            setForm(initial);
+            setFieldErrors({});
+            await refresh();
+            onViewChange("drafts");
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message ?? "Could not schedule this class. Check the schedule details and try again.");
+        } finally { setSaving(false); }
+    };
+
     const editDraft = async (item: Timetable) => {
+        setFieldErrors({});
         setEditingId(item.id);
         onViewChange("create");
         setForm({ academicYearId: item.academicYearId, gradeId: item.gradeId, sectionId: item.sectionId, subjectId: item.subjectId, facultyId: item.facultyId, dayOfWeek: item.dayOfWeek, startDate: item.startDate, endDate: item.endDate, startTime: item.startTime, endTime: item.endTime, classType: item.classType, room: item.room ?? "", meetingLink: item.meetingLink ?? "", notes: item.notes ?? "", active: false });
@@ -130,26 +185,30 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
         } catch { toast.error("Could not submit this timetable."); }
     };
 
-    const field = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm";
+    const field = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
+    const errorText = (key: string) => fieldErrors[key] ? <span className="block text-xs font-normal text-rose-600">{fieldErrors[key]}</span> : null;
     return <div className="mx-auto max-w-5xl space-y-6">
-        {view === "create" && <form onSubmit={saveDraft} className="grid grid-cols-1 gap-4 rounded-2xl border bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
+        {view === "create" && <form noValidate onSubmit={saveDraft} className="grid grid-cols-1 gap-4 rounded-2xl border-0 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
             <label className="space-y-1 text-sm font-medium text-slate-700">Academic year
                 <select className={field} required disabled={lookupsLoading} value={form.academicYearId || ""} onChange={e => void selectAcademicYear(e.target.value)}>
                     <option value="">Select academic year</option>
                     {academicYears.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
+                {errorText("academicYearId")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Grade
                 <select className={field} required disabled={!form.academicYearId || grades.length === 0} value={form.gradeId || ""} onChange={e => void selectGrade(e.target.value)}>
                     <option value="">Select grade</option>
                     {grades.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
+                {errorText("gradeId")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Section
                 <select className={field} required disabled={!form.gradeId || sections.length === 0} value={form.sectionId || ""} onChange={e => update("sectionId", e.target.value)}>
                     <option value="">Select section</option>
                     {sections.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
+                {errorText("sectionId")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Assigned subject
                 <select className={field} required disabled={lookupsLoading || subjects.length === 0} value={form.subjectId || ""} onChange={e => update("subjectId", e.target.value)}>
@@ -157,6 +216,7 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
                     {subjects.map(item => <option key={item.id} value={item.id}>{item.name} ({item.code})</option>)}
                 </select>
                 {subjects.length === 0 && !lookupsLoading && <span className="block text-xs font-normal text-amber-700">No active subjects are assigned to your faculty account.</span>}
+                {errorText("subjectId")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Day
                 <select className={field} value={form.dayOfWeek} onChange={e=>update("dayOfWeek",e.target.value)}>
@@ -169,27 +229,36 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
                 </select>
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Start date
-                <input className={field} type="date" required value={form.startDate} onChange={e=>update("startDate",e.target.value)} />
+                <input className={field} type="date" required aria-invalid={Boolean(fieldErrors.startDate)} value={form.startDate} onChange={e=>{update("startDate",e.target.value);setFieldErrors(old=>({...old,startDate:"",endDate:""}));}} />
+                {errorText("startDate")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">End date
-                <input className={field} type="date" required value={form.endDate} onChange={e=>update("endDate",e.target.value)} />
+                <input className={field} type="date" required aria-invalid={Boolean(fieldErrors.endDate)} value={form.endDate} onChange={e=>{update("endDate",e.target.value);setFieldErrors(old=>({...old,endDate:""}));}} />
+                {errorText("endDate")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">Start time
-                <input className={field} type="time" required value={form.startTime} onChange={e=>update("startTime",e.target.value)} />
+                <input className={field} type="time" required aria-invalid={Boolean(fieldErrors.startTime)} value={form.startTime} onChange={e=>{update("startTime",e.target.value);setFieldErrors(old=>({...old,startTime:"",endTime:""}));}} />
+                {errorText("startTime")}
             </label>
             <label className="space-y-1 text-sm font-medium text-slate-700">End time
-                <input className={field} type="time" required value={form.endTime} onChange={e=>update("endTime",e.target.value)} />
+                <input className={field} type="time" required aria-invalid={Boolean(fieldErrors.endTime)} value={form.endTime} onChange={e=>{update("endTime",e.target.value);setFieldErrors(old=>({...old,endTime:""}));}} />
+                {errorText("endTime")}
             </label>
             {form.classType === "OFFLINE" ? <label className="space-y-1 text-sm font-medium text-slate-700">Room
-                <input className={field} required value={form.room ?? ""} onChange={e=>update("room",e.target.value)} />
+                <input className={field} required aria-invalid={Boolean(fieldErrors.room)} value={form.room ?? ""} onChange={e=>{update("room",e.target.value);setFieldErrors(old=>({...old,room:""}));}} />
+                {errorText("room")}
             </label> : <label className="space-y-1 text-sm font-medium text-slate-700">Meeting link
-                <input className={field} type="url" required value={form.meetingLink ?? ""} onChange={e=>update("meetingLink",e.target.value)} />
+                <input className={field} type="url" required aria-invalid={Boolean(fieldErrors.meetingLink)} value={form.meetingLink ?? ""} onChange={e=>{update("meetingLink",e.target.value);setFieldErrors(old=>({...old,meetingLink:""}));}} />
+                {errorText("meetingLink")}
             </label>}
             <label className="space-y-1 text-sm font-medium text-slate-700 sm:col-span-2">Notes (optional)
                 <input className={field} value={form.notes ?? ""} onChange={e=>update("notes",e.target.value)} />
             </label>
-            <div className="flex items-end gap-3">
-                <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2.5 font-semibold text-white disabled:opacity-60">
+            <div className="flex flex-wrap items-end gap-3 sm:col-span-2 lg:col-span-3">
+                <button type="button" disabled={saving} onClick={() => void scheduleNow()} className="rounded-lg bg-emerald-600 px-5 py-2.5 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+                    {saving ? "Processing…" : editingId !== null ? "Update & submit" : "Schedule now"}
+                </button>
+                <button type="submit" disabled={saving} className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
                     {saving ? "Saving…" : editingId !== null ? "Update draft" : "Save draft"}
                 </button>
                 {editingId !== null && <button type="button" className="rounded-lg border px-4 py-2.5 text-sm font-semibold text-slate-700" onClick={() => { setEditingId(null); setForm(initial); }}>
