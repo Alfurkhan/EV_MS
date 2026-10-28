@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - feature/faculty-timetable-approval
+      - feature/assignments
 
 permissions:
   contents: read

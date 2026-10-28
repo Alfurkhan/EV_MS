@@ -35,6 +35,12 @@ spring:
 
                 allowCredentials: true
 
+          routes:
+            - id: user-service
+              uri: ${USER_SERVICE_URL:http://localhost:8080}
+              predicates:
+                - Path=/auth/**,/user/**,/subject/**,/academic-year/**,/grade/**,/section/**,/student-enrollment/**,/timetable/**,/assignments/**,/class-session/**,/attendance/**,/admin/test-accounts/**
+
 management:
   endpoints:
     web:

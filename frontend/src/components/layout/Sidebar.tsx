@@ -9,6 +9,7 @@ import {
     CalendarCheck,
     CalendarDays,
     BookOpen,
+    ClipboardList,
     School,
     Bell,
     Settings,
@@ -81,6 +82,12 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_ADMIN"],
             },
             {
+                icon: ClipboardList,
+                label: "Assignments",
+                path: "/assignments",
+                allowedRoles: ["ROLE_ADMIN"],
+            },
+            {
                 icon: CalendarDays,
                 label: "My Timetable",
                 path: "/my-timetable",
@@ -93,9 +100,21 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_STUDENT"],
             },
             {
+                icon: ClipboardList,
+                label: "Assignments",
+                path: "/my-assignments",
+                allowedRoles: ["ROLE_STUDENT"],
+            },
+            {
                 icon: GraduationCap,
                 label: "My Classes",
                 path: "/my-classes",
+                allowedRoles: ["ROLE_FACULTY"],
+            },
+            {
+                icon: ClipboardList,
+                label: "Assignments",
+                path: "/faculty-assignments",
                 allowedRoles: ["ROLE_FACULTY"],
             },
             {
