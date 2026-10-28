@@ -15,7 +15,7 @@ const initial: TimetableRequest = {
     classType: "OFFLINE", room: ""
 };
 
-export default function FacultyTimetableDraftPage() {
+export default function FacultyTimetableDraftPage({ view, onViewChange }: { view: "create" | "drafts"; onViewChange: (view: "create" | "drafts") => void }) {
     const [form, setForm] = useState<TimetableRequest>(initial);
     const [items, setItems] = useState<Timetable[]>([]);
     const [loading, setLoading] = useState(false);
@@ -131,9 +131,7 @@ export default function FacultyTimetableDraftPage() {
 
     const field = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm";
     return <div className="mx-auto max-w-5xl space-y-6">
-        <header><h1 className="text-2xl font-bold text-slate-900">My Timetable Drafts</h1>
-            <p className="mt-1 text-sm text-slate-600">Save a draft first, then submit it for admin approval. Drafts are not published to students.</p></header>
-        <form onSubmit={saveDraft} className="grid grid-cols-1 gap-4 rounded-2xl border bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
+        {view === "create" && <form onSubmit={saveDraft} className="grid grid-cols-1 gap-4 rounded-2xl border bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
             <label className="space-y-1 text-sm font-medium text-slate-700">Academic year
                 <select className={field} required disabled={lookupsLoading} value={form.academicYearId || ""} onChange={e => void selectAcademicYear(e.target.value)}>
                     <option value="">Select academic year</option>
@@ -197,14 +195,19 @@ export default function FacultyTimetableDraftPage() {
                     Cancel edit
                 </button>}
             </div>
-        </form>
-        <section className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Your drafts</h2>
-            {loading ? <p className="text-sm text-slate-500">Loading…</p> : items.length === 0 ? <p className="text-sm text-slate-500">No drafts yet.</p> :
+        </form>}
+        {view === "drafts" && <section className="rounded-2xl border bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold">Drafts and approval status</h2>
+            {loading ? <p className="text-sm text-slate-500">Loading your drafts…</p> : items.length === 0 ? <div className="py-12 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400"><span className="text-2xl">＋</span></div>
+                <h3 className="mt-4 text-base font-semibold text-slate-800">No class drafts yet</h3>
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">You haven’t created or scheduled any classes yet. Start by creating a class draft, then submit it to the administrator for approval.</p>
+                <button type="button" onClick={() => onViewChange("create")} className="mt-5 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Schedule a Class</button>
+            </div> :
                 <div className="space-y-3">{items.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
                     <div><p className="font-semibold text-slate-900">{item.subjectName} · {item.dayOfWeek}</p><p className="text-sm text-slate-600">Grade {item.gradeName}, Section {item.sectionName} · {item.startTime}–{item.endTime}</p><p className="text-xs text-slate-500">Status: {item.status}</p>{item.notes && <p className="mt-1 max-w-xl whitespace-pre-wrap text-sm text-amber-700">Notes / feedback: {item.notes}</p>}</div>
-                    <div className="flex gap-2"><button onClick={()=>editDraft(item)} className="rounded-lg border px-4 py-2 text-sm font-semibold text-slate-700">Edit</button><button onClick={()=>void submit(item.id)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Submit for approval</button></div>
+                    {(item.status === "DRAFT" || item.status === "REJECTED") && <div className="flex gap-2"><button onClick={()=>editDraft(item)} className="rounded-lg border px-4 py-2 text-sm font-semibold text-slate-700">Edit</button><button onClick={()=>void submit(item.id)} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">Submit for approval</button></div>}
                 </div>)}</div>}
-        </section>
+        </section>}
     </div>;
 }
