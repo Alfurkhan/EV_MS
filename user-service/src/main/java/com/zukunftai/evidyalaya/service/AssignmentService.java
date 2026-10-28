@@ -4,7 +4,6 @@ import com.zukunftai.evidyalaya.database.Assignment;
 import com.zukunftai.evidyalaya.database.AssignmentSubmission;
 import com.zukunftai.evidyalaya.model.AssignmentGradeRequest;
 import com.zukunftai.evidyalaya.model.AssignmentRequest;
-import com.zukunftai.evidyalaya.model.AssignmentSubmissionRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -18,8 +17,7 @@ public interface AssignmentService {
     List<Assignment> getFacultyAssignments();
     List<Assignment> getStudentAssignments();
     List<Assignment> getAdminAssignments();
-    AssignmentSubmission submit(Long assignmentId, AssignmentSubmissionRequest request);
-    AssignmentSubmission uploadSubmissionAttachment(Long assignmentId, MultipartFile file);
+    AssignmentSubmission submit(Long assignmentId, String responseText, MultipartFile file);
     List<AssignmentSubmission> getStudentSubmissions();
     List<AssignmentSubmission> getSubmissionsForFaculty(Long assignmentId);
     AssignmentSubmission gradeSubmission(Long submissionId, AssignmentGradeRequest request);
