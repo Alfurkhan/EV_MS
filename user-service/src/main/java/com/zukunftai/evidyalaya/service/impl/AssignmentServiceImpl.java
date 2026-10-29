@@ -123,11 +123,10 @@ public class AssignmentServiceImpl implements AssignmentService {
     }
 
     @Override
-    public void deleteDraft(Long id) {
+    public void deleteAssignment(Long id) {
         Assignment assignment = findFacultyAssignment(id, currentUser());
-        if (assignment.getStatus() != AssignmentStatus.DRAFT) {
-            throw error("Only draft assignments can be deleted.", HttpStatus.CONFLICT, "ASSIGNMENT_NOT_DRAFT");
-        }
+        submissionRepository.findByAssignmentOrderBySubmittedAtDesc(assignment)
+                .forEach(submission -> deleteStoredFile(submission.getAttachmentPath()));
         deleteStoredFile(assignment.getAttachmentPath());
         assignmentRepository.delete(assignment);
     }
