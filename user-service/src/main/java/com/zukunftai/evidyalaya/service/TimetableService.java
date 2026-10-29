@@ -45,5 +45,7 @@ public interface TimetableService {
 
     List<Timetable> getMyTimetable();
 
+    List<Timetable> getMyAssignmentClasses();
+
     List<Timetable> getMyStudentTimetable();
 }
