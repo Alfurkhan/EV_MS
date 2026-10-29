@@ -4,6 +4,7 @@ import com.zukunftai.evidyalaya.database.Assignment;
 import com.zukunftai.evidyalaya.database.AssignmentSubmission;
 import com.zukunftai.evidyalaya.model.*;
 import com.zukunftai.evidyalaya.repository.AssignmentSubmissionRepository;
+import com.zukunftai.evidyalaya.repository.StudentEnrollmentRepository;
 import com.zukunftai.evidyalaya.service.AssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,9 @@ import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(path = "/assignments", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -28,6 +32,7 @@ import java.util.List;
 public class AssignmentController {
     private final AssignmentService assignmentService;
     private final AssignmentSubmissionRepository submissionRepository;
+    private final StudentEnrollmentRepository enrollmentRepository;
 
     @GetMapping("/faculty")
     @PreAuthorize("hasRole('FACULTY')")
@@ -56,7 +61,7 @@ public class AssignmentController {
     @DeleteMapping("/faculty/{id}")
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<Void> deleteDraft(@PathVariable Long id) {
-        assignmentService.deleteDraft(id);
+        assignmentService.deleteAssignment(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -70,6 +75,28 @@ public class AssignmentController {
     @PreAuthorize("hasRole('FACULTY')")
     public List<AssignmentSubmissionResponse> facultySubmissions(@PathVariable Long id) {
         return assignmentService.getSubmissionsForFaculty(id).stream().map(this::toSubmissionResponse).toList();
+    }
+
+    @GetMapping("/faculty/{id}/report")
+    @PreAuthorize("hasRole('FACULTY')")
+    public Map<String, Long> assignmentReport(@PathVariable Long id) {
+        Assignment assignment = assignmentService.getFacultyAssignments().stream()
+                .filter(item -> item.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
+        long submittedCount = assignmentService.getSubmissionsForFaculty(id).stream()
+                .filter(submission -> submission.getSubmittedAt() != null)
+                .count();
+        long totalStudents = enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(
+                assignment.getAcademicYear(), assignment.getGrade(), assignment.getSection());
+        long pendingCount = Math.max(0L, totalStudents - submittedCount);
+        long submissionRate = totalStudents == 0 ? 0L : Math.round(submittedCount * 100.0 / totalStudents);
+        return Map.of(
+                "totalStudents", totalStudents,
+                "submittedCount", submittedCount,
+                "pendingCount", pendingCount,
+                "submissionRate", submissionRate
+        );
     }
 
     @PutMapping("/faculty/submissions/{submissionId}/grade")
