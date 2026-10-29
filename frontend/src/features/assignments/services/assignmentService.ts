@@ -64,11 +64,21 @@ export async function getAdminAssignments(): Promise<Assignment[]> {
     return (await api.get<Assignment[]>("/assignments/admin")).data;
 }
 
+export interface AssignmentReportStudent {
+    studentId: number;
+    studentName: string;
+    studentEmail: string;
+    submitted: boolean;
+    submittedAt: string | null;
+    graded: boolean;
+}
+
 export interface AssignmentReport {
     totalStudents: number;
     submittedCount: number;
     pendingCount: number;
     submissionRate: number;
+    students: AssignmentReportStudent[];
 }
 
 export async function getAssignmentReport(id: number): Promise<AssignmentReport> {
@@ -105,6 +115,14 @@ async function viewFile(url: string): Promise<void> {
         previewWindow.close();
         throw error;
     }
+}
+
+export async function getAssignmentAttachmentBlob(id: number): Promise<Blob> {
+    return fetchAttachmentBlob(`/assignments/${id}/attachment`);
+}
+
+export async function getSubmissionAttachmentBlob(id: number): Promise<Blob> {
+    return fetchAttachmentBlob(`/assignments/submissions/${id}/attachment`);
 }
 
 export async function downloadAssignmentAttachment(id: number, filename: string): Promise<void> {
