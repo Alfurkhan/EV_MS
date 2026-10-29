@@ -562,6 +562,18 @@ public class TimetableServiceImpl implements TimetableService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Timetable> getMyAssignmentClasses() {
+        User faculty = getCurrentFaculty();
+        return timetableRepository.findByFaculty(faculty).stream()
+                .filter(entry -> entry.isActive() && entry.getStatus() == TimetableStatus.APPROVED)
+                .sorted(Comparator.comparing((Timetable entry) -> entry.getAcademicYear().getId())
+                        .thenComparing(entry -> entry.getGrade().getName())
+                        .thenComparing(entry -> entry.getSection().getName()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Timetable> getMyTimetable() {
 
         User faculty =
