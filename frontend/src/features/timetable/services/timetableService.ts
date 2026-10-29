@@ -29,6 +29,11 @@ export async function updateFacultyDraft(id: number, data: TimetableRequest): Pr
     return response.data;
 }
 
+export async function getMyAssignmentClasses(): Promise<Timetable[]> {
+    const response = await api.get<Timetable[]>("/timetable/my/assignment-classes");
+    return response.data;
+}
+
 export async function getMyTimetableDrafts(): Promise<Timetable[]> {
     const response = await api.get<Timetable[]>("/timetable/my/drafts");
     return response.data;
