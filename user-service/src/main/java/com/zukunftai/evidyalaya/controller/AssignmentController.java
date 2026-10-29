@@ -23,8 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 
 @RestController
 @RequestMapping(path = "/assignments", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -79,23 +79,49 @@ public class AssignmentController {
 
     @GetMapping("/faculty/{id}/report")
     @PreAuthorize("hasRole('FACULTY')")
-    public Map<String, Long> assignmentReport(@PathVariable Long id) {
+    public Map<String, Object> assignmentReport(@PathVariable Long id) {
         Assignment assignment = assignmentService.getFacultyAssignments().stream()
                 .filter(item -> item.getId().equals(id))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignment not found."));
-        long submittedCount = assignmentService.getSubmissionsForFaculty(id).stream()
-                .filter(submission -> submission.getSubmittedAt() != null)
-                .count();
-        long totalStudents = enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(
-                assignment.getAcademicYear(), assignment.getGrade(), assignment.getSection());
-        long pendingCount = Math.max(0L, totalStudents - submittedCount);
+
+        Map<Long, AssignmentSubmission> submittedByStudent = new HashMap<>();
+        for (AssignmentSubmission submission : assignmentService.getSubmissionsForFaculty(id)) {
+            if (submission.getSubmittedAt() != null) {
+                submittedByStudent.put(submission.getStudent().getId(), submission);
+            }
+        }
+
+        List<Map<String, Object>> students = enrollmentRepository
+                .findByAcademicYearAndGradeAndSectionAndActiveTrue(
+                        assignment.getAcademicYear(), assignment.getGrade(), assignment.getSection())
+                .stream()
+                .sorted(Comparator.comparing(enrollment ->
+                        Optional.ofNullable(enrollment.getStudent().getFullName()).orElse("").toLowerCase(Locale.ROOT)))
+                .map(enrollment -> {
+                    var student = enrollment.getStudent();
+                    AssignmentSubmission submission = submittedByStudent.get(student.getId());
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("studentId", student.getId());
+                    row.put("studentName", student.getFullName());
+                    row.put("studentEmail", student.getEmail());
+                    row.put("submitted", submission != null);
+                    row.put("submittedAt", submission == null ? null : submission.getSubmittedAt());
+                    row.put("graded", submission != null && submission.getGradedAt() != null);
+                    return row;
+                })
+                .toList();
+
+        long totalStudents = students.size();
+        long submittedCount = students.stream().filter(student -> Boolean.TRUE.equals(student.get("submitted"))).count();
+        long pendingCount = totalStudents - submittedCount;
         long submissionRate = totalStudents == 0 ? 0L : Math.round(submittedCount * 100.0 / totalStudents);
         return Map.of(
                 "totalStudents", totalStudents,
                 "submittedCount", submittedCount,
                 "pendingCount", pendingCount,
-                "submissionRate", submissionRate
+                "submissionRate", submissionRate,
+                "students", students
         );
     }
 
