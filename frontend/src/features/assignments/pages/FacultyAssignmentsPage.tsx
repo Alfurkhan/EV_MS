@@ -365,7 +365,8 @@ export default function FacultyAssignmentsPage() {
                             {errors.sectionId && <span className="block text-xs font-medium text-rose-600">{errors.sectionId}</span>}
                         </label>
                         <label className="space-y-1 text-sm font-medium text-slate-700">Assigned subject
-                            <select required aria-invalid={Boolean(errors.subjectId)} className={fieldClass(Boolean(errors.subjectId))} value={form.subjectId || ""} onChange={(event) => { setForm({ ...form, subjectId: Number(event.target.value) }); setErrors((old) => ({ ...old, subjectId: undefined })); }}><option value="">Select subject</option>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name} ({subject.code})</option>)}</select>
+                            <select required disabled={selectedSubjectId !== null} aria-invalid={Boolean(errors.subjectId)} className={fieldClass(Boolean(errors.subjectId)) + " disabled:bg-slate-100"} value={form.subjectId || ""} onChange={(event) => { setForm({ ...form, subjectId: Number(event.target.value) }); setErrors((old) => ({ ...old, subjectId: undefined })); }}><option value="">Select subject</option>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name} ({subject.code})</option>)}</select>
+                            {selectedSubjectId !== null && <span className="block text-xs font-normal text-slate-500">Subject is fixed to the one you selected.</span>}
                             {errors.subjectId && <span className="block text-xs font-medium text-rose-600">{errors.subjectId}</span>}
                         </label>
                         <label className="space-y-1 text-sm font-medium text-slate-700 md:col-span-2">Instructions
