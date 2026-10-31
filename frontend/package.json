@@ -22,8 +22,7 @@
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
     "tailwindcss": "^4.3.3",
-    "zod": "^4.4.3",
-    "react-pptx-preview-kit": "^0.1.9"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
