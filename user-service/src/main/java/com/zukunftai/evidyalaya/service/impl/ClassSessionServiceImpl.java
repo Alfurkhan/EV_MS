@@ -528,9 +528,6 @@ public class ClassSessionServiceImpl implements ClassSessionService {
         List<Timetable> timetables = timetableRepository
                 .findByFacultyAndStatusAndActiveTrue(faculty, TimetableStatus.APPROVED)
                 .stream()
-                .filter(timetable -> timetable.getStartDate() != null
-                        && timetable.getEndDate() != null
-                        && !today.isAfter(timetable.getEndDate()))
                 .sorted(Comparator
                         .comparing(Timetable::getDayOfWeek)
                         .thenComparing(Timetable::getStartTime))
