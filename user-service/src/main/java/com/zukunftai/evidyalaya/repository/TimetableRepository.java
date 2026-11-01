@@ -28,6 +28,8 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
 
     List<Timetable> findByFaculty(User faculty);
 
+    List<Timetable> findByFacultyAndStatusAndActiveTrue(User faculty, TimetableStatus status);
+
     List<Timetable> findByFacultyAndStatusInOrderByCreatedAtDesc(User faculty, List<TimetableStatus> statuses);
 
     List<Timetable> findByStatusOrderByCreatedAtDesc(TimetableStatus status);
