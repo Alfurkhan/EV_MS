@@ -16,6 +16,7 @@ public class FacultyMyClassResponse {
     private Long sessionId;
 
     private LocalDate sessionDate;
+    private String dayOfWeek;
 
     /**
      * NOT_STARTED means today's timetable exists,
