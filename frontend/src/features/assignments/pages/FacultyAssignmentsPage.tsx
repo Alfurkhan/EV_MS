@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import {
     ArrowLeft, BarChart3, BookOpen, BookOpenCheck, ClipboardList, Download,
     Eye, FileUp, PlusCircle, RefreshCw, Save, Send, Trash2, X, FileText,
+    ChevronDown, Filter, Search,
 } from "lucide-react";
 import { getAcademicYears, type AcademicYear } from "../../academic/services/academicYearService";
 import { getGradesByAcademicYear, type Grade } from "../../academic/services/gradeService";
@@ -83,6 +84,13 @@ export default function FacultyAssignmentsPage() {
     const [previewAttachment, setPreviewAttachment] = useState<PreviewAttachment | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [assignmentSearch, setAssignmentSearch] = useState("");
+    const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<"ALL" | "DRAFT" | "PUBLISHED">("ALL");
+    const [assignmentYearFilter, setAssignmentYearFilter] = useState("");
+    const [assignmentSubjectFilter, setAssignmentSubjectFilter] = useState("");
+    const [assignmentGradeFilter, setAssignmentGradeFilter] = useState("");
+    const [assignmentSectionFilter, setAssignmentSectionFilter] = useState("");
     const [saving, setSaving] = useState(false);
     const [panelLoading, setPanelLoading] = useState(false);
     const formRef = useRef<HTMLFormElement>(null);
@@ -410,6 +418,54 @@ export default function FacultyAssignmentsPage() {
         }
     };
 
+    const filteredAssignments = useMemo(() => {
+        const query = assignmentSearch.trim().toLowerCase();
+        return assignments.filter((assignment) => {
+            const matchesSearch = !query || [
+                assignment.title,
+                assignment.instructions,
+                assignment.subjectName,
+                assignment.subjectCode,
+                assignment.academicYearName,
+                assignment.gradeName,
+                assignment.sectionName,
+            ].some((value) => value.toLowerCase().includes(query));
+            return matchesSearch
+                && (assignmentStatusFilter === "ALL" || assignment.status === assignmentStatusFilter)
+                && (!assignmentYearFilter || String(assignment.academicYearId) === assignmentYearFilter)
+                && (!assignmentSubjectFilter || String(assignment.subjectId) === assignmentSubjectFilter)
+                && (!assignmentGradeFilter || String(assignment.gradeId) === assignmentGradeFilter)
+                && (!assignmentSectionFilter || String(assignment.sectionId) === assignmentSectionFilter);
+        });
+    }, [assignments, assignmentSearch, assignmentStatusFilter, assignmentYearFilter, assignmentSubjectFilter, assignmentGradeFilter, assignmentSectionFilter]);
+
+    const activeFilterCount = [
+        assignmentSearch.trim(),
+        assignmentStatusFilter !== "ALL" ? assignmentStatusFilter : "",
+        assignmentYearFilter,
+        assignmentSubjectFilter,
+        assignmentGradeFilter,
+        assignmentSectionFilter,
+    ].filter(Boolean).length;
+
+    const clearAssignmentFilters = () => {
+        setAssignmentSearch("");
+        setAssignmentStatusFilter("ALL");
+        setAssignmentYearFilter("");
+        setAssignmentSubjectFilter("");
+        setAssignmentGradeFilter("");
+        setAssignmentSectionFilter("");
+    };
+
+    const yearFilterOptions = [...new Map(assignments.map((item) => [item.academicYearId, item.academicYearName])).entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]));
+    const subjectFilterOptions = [...new Map(assignments.map((item) => [item.subjectId, item.subjectName])).entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]));
+    const gradeFilterOptions = [...new Map(assignments.map((item) => [item.gradeId, item.gradeName])).entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]));
+    const sectionFilterOptions = [...new Map(assignments.map((item) => [item.sectionId, item.sectionName])).entries()]
+        .sort((a, b) => a[1].localeCompare(b[1]));
+
     const renderAssignment = (assignment: Assignment) => (
         <article key={assignment.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -519,10 +575,63 @@ export default function FacultyAssignmentsPage() {
             </>}
 
             {view === "assignments" && <section className="space-y-4">
-                <div><h2 className="text-xl font-semibold text-slate-800">Your Assignments</h2><p className="mt-1 text-sm text-slate-500">Manage drafts, publish work, review submissions, and monitor class progress.</p></div>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div><h2 className="text-xl font-semibold text-slate-800">Your Assignments</h2><p className="mt-1 text-sm text-slate-500">Manage drafts, publish work, review submissions, and monitor class progress.</p></div>
+                    {assignments.length > 0 && <button
+                        type="button"
+                        onClick={() => setFiltersOpen((open) => !open)}
+                        aria-expanded={filtersOpen}
+                        aria-controls="faculty-assignment-filters"
+                        className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${filtersOpen || activeFilterCount > 0 ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+                    >
+                        <Filter size={16} /> Filters
+                        {activeFilterCount > 0 && <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}
+                        <ChevronDown size={16} className={`transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+                    </button>}
+                </div>
+                {filtersOpen && assignments.length > 0 && <div id="faculty-assignment-filters" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <div><h3 className="font-semibold text-slate-800">Filter assignments</h3><p className="text-xs text-slate-500">Narrow your list by keyword, status, or class details.</p></div>
+                        <button type="button" onClick={clearAssignmentFilters} disabled={activeFilterCount === 0} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-slate-400">Clear filters</button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <label className="text-xs font-semibold text-slate-600 sm:col-span-2 lg:col-span-3">Search assignments
+                            <span className="relative mt-1 block">
+                                <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input value={assignmentSearch} onChange={(event) => setAssignmentSearch(event.target.value)} placeholder="Search title, instructions, subject, or class…" className="w-full rounded-lg border border-slate-300 py-2.5 pl-9 pr-3 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+                            </span>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">Status
+                            <select value={assignmentStatusFilter} onChange={(event) => setAssignmentStatusFilter(event.target.value as "ALL" | "DRAFT" | "PUBLISHED")} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                <option value="ALL">All statuses</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option>
+                            </select>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">Academic year
+                            <select value={assignmentYearFilter} onChange={(event) => setAssignmentYearFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                <option value="">All academic years</option>{yearFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                            </select>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">Subject
+                            <select value={assignmentSubjectFilter} onChange={(event) => setAssignmentSubjectFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                <option value="">All subjects</option>{subjectFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                            </select>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">Grade
+                            <select value={assignmentGradeFilter} onChange={(event) => setAssignmentGradeFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                <option value="">All grades</option>{gradeFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                            </select>
+                        </label>
+                        <label className="text-xs font-semibold text-slate-600">Section
+                            <select value={assignmentSectionFilter} onChange={(event) => setAssignmentSectionFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                <option value="">All sections</option>{sectionFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+                            </select>
+                        </label>
+                    </div>
+                </div>}
                 {loading ? <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-500">Loading assignments…</div>
                     : assignments.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center"><ClipboardList className="mx-auto text-slate-300" size={36} /><h3 className="mt-3 font-semibold text-slate-800">No assignments have been created yet</h3><p className="mt-1 text-sm text-slate-500">Open My Subjects to create your first assignment.</p><button type="button" onClick={() => setView("subjects")} className="mt-4 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white">Browse my subjects</button></div>
-                    : <div className="space-y-3">{assignments.map(renderAssignment)}</div>}
+                    : filteredAssignments.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center"><Search className="mx-auto text-slate-300" size={32} /><h3 className="mt-3 font-semibold text-slate-800">No matching assignments</h3><p className="mt-1 text-sm text-slate-500">Try adjusting your filters or search terms.</p><button type="button" onClick={clearAssignmentFilters} className="mt-4 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Clear filters</button></div>
+                    : <><p className="text-xs text-slate-500">Showing {filteredAssignments.length} of {assignments.length} assignments</p><div className="space-y-3">{filteredAssignments.map(renderAssignment)}</div></>}
             </section>}
 
             {reportForId !== null && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) { setReportForId(null); setReport(null); } }}><section role="dialog" aria-modal="true" aria-labelledby="assignment-report-title" className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
