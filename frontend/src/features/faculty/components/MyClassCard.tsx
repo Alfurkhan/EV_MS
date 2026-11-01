@@ -91,6 +91,13 @@ export default function MyClassCard({
     const isOnline =
         classItem.classType === "ONLINE";
 
+    const today = new Date();
+    const weekdays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const isScheduledToday =
+        classItem.dayOfWeek === weekdays[today.getDay()] &&
+        today >= new Date(`${classItem.startDate}T00:00:00`) &&
+        today <= new Date(`${classItem.endDate}T23:59:59`);
+
     return (
         <div
             className="
@@ -153,7 +160,7 @@ export default function MyClassCard({
                     >
                         <Clock3 size={14} />
 
-                        Not Started
+                        {isScheduledToday ? "Not Started" : "Assigned"}
                     </div>
                 )}
 
@@ -238,7 +245,7 @@ export default function MyClassCard({
                     />
 
                     <span>
-                        {formatDate(classItem.startDate)}
+                        {classItem.dayOfWeek.charAt(0) + classItem.dayOfWeek.slice(1).toLowerCase()} · {formatDate(classItem.startDate)}
                         {" – "}
                         {formatDate(classItem.endDate)}
                     </span>
