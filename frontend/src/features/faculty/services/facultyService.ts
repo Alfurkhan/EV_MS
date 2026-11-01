@@ -73,6 +73,11 @@ export async function deleteFaculty(
     await api.delete(`/user/faculties/${facultyId}`);
 }
 
+export async function getMyAssignedClasses(): Promise<FacultyClass[]> {
+    const response = await api.get<FacultyClass[]>("/class-session/my/assigned");
+    return response.data;
+}
+
 export async function getMyClassesToday(): Promise<FacultyClass[]> {
     const response = await api.get<FacultyClass[]>(
         "/class-session/my/today"
