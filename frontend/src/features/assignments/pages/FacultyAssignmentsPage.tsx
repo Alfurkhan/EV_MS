@@ -85,6 +85,8 @@ export default function FacultyAssignmentsPage() {
     const [previewLoading, setPreviewLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [filtersOpen, setFiltersOpen] = useState(false);
+    const [subjectFiltersOpen, setSubjectFiltersOpen] = useState(false);
+    const [subjectSearch, setSubjectSearch] = useState("");
     const [assignmentSearch, setAssignmentSearch] = useState("");
     const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<"ALL" | "DRAFT" | "PUBLISHED">("ALL");
     const [assignmentYearFilter, setAssignmentYearFilter] = useState("");
@@ -429,7 +431,7 @@ export default function FacultyAssignmentsPage() {
                 assignment.academicYearName,
                 assignment.gradeName,
                 assignment.sectionName,
-            ].some((value) => value.toLowerCase().includes(query));
+            ].some((value) => (value ?? "").toLowerCase().includes(query));
             return matchesSearch
                 && (assignmentStatusFilter === "ALL" || assignment.status === assignmentStatusFilter)
                 && (!assignmentYearFilter || String(assignment.academicYearId) === assignmentYearFilter)
@@ -438,6 +440,20 @@ export default function FacultyAssignmentsPage() {
                 && (!assignmentSectionFilter || String(assignment.sectionId) === assignmentSectionFilter);
         });
     }, [assignments, assignmentSearch, assignmentStatusFilter, assignmentYearFilter, assignmentSubjectFilter, assignmentGradeFilter, assignmentSectionFilter]);
+
+    const filteredSubjectAssignments = useMemo(
+        () => filteredAssignments.filter((assignment) => assignment.subjectId === selectedSubjectId),
+        [filteredAssignments, selectedSubjectId],
+    );
+
+    const filteredSubjects = useMemo(() => {
+        const query = subjectSearch.trim().toLowerCase();
+        return subjects.filter((subject) =>
+            !query || [subject.name, subject.code].some((value) => (value ?? "").toLowerCase().includes(query))
+        );
+    }, [subjects, subjectSearch]);
+
+    const activeSubjectFilterCount = subjectSearch.trim() ? 1 : 0;
 
     const activeFilterCount = [
         assignmentSearch.trim(),
@@ -498,15 +514,29 @@ export default function FacultyAssignmentsPage() {
             </div>
 
             {view === "subjects" && <>
-                <div><h2 className="text-xl font-semibold text-slate-800">My Subjects</h2><p className="mt-1 text-sm text-slate-500">Choose a subject to create assignments and review its existing work.</p></div>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div><h2 className="text-xl font-semibold text-slate-800">My Subjects</h2><p className="mt-1 text-sm text-slate-500">Choose a subject to create assignments and review its existing work.</p></div>
+                    {subjects.length > 0 && <button type="button" onClick={() => setSubjectFiltersOpen((open) => !open)} aria-expanded={subjectFiltersOpen} aria-controls="faculty-subject-filters" className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${subjectFiltersOpen || activeSubjectFilterCount > 0 ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}>
+                        <Filter size={16} /> Filters
+                        {activeSubjectFilterCount > 0 && <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">{activeSubjectFilterCount}</span>}
+                        <ChevronDown size={16} className={`transition-transform ${subjectFiltersOpen ? "rotate-180" : ""}`} />
+                    </button>}
+                </div>
+                {subjectFiltersOpen && subjects.length > 0 && <div id="faculty-subject-filters" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-slate-800">Filter subjects</h3><p className="text-xs text-slate-500">Search by subject name or subject code.</p></div><button type="button" onClick={() => setSubjectSearch("")} disabled={!subjectSearch.trim()} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-slate-400">Clear filters</button></div>
+                    <label className="block text-xs font-semibold text-slate-600">Search subjects
+                        <span className="relative mt-1 block"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={subjectSearch} onChange={(event) => setSubjectSearch(event.target.value)} placeholder="Search subject name or code…" className="w-full rounded-lg border border-slate-300 py-2.5 pl-9 pr-3 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" /></span>
+                    </label>
+                </div>}
                 {loading ? <div className="rounded-2xl bg-white p-10 text-center text-sm text-slate-500">Loading your subjects…</div>
                     : subjects.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center"><BookOpen className="mx-auto text-slate-300" size={34} /><h3 className="mt-3 font-semibold text-slate-800">No assigned subjects found</h3><p className="mt-1 text-sm text-slate-500">Subjects assigned to you through the school timetable will appear here.</p></div>
-                    : <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{subjects.map((subject) => {
+                    : <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">{filteredSubjects.map((subject) => {
                         const count = assignments.filter((assignment) => assignment.subjectId === subject.id).length;
                         return <button key={subject.id} type="button" onClick={() => { setSelectedSubjectId(subject.id); setView("subject"); setShowForm(false); setSelectedAssignment(null); setReportForId(null); }} className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-200">
                             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><BookOpen size={22} /></span><h3 className="mt-4 text-lg font-semibold text-slate-800">{subject.name}</h3><p className="mt-1 text-xs font-semibold uppercase tracking-wide text-indigo-600">{subject.code}</p><p className="mt-3 text-sm text-slate-500">{count} {count === 1 ? "assignment" : "assignments"} created</p><p className="mt-4 border-t border-slate-100 pt-3 text-sm font-semibold text-indigo-600">Open subject →</p>
                         </button>;
                     })}</div>}
+                {!loading && subjects.length > 0 && filteredSubjects.length === 0 && <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center"><Search className="mx-auto text-slate-300" size={32} /><h3 className="mt-3 font-semibold text-slate-800">No matching subjects</h3><p className="mt-1 text-sm text-slate-500">Try another subject name or code.</p><button type="button" onClick={() => setSubjectSearch("")} className="mt-4 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Clear filters</button></div>}
             </>}
 
             {view === "subject" && selectedSubject && <>
@@ -569,6 +599,21 @@ export default function FacultyAssignmentsPage() {
                     <p className="mt-3 text-xs text-slate-500">Only classes assigned to you in an approved timetable can be selected. Publishing makes this assignment visible to students actively enrolled in the selected class.</p>
                 </section></div>}
 
+                {!showForm && subjectAssignments.length > 0 && <section className="space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-lg font-semibold text-slate-800">Assignments for {selectedSubject.name}</h3><p className="text-xs text-slate-500">Showing assignments for this subject.</p></div><button type="button" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen} aria-controls="faculty-assignment-filters" className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${filtersOpen || activeFilterCount > 0 ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}><Filter size={16} /> Filters{activeFilterCount > 0 && <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}<ChevronDown size={16} className={`transition-transform ${filtersOpen ? "rotate-180" : ""}`} /></button></div>
+                    {filtersOpen && <div id="faculty-assignment-filters" className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><div><h3 className="font-semibold text-slate-800">Filter assignments</h3><p className="text-xs text-slate-500">Narrow this subject’s assignments by keyword, status, or class details.</p></div><button type="button" onClick={clearAssignmentFilters} disabled={activeFilterCount === 0} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-slate-400">Clear filters</button></div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <label className="text-xs font-semibold text-slate-600 sm:col-span-2 lg:col-span-3">Search assignments<span className="relative mt-1 block"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><input value={assignmentSearch} onChange={(event) => setAssignmentSearch(event.target.value)} placeholder="Search title, instructions, subject, or class…" className="w-full rounded-lg border border-slate-300 py-2.5 pl-9 pr-3 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" /></span></label>
+                            <label className="text-xs font-semibold text-slate-600">Status<select value={assignmentStatusFilter} onChange={(event) => setAssignmentStatusFilter(event.target.value as "ALL" | "DRAFT" | "PUBLISHED")} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="ALL">All statuses</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option></select></label>
+                            <label className="text-xs font-semibold text-slate-600">Academic year<select value={assignmentYearFilter} onChange={(event) => setAssignmentYearFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All academic years</option>{yearFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+                            <label className="text-xs font-semibold text-slate-600">Subject<select value={assignmentSubjectFilter} onChange={(event) => setAssignmentSubjectFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All subjects</option>{subjectFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+                            <label className="text-xs font-semibold text-slate-600">Grade<select value={assignmentGradeFilter} onChange={(event) => setAssignmentGradeFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All grades</option>{gradeFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+                            <label className="text-xs font-semibold text-slate-600">Section<select value={assignmentSectionFilter} onChange={(event) => setAssignmentSectionFilter(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"><option value="">All sections</option>{sectionFilterOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+                        </div>
+                    </div>}
+                    {filteredSubjectAssignments.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center"><Search className="mx-auto text-slate-300" size={32} /><h3 className="mt-3 font-semibold text-slate-800">No matching assignments</h3><p className="mt-1 text-sm text-slate-500">Try adjusting your filters or search terms.</p><button type="button" onClick={clearAssignmentFilters} className="mt-4 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Clear filters</button></div> : <div className="space-y-3">{filteredSubjectAssignments.map(renderAssignment)}</div>}
+                </section>}
                 {!loading && subjectAssignments.length === 0 && !showForm ? <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center"><ClipboardList className="mx-auto text-slate-300" size={36} /><h3 className="mt-3 font-semibold text-slate-800">No assignments have been created yet</h3><p className="mt-1 text-sm text-slate-500">Create the first assignment for {selectedSubject.name} when you’re ready.</p><button type="button" onClick={openCreate} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"><PlusCircle size={16} /> Create assignment</button></div>
                     : loading ? <div className="rounded-2xl bg-white p-8 text-center text-sm text-slate-500">Loading assignments…</div>
                     : !showForm && <section className="space-y-3"><h3 className="text-lg font-semibold text-slate-800">Assignments for {selectedSubject.name}</h3>{subjectAssignments.map(renderAssignment)}</section>}
