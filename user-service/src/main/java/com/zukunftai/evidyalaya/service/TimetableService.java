@@ -43,6 +43,8 @@ public interface TimetableService {
 
     List<Timetable> getTimetablesByFaculty(Long facultyId);
 
+    List<Timetable> getMyAssignmentClasses();
+
     List<Timetable> getMyTimetable();
 
     List<Timetable> getMyStudentTimetable();

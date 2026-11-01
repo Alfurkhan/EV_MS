@@ -10,6 +10,7 @@ on:
     branches:
       - feature/faculty-timetable-approval
       - feature/assignments
+      - feature/assignment-ux-enhancements
 
 permissions:
   contents: read

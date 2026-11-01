@@ -13,7 +13,7 @@ public interface AssignmentService {
     Assignment createDraft(AssignmentRequest request);
     Assignment updateDraft(Long id, AssignmentRequest request);
     Assignment publish(Long id);
-    void deleteDraft(Long id);
+    void deleteAssignment(Long id);
     List<Assignment> getFacultyAssignments();
     List<Assignment> getStudentAssignments();
     List<Assignment> getAdminAssignments();

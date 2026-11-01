@@ -97,6 +97,12 @@ public interface StudentEnrollmentRepository
             Section section
     );
 
+    long countByAcademicYearAndGradeAndSectionAndActiveTrue(
+            AcademicYear academicYear,
+            Grade grade,
+            Section section
+    );
+
     @Query("""
         SELECT COUNT(DISTINCT enrollment.student.id)
         FROM StudentEnrollment enrollment
