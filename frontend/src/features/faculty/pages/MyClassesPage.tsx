@@ -104,7 +104,7 @@ export default function MyClassesPage() {
 
                     <p className="mt-1 text-slate-500">
                         {activeView === "classes"
-                            ? "View and manage your classes for today"
+                            ? "View all classes assigned to you"
                             : activeView === "create"
                                 ? "Create a class schedule and save it as a draft for admin approval"
                                 : "Review your class drafts and track their approval status"}
@@ -256,11 +256,11 @@ export default function MyClassesPage() {
                     </div>
 
                     <h2 className="mt-4 text-base font-semibold text-slate-800">
-                        No classes scheduled for today
+                        No assigned classes found
                     </h2>
 
                     <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-                        There are no active classes scheduled for you today. You can create a class schedule or review drafts awaiting administrator approval.
+                        You don't have any approved class schedules assigned yet. You can create a class schedule or review drafts awaiting administrator approval.
                     </p>
                     <div className="mt-5 flex flex-wrap justify-center gap-3">
                         <button type="button" onClick={() => setActiveView("create")} className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Schedule a Class</button>
@@ -325,7 +325,7 @@ export default function MyClassesPage() {
                         {classes.length === 1
                             ? "class"
                             : "classes"}{" "}
-                        scheduled today
+                        assigned
                     </span>
                 </div>
             )}
