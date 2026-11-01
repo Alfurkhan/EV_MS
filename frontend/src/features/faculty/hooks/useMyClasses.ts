@@ -13,7 +13,7 @@ export function useMyClasses() {
             setLoading(true);
             setError("");
 
-            const data = await getMyClassesToday();
+            const data = await getMyAssignedClasses();
 
             setClasses(data);
         } catch (error: any) {
