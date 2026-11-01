@@ -11,6 +11,7 @@ export interface FacultyClass {
     sessionId: number | null;
 
     sessionDate: string;
+    dayOfWeek: string;
 
     status: FacultyClassStatus;
 
