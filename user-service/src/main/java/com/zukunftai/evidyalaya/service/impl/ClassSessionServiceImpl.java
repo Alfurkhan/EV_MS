@@ -3,6 +3,7 @@ package com.zukunftai.evidyalaya.service.impl;
 import com.zukunftai.evidyalaya.database.ClassSession;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.Timetable;
+import com.zukunftai.evidyalaya.database.TimetableStatus;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.ClassSessionResponse;
@@ -515,6 +516,77 @@ public class ClassSessionServiceImpl implements ClassSessionService {
         }
 
         return authentication.getName();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FacultyMyClassResponse> getMyAssignedClasses() {
+
+        User faculty = getCurrentFaculty();
+        LocalDate today = LocalDate.now();
+
+        List<Timetable> timetables = timetableRepository
+                .findByFacultyAndStatusAndActiveTrue(faculty, TimetableStatus.APPROVED)
+                .stream()
+                .filter(timetable -> timetable.getStartDate() != null
+                        && timetable.getEndDate() != null
+                        && !today.isAfter(timetable.getEndDate()))
+                .sorted(Comparator
+                        .comparing(Timetable::getDayOfWeek)
+                        .thenComparing(Timetable::getStartTime))
+                .toList();
+
+        List<FacultyMyClassResponse> responses = new ArrayList<>();
+
+        for (Timetable timetable : timetables) {
+            ClassSession session = classSessionRepository
+                    .findByTimetableAndSessionDate(timetable, today)
+                    .orElse(null);
+
+            FacultyMyClassResponse.FacultyMyClassResponseBuilder response =
+                    FacultyMyClassResponse.builder()
+                            .timetableId(timetable.getId())
+                            .sessionDate(today)
+                            .dayOfWeek(timetable.getDayOfWeek().name())
+                            .academicYearId(timetable.getAcademicYear().getId())
+                            .academicYearName(timetable.getAcademicYear().getName())
+                            .gradeId(timetable.getGrade().getId())
+                            .gradeName(timetable.getGrade().getName())
+                            .sectionId(timetable.getSection().getId())
+                            .sectionName(timetable.getSection().getName())
+                            .subjectId(timetable.getSubject().getId())
+                            .subjectName(timetable.getSubject().getName())
+                            .subjectCode(timetable.getSubject().getCode())
+                            .facultyId(timetable.getFaculty().getId())
+                            .facultyName(timetable.getFaculty().getFullName())
+                            .facultyEmail(timetable.getFaculty().getEmail())
+                            .scheduledStartTime(timetable.getStartTime())
+                            .scheduledEndTime(timetable.getEndTime())
+                            .startDate(timetable.getStartDate())
+                            .endDate(timetable.getEndDate())
+                            .classType(timetable.getClassType())
+                            .room(timetable.getRoom())
+                            .meetingLink(timetable.getMeetingLink())
+                            .notes(timetable.getNotes());
+
+            if (session == null) {
+                response.status("NOT_STARTED")
+                        .sessionId(null)
+                        .startedAt(null)
+                        .endedAt(null)
+                        .durationMinutes(null);
+            } else {
+                response.status(session.getStatus().name())
+                        .sessionId(session.getId())
+                        .startedAt(session.getStartedAt())
+                        .endedAt(session.getEndedAt())
+                        .durationMinutes(session.getDurationMinutes());
+            }
+
+            responses.add(response.build());
+        }
+
+        return responses;
     }
 
     @Override
