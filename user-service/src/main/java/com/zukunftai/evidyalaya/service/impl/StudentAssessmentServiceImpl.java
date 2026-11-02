@@ -58,7 +58,8 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
                             .durationMinutes(a.getDurationMinutes()).totalMarks(a.getTotalMarks()).availability(availability)
                             .attempted(attempt != null).attemptId(attempt == null ? null : attempt.getId())
                             .attemptStatus(attempt == null ? null : attempt.getStatus().name())
-                            .attemptDeadline(attempt == null ? null : attempt.getDeadlineAt()).build();
+                            .attemptDeadline(attempt == null ? null : attempt.getDeadlineAt())
+                            .hasAttachment(a.getAttachmentPath() != null).attachmentName(a.getAttachmentName()).build();
                 }).toList();
     }
 
