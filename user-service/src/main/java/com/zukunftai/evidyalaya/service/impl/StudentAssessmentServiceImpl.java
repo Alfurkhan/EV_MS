@@ -30,7 +30,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
             AssessmentAttemptRepository attempts, AssessmentAnswerRepository answers,
             StudentEnrollmentRepository enrollments, UserRepository users, AssessmentObjectiveGrader objectiveGrader) {
         this.assessments = assessments; this.questions = questions; this.attempts = attempts;
-        this.answers = answers; this.enrollments = enrollments; this.users = users;
+        this.answers = answers; this.enrollments = enrollments; this.users = users; this.objectiveGrader = objectiveGrader;
     }
 
     @Override @Transactional(readOnly = true)
