@@ -5,7 +5,6 @@ import {
     RefreshCw,
     SearchX,
     Search,
-    FilterX,
     Filter,
     ChevronDown,
 } from "lucide-react";
