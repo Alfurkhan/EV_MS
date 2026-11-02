@@ -11,4 +11,5 @@ public interface AssessmentAttemptRepository extends JpaRepository<AssessmentAtt
     Optional<AssessmentAttempt> findByAssessmentAndStudent(Assessment assessment, User student);
     Optional<AssessmentAttempt> findByIdAndStudent(Long id, User student);
     List<AssessmentAttempt> findByStudentOrderByCreatedAtDesc(User student);
+    List<AssessmentAttempt> findByStatusAndDeadlineAtLessThanEqual(AssessmentAttemptStatus status, java.time.Instant deadlineAt);
 }
