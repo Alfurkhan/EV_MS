@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
-import MyClassCard from "../components/MyClassCard";
+import WeeklyTimetableGrid from "../components/WeeklyTimetableGrid";
 import FacultyTimetableDraftPage from "../../timetable/pages/FacultyTimetableDraftPage";
 import { useMyClasses } from "../hooks/useMyClasses";
 import {
@@ -272,31 +272,12 @@ export default function MyClassesPage() {
 
                 /* CLASS LIST */
 
-                <div className="space-y-4">
-                    {classes.map((classItem) => (
-                        <div
-                            key={classItem.timetableId}
-                            className={
-                                actionLoading ===
-                                classItem.timetableId ||
-                                actionLoading ===
-                                classItem.sessionId
-                                    ? "opacity-70"
-                                    : ""
-                            }
-                        >
-                            <MyClassCard
-                                classItem={classItem}
-                                onStart={
-                                    handleStart
-                                }
-                                onEnd={
-                                    handleEnd
-                                }
-                            />
-                        </div>
-                    ))}
-                </div>
+                <WeeklyTimetableGrid
+                    classes={classes}
+                    actionLoading={actionLoading}
+                    onStart={handleStart}
+                    onEnd={handleEnd}
+                />
             )}
 
             {/* SUMMARY */}
