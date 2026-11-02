@@ -37,6 +37,7 @@ import FacultyAssessmentEvaluationsPage from "./features/assessments/pages/Facul
 import StudentAssignmentsPage from "./features/assignments/pages/StudentAssignmentsPage";
 import StudentAssessmentsPage from "./features/assessments/pages/StudentAssessmentsPage";
 import AdminAssignmentsPage from "./features/assignments/pages/AdminAssignmentsPage";
+import AdminAssessmentsPage from "./features/assessments/pages/AdminAssessmentsPage";
 
 export default function App() {
     return (
@@ -159,6 +160,14 @@ export default function App() {
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
                                 <AdminAssignmentsPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/admin-assessments"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                                <AdminAssessmentsPage />
                             </RoleProtectedRoute>
                         }
                     />
