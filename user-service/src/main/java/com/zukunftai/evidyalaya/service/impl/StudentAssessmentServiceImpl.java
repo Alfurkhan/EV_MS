@@ -79,7 +79,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
             if (attempt.getStatus() != AssessmentAttemptStatus.IN_PROGRESS) throw error("You have already submitted this assessment.", HttpStatus.CONFLICT, "ASSESSMENT_ALREADY_ATTEMPTED");
             return toResponse(attempt);
         }
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ASSESSMENT_ZONE);
         if (now.isBefore(assessment.getAvailableFrom()) || !now.isBefore(assessment.getAvailableUntil()))
             throw error("This assessment is outside its availability window.", HttpStatus.CONFLICT, "ASSESSMENT_WINDOW_CLOSED");
         Instant started = Instant.now();
