@@ -6,6 +6,8 @@ import {
     SearchX,
     Search,
     FilterX,
+    Filter,
+    ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -39,6 +41,7 @@ export default function MyClassesPage() {
     const [subjectFilter, setSubjectFilter] = useState("ALL");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [typeFilter, setTypeFilter] = useState("ALL");
+    const [filtersOpen, setFiltersOpen] = useState(false);
 
     const filteredClasses = classes.filter((item) => {
         const term = searchText.trim().toLowerCase();
@@ -53,8 +56,13 @@ export default function MyClassesPage() {
             (typeFilter === "ALL" || item.classType === typeFilter);
     });
 
-    const hasActiveFilters = Boolean(searchText.trim() || dayFilter !== "ALL" ||
-        subjectFilter !== "ALL" || statusFilter !== "ALL" || typeFilter !== "ALL");
+    const activeFilterCount = [
+        searchText.trim(),
+        dayFilter !== "ALL" ? dayFilter : "",
+        subjectFilter !== "ALL" ? subjectFilter : "",
+        statusFilter !== "ALL" ? statusFilter : "",
+        typeFilter !== "ALL" ? typeFilter : "",
+    ].filter(Boolean).length;
 
     const clearFilters = () => {
         setSearchText("");
@@ -232,49 +240,53 @@ export default function MyClassesPage() {
 
 
             {classes.length > 0 && (
-                <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <Search size={16} className="text-slate-500" />
-                            Filter classes
-                            <span className="text-xs font-normal text-slate-400">{filteredClasses.length} of {classes.length} shown</span>
-                        </div>
-                        {hasActiveFilters && (
-                            <button type="button" onClick={clearFilters} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800">
-                                <FilterX size={14} /> Clear filters
-                            </button>
-                        )}
+                <div className="flex flex-col items-start gap-3">
+                    <div className="flex w-full justify-end">
+                        <button type="button" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen} aria-controls="faculty-class-filters"
+                            className={"inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition " + (filtersOpen || activeFilterCount > 0 ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50")}>
+                            <Filter size={16} /> Filters
+                            {activeFilterCount > 0 && <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}
+                            <ChevronDown size={16} className={"transition-transform " + (filtersOpen ? "rotate-180" : "")} />
+                        </button>
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                        <div className="relative">
-                            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                            <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search subject, grade, room..." aria-label="Search classes"
-                                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
-                        </div>
-                        <select value={dayFilter} onChange={(e) => setDayFilter(e.target.value)} aria-label="Filter by weekday" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
-                            <option value="ALL">All weekdays</option>
-                            {[...new Set(classes.map((item) => item.dayOfWeek).filter((day): day is string => Boolean(day)))].sort().map((day) => (
-                                <option key={day} value={day}>{day.charAt(0) + day.slice(1).toLowerCase()}</option>
-                            ))}
-                        </select>
-                        <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} aria-label="Filter by subject" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
-                            <option value="ALL">All subjects</option>
-                            {[...new Set(classes.map((item) => item.subjectName))].sort().map((subject) => <option key={subject} value={subject}>{subject}</option>)}
-                        </select>
-                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter by class status" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
-                            <option value="ALL">All statuses</option>
-                            <option value="NOT_STARTED">Not started</option>
-                            <option value="IN_PROGRESS">In progress</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="CANCELLED">Cancelled</option>
-                        </select>
-                        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} aria-label="Filter by class type" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
-                            <option value="ALL">All class types</option>
-                            <option value="ONLINE">Online</option>
-                            <option value="OFFLINE">Offline</option>
-                        </select>
-                    </div>
-                </section>
+                    {filtersOpen && (
+                        <section id="faculty-class-filters" className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                                <div><h3 className="font-semibold text-slate-800">Filter classes</h3><p className="text-xs text-slate-500">Narrow your timetable by keyword, weekday, subject, status, or class type.</p></div>
+                                <button type="button" onClick={clearFilters} disabled={activeFilterCount === 0} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-slate-400">Clear filters</button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                <label className="text-xs font-semibold text-slate-600 sm:col-span-2 lg:col-span-3">Search classes
+                                    <span className="relative mt-1 block"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search subject, code, grade, section, or room..." className="w-full rounded-lg border border-slate-300 py-2.5 pl-9 pr-3 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+                                    </span>
+                                </label>
+                                <label className="text-xs font-semibold text-slate-600">Weekday
+                                    <select value={dayFilter} onChange={(e) => setDayFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                        <option value="ALL">All weekdays</option>
+                                        {[...new Set(classes.map((item) => item.dayOfWeek).filter((day): day is string => Boolean(day)))].sort().map((day) => <option key={day} value={day}>{day.charAt(0) + day.slice(1).toLowerCase()}</option>)}
+                                    </select>
+                                </label>
+                                <label className="text-xs font-semibold text-slate-600">Subject
+                                    <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                        <option value="ALL">All subjects</option>
+                                        {[...new Set(classes.map((item) => item.subjectName))].sort().map((subject) => <option key={subject} value={subject}>{subject}</option>)}
+                                    </select>
+                                </label>
+                                <label className="text-xs font-semibold text-slate-600">Status
+                                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                        <option value="ALL">All statuses</option><option value="NOT_STARTED">Not started</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option>
+                                    </select>
+                                </label>
+                                <label className="text-xs font-semibold text-slate-600">Class type
+                                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                        <option value="ALL">All class types</option><option value="ONLINE">Online</option><option value="OFFLINE">Offline</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </section>
+                    )}
+                </div>
             )}
 
             {/* LOADING */}
