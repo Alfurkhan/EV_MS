@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public interface AssessmentAttemptRepository extends JpaRepository<AssessmentAttempt, Long> {
     Optional<AssessmentAttempt> findByAssessmentAndStudent(Assessment assessment, User student);
+    long countByAssessmentId(Long assessmentId);
     Optional<AssessmentAttempt> findByIdAndStudent(Long id, User student);
     List<AssessmentAttempt> findByStudentOrderByCreatedAtDesc(User student);
     List<AssessmentAttempt> findByStatusAndDeadlineAtLessThanEqual(AssessmentAttemptStatus status, java.time.Instant deadlineAt);
