@@ -12,6 +12,7 @@ public interface AssessmentService {
     Assessment createDraft(AssessmentRequest request);
     Assessment updateDraft(Long id, AssessmentRequest request);
     Assessment publish(Long id);
+    void deleteDraft(Long id);
     Assessment uploadAttachment(Long id, MultipartFile file);
     Assessment getAssessmentForAttachment(Long id);
     Path resolveStoredAttachment(String storedPath);
