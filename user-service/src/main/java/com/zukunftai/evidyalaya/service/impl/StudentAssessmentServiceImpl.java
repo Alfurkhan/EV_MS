@@ -24,10 +24,11 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
     private final AssessmentAnswerRepository answers;
     private final StudentEnrollmentRepository enrollments;
     private final UserRepository users;
+    private final AssessmentObjectiveGrader objectiveGrader;
 
     public StudentAssessmentServiceImpl(AssessmentRepository assessments, AssessmentQuestionRepository questions,
             AssessmentAttemptRepository attempts, AssessmentAnswerRepository answers,
-            StudentEnrollmentRepository enrollments, UserRepository users) {
+            StudentEnrollmentRepository enrollments, UserRepository users, AssessmentObjectiveGrader objectiveGrader) {
         this.assessments = assessments; this.questions = questions; this.attempts = attempts;
         this.answers = answers; this.enrollments = enrollments; this.users = users;
     }
@@ -114,7 +115,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
             Instant now = Instant.now();
             boolean expired = !now.isBefore(attempt.getDeadlineAt());
             attempt.setStatus(expired ? AssessmentAttemptStatus.AUTO_SUBMITTED : AssessmentAttemptStatus.SUBMITTED);
-            attempt.setSubmittedAt(now); attempt.setUpdatedAt(now); attempts.save(attempt);
+            attempt.setSubmittedAt(now); attempt.setUpdatedAt(now); objectiveGrader.gradeObjectiveAnswers(attempt); attempts.save(attempt);
         }
         return toResponse(attempt);
     }
@@ -127,7 +128,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
     private void autoSubmitIfExpired(AssessmentAttempt attempt) {
         if (attempt.getStatus() == AssessmentAttemptStatus.IN_PROGRESS && !Instant.now().isBefore(attempt.getDeadlineAt())) {
             Instant now = Instant.now(); attempt.setStatus(AssessmentAttemptStatus.AUTO_SUBMITTED);
-            attempt.setSubmittedAt(now); attempt.setUpdatedAt(now); attempts.save(attempt);
+            attempt.setSubmittedAt(now); attempt.setUpdatedAt(now); objectiveGrader.gradeObjectiveAnswers(attempt); attempts.save(attempt);
         }
     }
     private AssessmentAttempt ownedAttempt(Long id) {
