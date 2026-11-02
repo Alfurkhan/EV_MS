@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -36,6 +37,8 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     @Value("${app.assessment-storage-dir:uploads/assessments}")
     private String storageDirectory;
+
+    private static final ZoneId ASSESSMENT_ZONE = ZoneId.of("Asia/Kolkata");
 
     public AssessmentServiceImpl(AssessmentRepository assessmentRepository,
             AssessmentQuestionRepository questionRepository,
@@ -137,7 +140,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         for (AssessmentQuestion question : questions) validateQuestion(question.getQuestionType(),
                 question.getOptions(), question.getCorrectAnswer(), true);
         assessment.setStatus(AssessmentStatus.PUBLISHED);
-        assessment.setPublishedAt(LocalDateTime.now());
+        assessment.setPublishedAt(LocalDateTime.now(ASSESSMENT_ZONE));
         assessment.setUpdatedAt(Instant.now());
         return assessmentRepository.save(assessment);
     }
