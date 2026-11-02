@@ -203,7 +203,7 @@ public class AssessmentServiceImpl implements AssessmentService {
             throw error("Attachments must be 25 MB or smaller.", HttpStatus.PAYLOAD_TOO_LARGE, "ATTACHMENT_TOO_LARGE");
         }
         String original = StringUtils.cleanPath(Objects.requireNonNullElse(file.getOriginalFilename(), "attachment"));
-        if (original.isBlank() || original.contains("..") || original.contains("/") || original.contains("\\\\")) {
+        if (original.isBlank() || original.contains("..") || original.contains("/") || original.contains("\\")) {
             throw error("Invalid attachment filename.", HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT_NAME");
         }
         String extension = "";
