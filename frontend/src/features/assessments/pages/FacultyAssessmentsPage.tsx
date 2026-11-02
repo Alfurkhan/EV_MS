@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ClipboardList, Plus, Save, Send, RefreshCw } from "lucide-react";
 import { getAcademicYears, type AcademicYear } from "../../academic/services/academicYearService";
@@ -44,7 +44,6 @@ export default function FacultyAssessmentsPage() {
 
     const refresh=async()=>{setLoading(true);try{setItems(await getFacultyAssessments());}catch(e:any){toast.error(e?.response?.data?.message??"Could not load assessments.");}finally{setLoading(false);}};
     useEffect(()=>{void refresh();Promise.all([getAcademicYears(),getMySubjects(),getMyAssignmentClasses()]).then(([y,s,c])=>{setYears(y.filter(v=>v.active));setSubjects(s.filter(v=>v.active));setClasses(c.filter(v=>v.active&&v.status==="APPROVED"));}).catch(()=>toast.error("Could not load your approved teaching assignments."));},[]);
-    const classOptions=useMemo(()=>classes.filter(c=>c.subjectId===subjectId),[classes,subjectId]);
     const reset=()=>{setEditing(null);setTitle("");setDescription("");setAssessmentType("QUIZ");setAcademicYearId(0);setGradeId(0);setSectionId(0);setSubjectId(0);setTimingMode("FIXED_WINDOW");setAvailableFrom(localDateTime(new Date(Date.now()+3600000)));setAvailableUntil(localDateTime(new Date(Date.now()+7200000)));setDurationMinutes(45);setAllowOvertime(false);setTotalMarks("10");setQuestions([blankQuestion()]);setQuestionOptions({0:"Option A, Option B, Option C, Option D"});setQuestionAnswers({0:"0"});setGrades([]);setSections([]);setShowForm(false);};
     const openEdit=async(a:Assessment)=>{setEditing(a.id);setTitle(a.title);setDescription(a.description??"");setAssessmentType(a.assessmentType);setAcademicYearId(a.academicYearId);setGradeId(a.gradeId);setSectionId(a.sectionId);setSubjectId(a.subjectId);setTimingMode(a.timingMode);setAvailableFrom(a.availableFrom.slice(0,16));setAvailableUntil(a.availableUntil.slice(0,16));setDurationMinutes(a.durationMinutes??45);setAllowOvertime(a.allowOvertime);setTotalMarks(String(a.totalMarks));setQuestions(a.questions.map(q=>({questionText:q.questionText,questionType:q.questionType,options:q.options??[],correctAnswer:q.correctAnswer,marks:q.marks,position:q.position})));const opts:Record<number,string>={},ans:Record<number,string>={};a.questions.forEach((q,i)=>{opts[i]=(q.options??[]).join(", ");ans[i]=String(q.correctAnswer??"");});setQuestionOptions(opts);setQuestionAnswers(ans);setGrades(await getGradesByAcademicYear(a.academicYearId));setSections(await getSectionsByGrade(a.gradeId));setShowForm(true);};
     const updateQuestion=(index:number,patch:Partial<AssessmentQuestionRequest>)=>setQuestions(old=>old.map((q,i)=>i===index?{...q,...patch}:q));
