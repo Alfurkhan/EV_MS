@@ -2,7 +2,7 @@ export type AttemptStatus = "SUBMITTED" | "AUTO_SUBMITTED";
 export interface FacultyEvaluationAnswer {
   questionId: number; questionText: string; questionType: string; options: string[] | null;
   correctAnswer: unknown; submittedAnswer: unknown; maximumMarks: number;
-  marksAwarded: number | null; feedback: string | null; manualEvaluation: boolean;
+  marksAwarded: number | null; feedback: string | null; manualEvaluation: boolean; attachmentName:string|null; hasAttachment:boolean;
 }
 export interface FacultyEvaluationAttempt {
   attemptId: number; assessmentId: number; assessmentTitle: string; studentName: string;
