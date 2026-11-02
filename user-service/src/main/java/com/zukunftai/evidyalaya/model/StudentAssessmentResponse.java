@@ -28,4 +28,6 @@ public class StudentAssessmentResponse {
     private Long attemptId;
     private String attemptStatus;
     private Instant attemptDeadline;
+    private boolean hasAttachment;
+    private String attachmentName;
 }
