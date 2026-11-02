@@ -27,6 +27,8 @@ public class StudentAssessmentResponse {
     private boolean attempted;
     private Long attemptId;
     private String attemptStatus;
+    private boolean resultsPublished;
+    private BigDecimal resultScore;
     private Instant attemptDeadline;
     private boolean hasAttachment;
     private String attachmentName;
