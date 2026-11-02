@@ -14,6 +14,9 @@ public class StudentAssessmentAttemptResponse {
     private Instant startedAt;
     private Instant deadlineAt;
     private Instant submittedAt;
+    private boolean resultsPublished;
+    private java.math.BigDecimal score;
+    private java.math.BigDecimal totalMarks;
     private List<StudentAssessmentQuestionResponse> questions;
     private List<StudentAssessmentAnswerResponse> answers;
 }
