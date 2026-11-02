@@ -93,4 +93,9 @@ tasks.register("meetQuickstartTest", JavaExec) {
 
 tasks.named('test') {
     useJUnitPlatform()
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
 }
