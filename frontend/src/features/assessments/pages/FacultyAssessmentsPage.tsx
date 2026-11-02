@@ -30,7 +30,9 @@ export default function FacultyAssessmentsPage() {
     const [saving,setSaving]=useState(false);
     const [uploading,setUploading]=useState(false);
     const [referenceFile,setReferenceFile]=useState<File|null>(null);
-    const [questionPaperFile,setQuestionPaperFile]=useState<File|null>(null);\n    const [importPreview,setImportPreview]=useState<QuestionPaperImportPreview|null>(null);\n    const [importing,setImporting]=useState(false);
+    const [questionPaperFile,setQuestionPaperFile]=useState<File|null>(null); 
+    const [importPreview,setImportPreview]=useState<QuestionPaperImportPreview|null>(null); 
+    const [importing,setImporting]=useState(false);
     const [title,setTitle]=useState("");
     const [description,setDescription]=useState("");
     const [assessmentType,setAssessmentType]=useState<AssessmentType>("QUIZ");
