@@ -34,6 +34,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final UserRepository userRepository;
     private final TimetableRepository timetableRepository;
     private final StudentEnrollmentRepository enrollmentRepository;
+    private final AssessmentAttemptRepository attemptRepository;
 
     @Value("${app.assessment-storage-dir:uploads/assessments}")
     private String storageDirectory;
@@ -48,7 +49,8 @@ public class AssessmentServiceImpl implements AssessmentService {
             SubjectRepository subjectRepository,
             UserRepository userRepository,
             TimetableRepository timetableRepository,
-            StudentEnrollmentRepository enrollmentRepository) {
+            StudentEnrollmentRepository enrollmentRepository,
+            AssessmentAttemptRepository attemptRepository) {
         this.assessmentRepository = assessmentRepository;
         this.questionRepository = questionRepository;
         this.academicYearRepository = academicYearRepository;
@@ -58,6 +60,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         this.userRepository = userRepository;
         this.timetableRepository = timetableRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.attemptRepository = attemptRepository;
     }
 
     @Override
@@ -151,6 +154,9 @@ public class AssessmentServiceImpl implements AssessmentService {
         Assessment assessment = findOwned(id);
         if (assessment.getStatus() != AssessmentStatus.DRAFT) {
             throw error("Only your own draft assessments can be permanently deleted.", HttpStatus.CONFLICT, "ASSESSMENT_NOT_DRAFT");
+        }
+        if (attemptRepository.countByAssessmentId(id) > 0) {
+            throw error("This draft has attempt records and cannot be permanently deleted.", HttpStatus.CONFLICT, "ASSESSMENT_HAS_ATTEMPTS");
         }
         questionRepository.deleteByAssessmentId(id);
         assessmentRepository.delete(assessment);
