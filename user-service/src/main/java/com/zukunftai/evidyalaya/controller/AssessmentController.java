@@ -96,7 +96,7 @@ public class AssessmentController {
                 .timingMode(assessment.getTimingMode()).availableFrom(assessment.getAvailableFrom())
                 .availableUntil(assessment.getAvailableUntil()).durationMinutes(assessment.getDurationMinutes())
                 .allowOvertime(assessment.isAllowOvertime()).totalMarks(assessment.getTotalMarks())
-                .publishedAt(assessment.getPublishedAt()).createdAt(assessment.getCreatedAt())
+                .publishedAt(assessment.getPublishedAt()).resultsPublished(assessment.isResultsPublished()).createdAt(assessment.getCreatedAt())
                 .updatedAt(assessment.getUpdatedAt()).questions(questions)
                 .hasAttachment(assessment.getAttachmentPath() != null).attachmentName(assessment.getAttachmentName())
                 .attachmentSize(assessment.getAttachmentSize()).build();
