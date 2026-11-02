@@ -859,7 +859,7 @@
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT uk_assignment_submission_student UNIQUE (assignment_id, student_id),
                 CONSTRAINT chk_assignment_submission_marks CHECK (
-                    marks IS NULL OR (marks >= 0 AND max_marks IS NOT NULL AND max_marks > 0 AND marks <= max_marks)
+                    marks IS NULL OR (marks &gt;= 0 AND max_marks IS NOT NULL AND max_marks &gt; 0 AND marks &lt;= max_marks)
                 )
             );
             CREATE INDEX IF NOT EXISTS idx_assignment_submission_student
