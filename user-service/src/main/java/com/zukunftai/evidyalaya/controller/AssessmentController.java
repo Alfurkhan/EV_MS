@@ -61,6 +61,13 @@ public class AssessmentController {
     }
 
 
+    @DeleteMapping("/faculty/{id}")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<Void> deleteDraft(@PathVariable Long id) {
+        assessmentService.deleteDraft(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping(path = "/faculty/{id}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('FACULTY')")
     public AssessmentResponse uploadAttachment(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
