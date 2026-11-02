@@ -31,8 +31,16 @@
             <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
             <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
         </createTable>
-        <addCheckConstraint tableName="assessment" constraintName="ck_assessment_window" checkConstraint="available_until &gt; available_from"/>
-        <addCheckConstraint tableName="assessment" constraintName="ck_assessment_duration" checkConstraint="duration_minutes IS NULL OR duration_minutes &gt; 0"/>
+        <sql>
+            ALTER TABLE assessment
+                ADD CONSTRAINT ck_assessment_window
+                CHECK (available_until &gt; available_from);
+        </sql>
+        <sql>
+            ALTER TABLE assessment
+                ADD CONSTRAINT ck_assessment_duration
+                CHECK (duration_minutes IS NULL OR duration_minutes &gt; 0);
+        </sql>
         <createIndex tableName="assessment" indexName="idx_assessment_faculty"><column name="faculty_id"/><column name="created_at"/></createIndex>
         <createIndex tableName="assessment" indexName="idx_assessment_window"><column name="status"/><column name="available_from"/><column name="available_until"/></createIndex>
     </changeSet>
