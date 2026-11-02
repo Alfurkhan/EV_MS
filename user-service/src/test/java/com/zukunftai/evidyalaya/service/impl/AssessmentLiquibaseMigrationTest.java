@@ -3,6 +3,7 @@ package com.zukunftai.evidyalaya.service.impl;
 import liquibase.Contexts;
 import liquibase.LabelExpression;
 import liquibase.Liquibase;
+import liquibase.exception.LiquibaseException;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -41,7 +42,12 @@ class AssessmentLiquibaseMigrationTest {
                     database
             );
 
-            liquibase.update(new Contexts(), new LabelExpression());
+            try {
+                liquibase.update(new Contexts(), new LabelExpression());
+            } catch (LiquibaseException exception) {
+                exception.printStackTrace();
+                throw exception;
+            }
 
             assertTrue(tableExists(connection, "assessment"));
             assertTrue(tableExists(connection, "assessment_question"));
