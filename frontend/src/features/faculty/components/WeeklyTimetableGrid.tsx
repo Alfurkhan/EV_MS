@@ -36,22 +36,22 @@ function ClassTile({ item, today, busy, onStart, onEnd }: {
     const done = item.status === "COMPLETED";
     const online = item.classType === "ONLINE";
 
-    return <article className={`flex min-h-[330px] flex-col rounded-xl border p-3 shadow-sm transition hover:shadow-md ${live ? "border-red-200 bg-red-50/70" : done ? "border-emerald-200 bg-emerald-50/60" : canStart ? "border-blue-300 bg-blue-50/70" : "border-slate-200 bg-white"}`}>
-        <div className="flex min-h-[58px] items-start justify-between gap-2">
+    return <article className={`flex min-h-[250px] flex-col rounded-xl border p-3 shadow-sm transition hover:shadow-md ${live ? "border-red-200 bg-red-50/70" : done ? "border-emerald-200 bg-emerald-50/60" : canStart ? "border-blue-300 bg-blue-50/70" : "border-slate-200 bg-white"}`}>
+        <div className="flex min-h-[54px] items-start justify-between gap-2">
             <div className="min-w-0">
                 <h3 className="line-clamp-2 min-h-[40px] break-words text-sm font-bold leading-5 text-slate-800">{item.subjectName}</h3>
-                <p className="mt-1 min-h-[16px] text-xs leading-4 text-slate-600">{item.gradeName} · Section {item.sectionName}</p>
+                <p className="mt-1 min-h-[16px] whitespace-nowrap text-xs leading-4 text-slate-600">{item.gradeName} · Section {item.sectionName}</p>
             </div>
             {live ? <span className="rounded-full bg-red-100 px-2 py-1 text-[10px] font-semibold text-red-700">Live</span> : done ? <CheckCircle2 size={15} className="text-emerald-600" /> : canStart ? <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-semibold text-blue-700">Today</span> : null}
         </div>
-        <div className="mt-3 grid grid-rows-[20px_20px_20px_32px] gap-2 text-xs text-slate-600">
-            <p className="flex items-center gap-1.5 truncate font-semibold leading-5 text-slate-700"><Clock3 size={13} className="shrink-0"/><span className="truncate">{timeLabel(item.scheduledStartTime)} – {timeLabel(item.scheduledEndTime)}</span></p>
+        <div className="mt-2 grid grid-rows-[20px_20px_20px_32px] gap-1.5 text-xs text-slate-600">
+            <p className="flex items-center gap-1.5 whitespace-nowrap font-semibold leading-5 text-slate-700"><Clock3 size={13} className="shrink-0"/><span className="whitespace-nowrap">{timeLabel(item.scheduledStartTime)} – {timeLabel(item.scheduledEndTime)}</span></p>
             <p className="flex items-center gap-1.5 truncate leading-5"><BookOpen size={13} className="shrink-0"/><span className="truncate">{item.subjectCode}</span></p>
             <p className="flex items-center gap-1.5 truncate leading-5"><Monitor size={13} className="shrink-0"/><span className="truncate">{online ? "Online class" : item.room || "Room not assigned"}</span></p>
             <p className="flex items-start gap-1.5 overflow-hidden text-[11px] leading-4 text-slate-500"><CalendarDays size={12} className="mt-0.5 shrink-0"/><span className="line-clamp-2">{dateLabel(item.startDate)} – {dateLabel(item.endDate)}</span></p>
         </div>
-        <div className="mt-2 min-h-[20px]">{online && item.meetingLink && <a href={item.meetingLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"><ExternalLink size={12}/> Meeting link</a>}</div>
-        <div className="mt-2 min-h-[34px] text-[11px] leading-4 text-slate-500">{item.notes ? <p className="line-clamp-2" title={item.notes}>{item.notes}</p> : null}</div>
+        <div className="mt-1 min-h-[18px]">{online && item.meetingLink && <a href={item.meetingLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"><ExternalLink size={12}/> Meeting link</a>}</div>
+        <div className="mt-1 min-h-[18px] text-[11px] leading-4 text-slate-500">{item.notes ? <p className="line-clamp-2" title={item.notes}>{item.notes}</p> : null}</div>
         <div className="mt-auto">
         {live && <div className="mt-3 flex flex-col gap-2">
             <button type="button" onClick={() => navigate(`/attendance?sessionId=${item.sessionId}`)} className="inline-flex items-center justify-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100"><ClipboardCheck size={13}/> Attendance</button>
@@ -73,8 +73,8 @@ export default function WeeklyTimetableGrid({ classes, actionLoading, onStart, o
             <div><h2 className="font-bold text-slate-800">Weekly teaching timetable</h2><p className="text-sm text-slate-500">Approved classes organized by weekday and start time.</p></div>
             <span className="text-xs font-medium text-slate-500">{classes.length} assigned {classes.length === 1 ? "class" : "classes"}</span>
         </header>
-        <div className="overflow-x-auto"><div className="min-w-[1120px]">
-            <div className="grid grid-cols-[76px_repeat(7,minmax(0,1fr))] border-b border-slate-200 bg-slate-50">
+        <div className="overflow-x-auto"><div className="min-w-[1660px]">
+            <div className="grid grid-cols-[76px_repeat(7,minmax(226px,1fr))] border-b border-slate-200 bg-slate-50">
                 <div className="flex items-center justify-center border-r border-slate-200 px-2 py-4 text-[11px] font-semibold uppercase tracking-wide text-slate-400">Time</div>
                 {DAYS.map(([key,label]) => {
                     const count = classes.filter(item => item.dayOfWeek === key).length;
