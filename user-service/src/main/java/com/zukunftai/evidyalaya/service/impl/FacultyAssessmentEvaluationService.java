@@ -91,6 +91,24 @@ public class FacultyAssessmentEvaluationService {
         return toResponse(attempt);
     }
 
+    public void publishResults(Long assessmentId) {
+        Assessment assessment = ownedAssessment(assessmentId);
+        List<AssessmentAttempt> allAttempts = attempts.findAll().stream()
+                .filter(a -> a.getAssessment().getId().equals(assessmentId)).toList();
+        if (allAttempts.stream().anyMatch(a -> a.getStatus() == AssessmentAttemptStatus.IN_PROGRESS)) {
+            throw error("Results cannot be published while students still have active attempts.",
+                    HttpStatus.CONFLICT, "ASSESSMENT_ATTEMPTS_IN_PROGRESS");
+        }
+        for (AssessmentAttempt attempt : allAttempts) {
+            if (!toResponse(attempt).isEvaluationComplete()) {
+                throw error("Complete all manual evaluations before publishing results.",
+                        HttpStatus.CONFLICT, "ASSESSMENT_EVALUATION_PENDING");
+            }
+        }
+        assessment.setResultsPublished(true);
+        assessments.save(assessment);
+    }
+
     private void recalculateScore(AssessmentAttempt attempt) {
         BigDecimal score = answers.findByAttemptIdOrderByQuestionPositionAsc(attempt.getId()).stream()
                 .map(AssessmentAnswer::getMarksAwarded).filter(Objects::nonNull)
