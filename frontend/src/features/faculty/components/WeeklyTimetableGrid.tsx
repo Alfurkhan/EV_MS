@@ -83,7 +83,7 @@ export default function WeeklyTimetableGrid({ classes, actionLoading, onStart, o
                 })}
             </div>
             {slots.length === 0 ? <div className="p-12 text-center text-sm text-slate-500">No scheduled time slots found.</div> : slots.map(slot => <div key={slot} className="grid grid-cols-[76px_repeat(7,minmax(0,1fr))] border-b border-slate-100 last:border-b-0">
-                <div className="flex items-start justify-center border-r border-slate-200 bg-slate-50 px-1 py-4 text-xs font-semibold text-slate-500">{timeLabel(slot)}</div>
+                <div className="flex items-start justify-center border-r border-slate-200 bg-slate-50 px-1 py-4 text-center text-xs font-semibold text-slate-500">{timeLabel(slot)} – {timeLabel(classes.filter(item => item.scheduledStartTime.slice(0,5) === slot).map(item => item.scheduledEndTime).sort().slice(-1)[0] || slot)}</div>
                 {DAYS.map(([key]) => {
                     const items = classes.filter(item => item.dayOfWeek === key && item.scheduledStartTime.slice(0,5) === slot).sort((a,b) => a.scheduledStartTime.localeCompare(b.scheduledStartTime));
                     return <div key={key} className={`min-h-28 border-r border-slate-100 p-2 last:border-r-0 ${key === todayKey ? "bg-blue-50/30" : ""}`}>
