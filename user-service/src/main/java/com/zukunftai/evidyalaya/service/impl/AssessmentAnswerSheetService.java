@@ -26,8 +26,8 @@ public class AssessmentAnswerSheetService {
    .orElseThrow(()->error("Attempt not found.",HttpStatus.NOT_FOUND,"ASSESSMENT_ATTEMPT_NOT_FOUND"));
   if(attempt.getStatus()!=AssessmentAttemptStatus.IN_PROGRESS||!Instant.now().isBefore(attempt.getDeadlineAt()))
    throw error("Answer sheets can only be uploaded during an active attempt.",HttpStatus.CONFLICT,"ASSESSMENT_ATTEMPT_CLOSED");
-  AssessmentQuestion question=attempt.getAssessment().getId().equals(attempts.findById(attemptId).orElseThrow().getAssessment().getId())
-   ? answers.findByAttemptIdAndQuestionId(attemptId,questionId).map(AssessmentAnswer::getQuestion).orElse(null):null;
+  AssessmentQuestion question=answers.findByAttemptIdAndQuestionId(attemptId,questionId)
+   .map(AssessmentAnswer::getQuestion).orElse(null);
   if(question==null) throw error("Save an answer for this question before uploading its sheet.",HttpStatus.BAD_REQUEST,"ASSESSMENT_ANSWER_REQUIRED");
   if(file==null||file.isEmpty()) throw error("Choose a non-empty file.",HttpStatus.BAD_REQUEST,"ANSWER_SHEET_REQUIRED");
   if(file.getSize()>25L*1024*1024) throw error("Answer sheets must be 25 MB or smaller.",HttpStatus.PAYLOAD_TOO_LARGE,"ANSWER_SHEET_TOO_LARGE");
@@ -35,6 +35,10 @@ public class AssessmentAnswerSheetService {
   if(name.isBlank()||name.contains("..")||name.contains("/")||name.contains("\\")) throw error("Invalid filename.",HttpStatus.BAD_REQUEST,"INVALID_ANSWER_SHEET_NAME");
   String type=Objects.requireNonNullElse(file.getContentType(),"").toLowerCase(Locale.ROOT);
   if(!Set.of("application/pdf","image/jpeg","image/png").contains(type)) throw error("Only PDF, JPG and PNG answer sheets are accepted.",HttpStatus.BAD_REQUEST,"ANSWER_SHEET_TYPE_NOT_ALLOWED");
+  try(java.io.InputStream input=file.getInputStream()){
+   byte[] signature=input.readNBytes(8);
+   if(!hasValidSignature(type,signature)) throw error("The uploaded file content does not match its declared PDF, JPG or PNG type.",HttpStatus.BAD_REQUEST,"ANSWER_SHEET_CONTENT_INVALID");
+  }catch(IOException e){throw error("Could not read answer sheet.",HttpStatus.BAD_REQUEST,"ANSWER_SHEET_READ_FAILED");}
   String ext=type.equals("application/pdf")?".pdf":type.equals("image/png")?".png":".jpg";
   String stored=UUID.randomUUID()+ext; Path root=Paths.get(storageDirectory).toAbsolutePath().normalize();Path target=root.resolve(stored).normalize();
   try{Files.createDirectories(root);Files.copy(file.getInputStream(),target,StandardCopyOption.REPLACE_EXISTING);}
@@ -60,5 +64,11 @@ public class AssessmentAnswerSheetService {
  }
  private void delete(String stored){if(stored==null)return;try{Path root=Paths.get(storageDirectory).toAbsolutePath().normalize();Path p=root.resolve(stored).normalize();if(p.startsWith(root))Files.deleteIfExists(p);}catch(Exception ignored){}}
  private User currentUser(){Authentication a=SecurityContextHolder.getContext().getAuthentication();if(a==null||!a.isAuthenticated())throw error("Not authenticated.",HttpStatus.UNAUTHORIZED,"USER_NOT_AUTHENTICATED");return users.findByUsername(a.getName()).orElseThrow(()->error("User not found.",HttpStatus.UNAUTHORIZED,"USER_NOT_FOUND"));}
+ private boolean hasValidSignature(String type,byte[] signature){
+  if("application/pdf".equals(type)) return signature.length>=5&&signature[0]=='%'&&signature[1]=='P'&&signature[2]=='D'&&signature[3]=='F'&&signature[4]=='-';
+  if("image/jpeg".equals(type)) return signature.length>=3&&(signature[0]&0xff)==0xff&&(signature[1]&0xff)==0xd8&&(signature[2]&0xff)==0xff;
+  if("image/png".equals(type)) return signature.length>=8&&(signature[0]&0xff)==0x89&&signature[1]=='P'&&signature[2]=='N'&&signature[3]=='G'&&(signature[4]&0xff)==0x0d&&(signature[5]&0xff)==0x0a&&(signature[6]&0xff)==0x1a&&(signature[7]&0xff)==0x0a;
+  return false;
+ }
  private APIException error(String m,HttpStatus s,String c){return new APIException(m,s,c);}
 }
