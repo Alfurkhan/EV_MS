@@ -51,4 +51,13 @@
         </createTable>
         <createIndex tableName="assessment_question" indexName="idx_question_assessment_order"><column name="assessment_id"/><column name="position"/></createIndex>
     </changeSet>
+
+    <changeSet id="assessments-003-add-attachment-metadata" author="evidyalaya">
+        <addColumn tableName="assessment">
+            <column name="attachment_path" type="VARCHAR(255)"/>
+            <column name="attachment_name" type="VARCHAR(255)"/>
+            <column name="attachment_content_type" type="VARCHAR(150)"/>
+            <column name="attachment_size" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
