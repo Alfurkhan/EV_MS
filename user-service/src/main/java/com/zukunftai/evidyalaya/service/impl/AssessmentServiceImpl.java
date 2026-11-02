@@ -7,6 +7,11 @@ import com.zukunftai.evidyalaya.model.AssessmentRequest;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.AssessmentService;
 import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,6 +32,9 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
     private final TimetableRepository timetableRepository;
+
+    @Value("${app.assessment-storage-dir:uploads/assessments}")
+    private String storageDirectory;
 
     public AssessmentServiceImpl(AssessmentRepository assessmentRepository,
             AssessmentQuestionRepository questionRepository,
@@ -130,6 +138,97 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessment.setUpdatedAt(Instant.now());
         return assessmentRepository.save(assessment);
     }
+
+
+    @Override
+    public Assessment uploadAttachment(Long id, MultipartFile file) {
+        Assessment assessment = findOwned(id);
+        if (assessment.getStatus() != AssessmentStatus.DRAFT) {
+            throw error("Attachments can only be changed while an assessment is a draft.", HttpStatus.CONFLICT, "ASSESSMENT_NOT_DRAFT");
+        }
+        StoredFile stored = storeFile(file);
+        deleteStoredFile(assessment.getAttachmentPath());
+        assessment.setAttachmentPath(stored.path());
+        assessment.setAttachmentName(stored.name());
+        assessment.setAttachmentContentType(stored.contentType());
+        assessment.setAttachmentSize(stored.size());
+        assessment.setUpdatedAt(Instant.now());
+        return assessmentRepository.save(assessment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Assessment getAssessmentForAttachment(Long id) {
+        Assessment assessment = assessmentRepository.findById(id)
+                .orElseThrow(() -> error("Assessment not found.", HttpStatus.NOT_FOUND, "ASSESSMENT_NOT_FOUND"));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw error("User is not authenticated.", HttpStatus.UNAUTHORIZED, "USER_NOT_AUTHENTICATED");
+        }
+        User user = userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> error("User not found.", HttpStatus.UNAUTHORIZED, "USER_NOT_FOUND"));
+        boolean admin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (admin || assessment.getFaculty().getId().equals(user.getId())) return assessment;
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_STUDENT"))) {
+            if (assessment.getStatus() != AssessmentStatus.PUBLISHED) {
+                throw error("This assessment is not published.", HttpStatus.FORBIDDEN, "ASSESSMENT_NOT_ACCESSIBLE");
+            }
+            boolean enrolled = enrollmentRepository.findByStudentAndActiveTrue(user).stream()
+                    .anyMatch(e -> e.getAcademicYear().getId().equals(assessment.getAcademicYear().getId())
+                            && e.getGrade().getId().equals(assessment.getGrade().getId())
+                            && e.getSection().getId().equals(assessment.getSection().getId()));
+            if (enrolled) return assessment;
+        }
+        throw error("You are not allowed to view this assessment attachment.", HttpStatus.FORBIDDEN, "ASSESSMENT_ATTACHMENT_FORBIDDEN");
+    }
+
+    @Override
+    public Path resolveStoredAttachment(String storedPath) {
+        if (storedPath == null || storedPath.isBlank()) {
+            throw error("Attachment not found.", HttpStatus.NOT_FOUND, "ATTACHMENT_NOT_FOUND");
+        }
+        Path root = Paths.get(storageDirectory).toAbsolutePath().normalize();
+        Path resolved = root.resolve(storedPath).normalize();
+        if (!resolved.startsWith(root) || !Files.isRegularFile(resolved)) {
+            throw error("Attachment not found.", HttpStatus.NOT_FOUND, "ATTACHMENT_NOT_FOUND");
+        }
+        return resolved;
+    }
+
+    private StoredFile storeFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw error("Choose a non-empty attachment.", HttpStatus.BAD_REQUEST, "ATTACHMENT_REQUIRED");
+        }
+        if (file.getSize() > 25L * 1024 * 1024) {
+            throw error("Attachments must be 25 MB or smaller.", HttpStatus.PAYLOAD_TOO_LARGE, "ATTACHMENT_TOO_LARGE");
+        }
+        String original = StringUtils.cleanPath(Objects.requireNonNullElse(file.getOriginalFilename(), "attachment"));
+        if (original.isBlank() || original.contains("..") || original.contains("/") || original.contains("\\\\")) {
+            throw error("Invalid attachment filename.", HttpStatus.BAD_REQUEST, "INVALID_ATTACHMENT_NAME");
+        }
+        String extension = "";
+        int dot = original.lastIndexOf('.');
+        if (dot >= 0 && original.length() - dot <= 20) extension = original.substring(dot);
+        String generated = UUID.randomUUID() + extension;
+        Path root = Paths.get(storageDirectory).toAbsolutePath().normalize();
+        Path destination = root.resolve(generated).normalize();
+        try {
+            Files.createDirectories(root);
+            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            throw error("Could not store the attachment.", HttpStatus.INTERNAL_SERVER_ERROR, "ATTACHMENT_STORAGE_FAILED");
+        }
+        String contentType = file.getContentType();
+        return new StoredFile(generated, original, contentType == null ? "application/octet-stream" : contentType, file.getSize());
+    }
+
+    private void deleteStoredFile(String storedPath) {
+        if (storedPath == null || storedPath.isBlank()) return;
+        try { Files.deleteIfExists(resolveStoredAttachment(storedPath)); }
+        catch (Exception ignored) { /* best-effort cleanup */ }
+    }
+
+    private record StoredFile(String path, String name, String contentType, long size) {}
 
     private References resolveReferences(User faculty, AssessmentRequest request) {
         AcademicYear year = require(academicYearRepository.findById(request.getAcademicYearId()).orElse(null), "Academic year not found.");
