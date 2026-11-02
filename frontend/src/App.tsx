@@ -34,6 +34,7 @@ import MyClassesPage from "./features/faculty/pages/MyClassesPage";
 import FacultyAssignmentsPage from "./features/assignments/pages/FacultyAssignmentsPage";
 import FacultyAssessmentsPage from "./features/assessments/pages/FacultyAssessmentsPage";
 import StudentAssignmentsPage from "./features/assignments/pages/StudentAssignmentsPage";
+import StudentAssessmentsPage from "./features/assessments/pages/StudentAssessmentsPage";
 import AdminAssignmentsPage from "./features/assignments/pages/AdminAssignmentsPage";
 
 export default function App() {
@@ -247,6 +248,14 @@ export default function App() {
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_STUDENT"]}>
                                 <StudentAssignmentsPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/my-assessments"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_STUDENT"]}>
+                                <StudentAssessmentsPage />
                             </RoleProtectedRoute>
                         }
                     />
