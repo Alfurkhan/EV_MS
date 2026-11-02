@@ -43,6 +43,18 @@ public class AssessmentAnswer {
     @JoinColumn(name = "evaluated_by")
     private User evaluatedBy;
 
+    @Column(name = "attachment_path")
+    private String attachmentPath;
+
+    @Column(name = "attachment_name")
+    private String attachmentName;
+
+    @Column(name = "attachment_content_type")
+    private String attachmentContentType;
+
+    @Column(name = "attachment_size")
+    private Long attachmentSize;
+
     @Column(name = "evaluated_at")
     private Instant evaluatedAt;
 
