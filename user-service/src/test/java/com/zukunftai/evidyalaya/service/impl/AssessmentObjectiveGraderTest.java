@@ -65,7 +65,7 @@ class AssessmentObjectiveGraderTest {
     }
 
     @Test
-    void leavesMissingObjectiveAnswersAtZeroScore() {
+    void leavesMissingObjectiveAnswersAtZeroScore() throws Exception {
         Assessment assessment = Assessment.builder().id(11L).build();
         AssessmentAttempt attempt = AssessmentAttempt.builder().id(21L).assessment(assessment).build();
         AssessmentQuestion question = question(4L, assessment, AssessmentQuestionType.MCQ, "0", "5.00");
