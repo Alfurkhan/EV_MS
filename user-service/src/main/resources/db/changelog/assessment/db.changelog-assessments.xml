@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- Standalone assessment schema. Include this file from the master changelog
+         after preserving any local edits to db.changelog-master.xml. -->
+    <changeSet id="assessments-001-create-assessment" author="evidyalaya">
+        <createTable tableName="assessment">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_assessment" nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)"><constraints nullable="false"/></column>
+            <column name="description" type="TEXT"/>
+            <column name="assessment_type" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="status" type="VARCHAR(20)" defaultValue="DRAFT"><constraints nullable="false"/></column>
+            <column name="academic_year_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_assessment_year" references="academic_year(id)"/></column>
+            <column name="grade_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_assessment_grade" references="grade(id)"/></column>
+            <column name="section_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_assessment_section" references="section(id)"/></column>
+            <column name="subject_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_assessment_subject" references="&quot;subject&quot;(id)"/></column>
+            <column name="faculty_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_assessment_faculty" references="&quot;user&quot;(&quot;ID&quot;)"/></column>
+            <column name="timing_mode" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="available_from" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="available_until" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="duration_minutes" type="INT"/>
+            <column name="allow_overtime" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+            <column name="total_marks" type="NUMERIC(8,2)" defaultValueNumeric="0"><constraints nullable="false"/></column>
+            <column name="published_at" type="TIMESTAMP"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+        </createTable>
+        <addCheckConstraint tableName="assessment" constraintName="ck_assessment_window" checkConstraint="available_until &gt; available_from"/>
+        <addCheckConstraint tableName="assessment" constraintName="ck_assessment_duration" checkConstraint="duration_minutes IS NULL OR duration_minutes &gt; 0"/>
+        <createIndex tableName="assessment" indexName="idx_assessment_faculty"><column name="faculty_id"/><column name="created_at"/></createIndex>
+        <createIndex tableName="assessment" indexName="idx_assessment_window"><column name="status"/><column name="available_from"/><column name="available_until"/></createIndex>
+    </changeSet>
+
+    <changeSet id="assessments-002-create-question" author="evidyalaya">
+        <createTable tableName="assessment_question">
+            <column name="id" type="BIGINT" autoIncrement="true"><constraints primaryKey="true" primaryKeyName="pk_assessment_question" nullable="false"/></column>
+            <column name="assessment_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_question_assessment" references="assessment(id)" deleteCascade="true"/></column>
+            <column name="question_text" type="TEXT"><constraints nullable="false"/></column>
+            <column name="question_type" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="options_json" type="JSONB"/>
+            <column name="correct_answer_json" type="JSONB"/>
+            <column name="marks" type="NUMERIC(8,2)"><constraints nullable="false"/></column>
+            <column name="position" type="INT"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+        </createTable>
+        <createIndex tableName="assessment_question" indexName="idx_question_assessment_order"><column name="assessment_id"/><column name="position"/></createIndex>
+    </changeSet>
+</databaseChangeLog>
