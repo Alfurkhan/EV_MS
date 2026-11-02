@@ -27,6 +27,11 @@ public class FacultyAssessmentEvaluationController {
         return service.getAttempt(assessmentId, attemptId);
     }
 
+    @PostMapping("/{assessmentId}/publish-results")
+    public void publishResults(@PathVariable Long assessmentId) {
+        service.publishResults(assessmentId);
+    }
+
     @PutMapping("/{assessmentId}/evaluations/{attemptId}/answers/{questionId}")
     public FacultyEvaluationAttemptResponse evaluateAnswer(@PathVariable Long assessmentId,
             @PathVariable Long attemptId, @PathVariable Long questionId,
