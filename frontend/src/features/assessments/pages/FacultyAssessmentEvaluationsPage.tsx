@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { ArrowLeft, CheckCircle2, Clock3, RefreshCw, Save } from "lucide-react";
-import { getAssessmentEvaluations, getAssessmentEvaluation, gradeAssessmentAnswer } from "../services/facultyEvaluationService";
+import { getAssessmentEvaluations, getAssessmentEvaluation, gradeAssessmentAnswer, publishAssessmentResults } from "../services/facultyEvaluationService";
 import type { FacultyEvaluationAttempt } from "../types/facultyEvaluation";
 
 const field = "mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
@@ -17,6 +17,7 @@ export default function FacultyAssessmentEvaluationsPage() {
   const [feedback, setFeedback] = useState<Record<number,string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<number|null>(null);
+  const [publishing, setPublishing] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -42,6 +43,13 @@ export default function FacultyAssessmentEvaluationsPage() {
     try { setSelected(await getAssessmentEvaluation(id, attemptId)); }
     catch(e:any) { toast.error(e?.response?.data?.message ?? "Could not open submission."); }
   };
+  const publishResults = async () => {
+    if (!window.confirm("Publish results for all submitted attempts? Students will be able to see their scores.")) return;
+    setPublishing(true);
+    try { await publishAssessmentResults(id); toast.success("Results published to students."); await refresh(); }
+    catch(e:any) { toast.error(e?.response?.data?.message ?? "Results could not be published."); }
+    finally { setPublishing(false); }
+  };
   const save = async (questionId:number, maximum:number) => {
     const value = Number(marks[questionId]);
     if (marks[questionId] === "" || !Number.isFinite(value) || value < 0 || value > maximum) {
@@ -60,7 +68,7 @@ export default function FacultyAssessmentEvaluationsPage() {
   return <div className="mx-auto max-w-6xl space-y-5">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><Link to="/faculty-assessments" className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600"><ArrowLeft size={15}/> Back to Quiz &amp; Exams</Link><h1 className="mt-2 text-2xl font-bold text-slate-900">Assessment evaluations</h1><p className="mt-1 text-sm text-slate-500">Review submissions and grade short-answer or descriptive responses.</p></div>
-      <button onClick={()=>void refresh()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"><RefreshCw size={15}/> Refresh</button>
+      <div className="flex gap-2"><button onClick={()=>void refresh()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"><RefreshCw size={15}/> Refresh</button><button disabled={publishing||items.length===0||items.some(x=>!x.evaluationComplete)} onClick={()=>void publishResults()} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?"Publishing…":"Publish results"}</button></div>
     </header>
     <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
       <section className="rounded-xl border border-slate-200 bg-white p-4">
