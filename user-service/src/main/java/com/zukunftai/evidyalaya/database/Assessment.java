@@ -74,6 +74,9 @@ public class Assessment {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
+    @Column(name = "results_published", nullable = false)
+    private boolean resultsPublished;
+
     @Column(name = "attachment_path")
     private String attachmentPath;
 
