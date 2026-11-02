@@ -30,6 +30,9 @@ public class StudentAssessmentController {
     public StudentAssessmentAttemptResponse saveAnswer(@PathVariable Long attemptId, @PathVariable Long questionId,
             @RequestBody JsonNode answer) { return service.saveAnswer(attemptId, questionId, answer); }
 
+    @DeleteMapping("/attempts/{attemptId}")
+    public void deleteInProgressAttempt(@PathVariable Long attemptId) { service.deleteInProgressAttempt(attemptId); }
+
     @PostMapping("/attempts/{attemptId}/submit")
     public StudentAssessmentAttemptResponse submit(@PathVariable Long attemptId) { return service.submit(attemptId); }
 }
