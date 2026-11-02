@@ -9,6 +9,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -50,6 +60,26 @@ public class AssessmentController {
         return toResponse(assessmentService.publish(id));
     }
 
+
+    @PostMapping(path = "/faculty/{id}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('FACULTY')")
+    public AssessmentResponse uploadAttachment(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        return toResponse(assessmentService.uploadAttachment(id, file));
+    }
+
+    @GetMapping("/{id}/attachment")
+    @PreAuthorize("hasAnyRole('STUDENT','FACULTY','ADMIN')")
+    public ResponseEntity<Resource> downloadAttachment(@PathVariable Long id) throws IOException {
+        Assessment assessment = assessmentService.getAssessmentForAttachment(id);
+        if (assessment.getAttachmentPath() == null) return ResponseEntity.notFound().build();
+        Path path = assessmentService.resolveStoredAttachment(assessment.getAttachmentPath());
+        Resource resource = new UrlResource(path.toUri());
+        String name = assessment.getAttachmentName() == null ? "assessment-attachment" : assessment.getAttachmentName().replace("\\r", "").replace("\\n", "");
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(name, StandardCharsets.UTF_8).build().toString())
+                .body(resource);
+    }
+
     private AssessmentResponse toResponse(Assessment assessment) {
         List<AssessmentQuestionResponse> questions = questionRepository
                 .findByAssessmentIdOrderByPositionAsc(assessment.getId()).stream()
@@ -67,7 +97,7 @@ public class AssessmentController {
                 .availableUntil(assessment.getAvailableUntil()).durationMinutes(assessment.getDurationMinutes())
                 .allowOvertime(assessment.isAllowOvertime()).totalMarks(assessment.getTotalMarks())
                 .publishedAt(assessment.getPublishedAt()).createdAt(assessment.getCreatedAt())
-                .updatedAt(assessment.getUpdatedAt()).questions(questions).build();
+                .updatedAt(assessment.getUpdatedAt()).questions(questions)\n                .hasAttachment(assessment.getAttachmentPath() != null).attachmentName(assessment.getAttachmentName())\n                .attachmentSize(assessment.getAttachmentSize()).build();
     }
 
     private AssessmentQuestionResponse toQuestionResponse(AssessmentQuestion question) {
