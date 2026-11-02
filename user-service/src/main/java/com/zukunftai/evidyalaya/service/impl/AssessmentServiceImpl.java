@@ -32,6 +32,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
     private final TimetableRepository timetableRepository;
+    private final StudentEnrollmentRepository enrollmentRepository;
 
     @Value("${app.assessment-storage-dir:uploads/assessments}")
     private String storageDirectory;
@@ -43,7 +44,8 @@ public class AssessmentServiceImpl implements AssessmentService {
             SectionRepository sectionRepository,
             SubjectRepository subjectRepository,
             UserRepository userRepository,
-            TimetableRepository timetableRepository) {
+            TimetableRepository timetableRepository,
+            StudentEnrollmentRepository enrollmentRepository) {
         this.assessmentRepository = assessmentRepository;
         this.questionRepository = questionRepository;
         this.academicYearRepository = academicYearRepository;
@@ -52,6 +54,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         this.subjectRepository = subjectRepository;
         this.userRepository = userRepository;
         this.timetableRepository = timetableRepository;
+        this.enrollmentRepository = enrollmentRepository;
     }
 
     @Override
