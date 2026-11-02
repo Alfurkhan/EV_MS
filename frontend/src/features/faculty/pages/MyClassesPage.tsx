@@ -4,6 +4,8 @@ import {
     BookOpen,
     RefreshCw,
     SearchX,
+    Search,
+    FilterX,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -30,6 +32,37 @@ export default function MyClassesPage() {
 
     const [activeView, setActiveView] =
         useState<"classes" | "create" | "drafts">("classes");
+
+
+    const [searchText, setSearchText] = useState("");
+    const [dayFilter, setDayFilter] = useState("ALL");
+    const [subjectFilter, setSubjectFilter] = useState("ALL");
+    const [statusFilter, setStatusFilter] = useState("ALL");
+    const [typeFilter, setTypeFilter] = useState("ALL");
+
+    const filteredClasses = classes.filter((item) => {
+        const term = searchText.trim().toLowerCase();
+        const matchesSearch = !term || [
+            item.subjectName, item.subjectCode, item.gradeName,
+            item.sectionName, item.room ?? "",
+        ].some((value) => value.toLowerCase().includes(term));
+        return matchesSearch &&
+            (dayFilter === "ALL" || item.dayOfWeek === dayFilter) &&
+            (subjectFilter === "ALL" || item.subjectName === subjectFilter) &&
+            (statusFilter === "ALL" || item.status === statusFilter) &&
+            (typeFilter === "ALL" || item.classType === typeFilter);
+    });
+
+    const hasActiveFilters = Boolean(searchText.trim() || dayFilter !== "ALL" ||
+        subjectFilter !== "ALL" || statusFilter !== "ALL" || typeFilter !== "ALL");
+
+    const clearFilters = () => {
+        setSearchText("");
+        setDayFilter("ALL");
+        setSubjectFilter("ALL");
+        setStatusFilter("ALL");
+        setTypeFilter("ALL");
+    };
 
     const handleStart = async (
         classItem: FacultyClass
@@ -197,6 +230,53 @@ export default function MyClassesPage() {
                 </div>
             )}
 
+
+            {classes.length > 0 && (
+                <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                            <Search size={16} className="text-slate-500" />
+                            Filter classes
+                            <span className="text-xs font-normal text-slate-400">{filteredClasses.length} of {classes.length} shown</span>
+                        </div>
+                        {hasActiveFilters && (
+                            <button type="button" onClick={clearFilters} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-800">
+                                <FilterX size={14} /> Clear filters
+                            </button>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                        <div className="relative">
+                            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search subject, grade, room..." aria-label="Search classes"
+                                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
+                        </div>
+                        <select value={dayFilter} onChange={(e) => setDayFilter(e.target.value)} aria-label="Filter by weekday" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
+                            <option value="ALL">All weekdays</option>
+                            {[...new Set(classes.map((item) => item.dayOfWeek).filter((day): day is string => Boolean(day)))].sort().map((day) => (
+                                <option key={day} value={day}>{day.charAt(0) + day.slice(1).toLowerCase()}</option>
+                            ))}
+                        </select>
+                        <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} aria-label="Filter by subject" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
+                            <option value="ALL">All subjects</option>
+                            {[...new Set(classes.map((item) => item.subjectName))].sort().map((subject) => <option key={subject} value={subject}>{subject}</option>)}
+                        </select>
+                        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} aria-label="Filter by class status" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
+                            <option value="ALL">All statuses</option>
+                            <option value="NOT_STARTED">Not started</option>
+                            <option value="IN_PROGRESS">In progress</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="CANCELLED">Cancelled</option>
+                        </select>
+                        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} aria-label="Filter by class type" className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
+                            <option value="ALL">All class types</option>
+                            <option value="ONLINE">Online</option>
+                            <option value="OFFLINE">Offline</option>
+                        </select>
+                    </div>
+                </section>
+            )}
+
             {/* LOADING */}
 
             {loading && !classes.length ? (
@@ -272,12 +352,16 @@ export default function MyClassesPage() {
 
                 /* CLASS LIST */
 
-                <WeeklyTimetableGrid
-                    classes={classes}
-                    actionLoading={actionLoading}
-                    onStart={handleStart}
-                    onEnd={handleEnd}
-                />
+                {filteredClasses.length > 0 ? (
+                    <WeeklyTimetableGrid classes={filteredClasses} actionLoading={actionLoading} onStart={handleStart} onEnd={handleEnd} />
+                ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+                        <SearchX size={28} className="mx-auto text-slate-400" />
+                        <h2 className="mt-3 text-base font-semibold text-slate-800">No matching classes</h2>
+                        <p className="mt-1 text-sm text-slate-500">Try changing your search or filters to see more classes.</p>
+                        <button type="button" onClick={clearFilters} className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Clear filters</button>
+                    </div>
+                )}
             )}
 
             {/* SUMMARY */}
@@ -302,11 +386,7 @@ export default function MyClassesPage() {
                     <BookOpen size={16} />
 
                     <span>
-                        {classes.length}{" "}
-                        {classes.length === 1
-                            ? "class"
-                            : "classes"}{" "}
-                        assigned
+                        {filteredClasses.length} of {classes.length} classes shown
                     </span>
                 </div>
             )}
