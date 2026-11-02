@@ -15,6 +15,19 @@ public class AssessmentObjectiveGrader {
     private final AssessmentQuestionRepository questionRepository;
     private final AssessmentAnswerRepository answerRepository;
 
+    private boolean answersMatch(AssessmentQuestionType type, com.fasterxml.jackson.databind.JsonNode expected,
+            com.fasterxml.jackson.databind.JsonNode actual) {
+        if (type != AssessmentQuestionType.MULTIPLE_SELECT) return expected.equals(actual);
+        if (!expected.isArray() || !actual.isArray() || expected.size() != actual.size()) return false;
+        java.util.List<String> left = new java.util.ArrayList<>();
+        java.util.List<String> right = new java.util.ArrayList<>();
+        expected.forEach(v -> left.add(v.toString()));
+        actual.forEach(v -> right.add(v.toString()));
+        java.util.Collections.sort(left);
+        java.util.Collections.sort(right);
+        return left.equals(right);
+    }
+
     /** Grades exact-match objective answers. Subjective answers remain pending faculty review. */
     @Transactional
     public void gradeObjectiveAnswers(AssessmentAttempt attempt) {
@@ -27,7 +40,7 @@ public class AssessmentObjectiveGrader {
             AssessmentAnswer answer = answerRepository.findByAttemptIdAndQuestionId(attempt.getId(), question.getId()).orElse(null);
             if (answer == null) continue;
             boolean correct = question.getCorrectAnswer() != null && answer.getAnswer() != null
-                    && question.getCorrectAnswer().equals(answer.getAnswer());
+                    && answersMatch(type, question.getCorrectAnswer(), answer.getAnswer());
             answer.setMarksAwarded(correct ? question.getMarks() : BigDecimal.ZERO);
             answer.setFeedback(correct ? "Correct" : "Incorrect");
             answer.setEvaluatedAt(Instant.now());
