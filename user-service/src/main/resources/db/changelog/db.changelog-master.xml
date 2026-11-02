@@ -839,6 +839,7 @@
     </changeSet>
 
     <changeSet id="29102026-002" author="Furkhan">
+        <validCheckSum>9:0dba2c1fc1c60d4667fc55c93a0f5a50</validCheckSum>
         <comment>Create student assignment submissions and grading records</comment>
         <sql>
             CREATE TABLE IF NOT EXISTS assignment_submission (
