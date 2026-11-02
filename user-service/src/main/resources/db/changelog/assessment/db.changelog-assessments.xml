@@ -94,4 +94,14 @@
         <createIndex tableName="assessment_answer" indexName="idx_answer_attempt"><column name="attempt_id"/></createIndex>
     </changeSet>
 
+
+    <changeSet id="assessments-006-add-answer-evaluator" author="evidyalaya">
+        <addColumn tableName="assessment_answer">
+            <column name="evaluated_by" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="assessment_answer" baseColumnNames="evaluated_by"
+                constraintName="fk_answer_evaluated_by" referencedTableName="&quot;user&quot;"
+                referencedColumnNames="ID"/>
+    </changeSet>
+
 </databaseChangeLog>
