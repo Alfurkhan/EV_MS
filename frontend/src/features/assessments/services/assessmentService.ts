@@ -4,6 +4,7 @@ export async function getFacultyAssessments(): Promise<Assessment[]> { return (a
 export async function getFacultyAssessment(id: number): Promise<Assessment> { return (await api.get<Assessment>(`/assessments/faculty/${id}`)).data; }
 export async function createAssessmentDraft(data: AssessmentRequest): Promise<Assessment> { return (await api.post<Assessment>("/assessments/faculty/drafts", data)).data; }
 export async function updateAssessmentDraft(id: number, data: AssessmentRequest): Promise<Assessment> { return (await api.put<Assessment>(`/assessments/faculty/${id}`, data)).data; }
+export async function deleteFacultyAssessmentDraft(id: number): Promise<void> { await api.delete(`/assessments/faculty/${id}`); }
 export async function publishAssessment(id: number): Promise<Assessment> { return (await api.post<Assessment>(`/assessments/faculty/${id}/publish`)).data; }
 export async function uploadAssessmentAttachment(id: number, file: File): Promise<Assessment> {
     const form = new FormData();
