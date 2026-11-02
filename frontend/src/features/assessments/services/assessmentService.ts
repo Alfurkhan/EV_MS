@@ -13,6 +13,10 @@ export async function uploadAssessmentAttachment(id: number, file: File): Promis
     })).data;
 }
 
+export async function downloadAssessmentAttachment(id: number): Promise<Blob> {
+    return (await api.get(`/assessments/${id}/attachment`, { responseType: "blob" })).data;
+}
+
 export interface QuestionPaperImportPreview {
     sourceFilename: string;
     detectedQuestionCount: number;
