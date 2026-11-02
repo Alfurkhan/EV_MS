@@ -36,7 +36,7 @@ function ClassTile({ item, today, busy, onStart, onEnd }: {
     const done = item.status === "COMPLETED";
     const online = item.classType === "ONLINE";
 
-    return <article className={`flex min-h-[250px] flex-col rounded-xl border p-3 shadow-sm transition hover:shadow-md ${live ? "border-red-200 bg-red-50/70" : done ? "border-emerald-200 bg-emerald-50/60" : canStart ? "border-blue-300 bg-blue-50/70" : "border-slate-200 bg-white"}`}>
+    return <article className={`flex h-[300px] min-h-[300px] flex-col rounded-xl border p-3 shadow-sm transition hover:shadow-md ${live ? "border-red-200 bg-red-50/70" : done ? "border-emerald-200 bg-emerald-50/60" : canStart ? "border-blue-300 bg-blue-50/70" : "border-slate-200 bg-white"}`}>
         <div className="flex min-h-[54px] items-start justify-between gap-2">
             <div className="min-w-0">
                 <h3 className="line-clamp-2 min-h-[40px] break-words text-sm font-bold leading-5 text-slate-800">{item.subjectName}</h3>
@@ -89,7 +89,7 @@ export default function WeeklyTimetableGrid({ classes, actionLoading, onStart, o
                 {DAYS.map(([key]) => {
                     const items = classes.filter(item => item.dayOfWeek === key && item.scheduledStartTime.slice(0,5) === slot).sort((a,b) => a.scheduledStartTime.localeCompare(b.scheduledStartTime));
                     return <div key={key} className={`min-h-28 border-r border-slate-100 p-2 last:border-r-0 ${key === todayKey ? "bg-blue-50/30" : ""}`}>
-                        <div className="space-y-2">{items.map(item => <ClassTile key={item.timetableId} item={item} today={today} busy={actionLoading === item.timetableId || actionLoading === item.sessionId} onStart={onStart} onEnd={onEnd}/>)}</div>
+                        <div className="space-y-2">{items.map(item => <ClassTile key={item.timetableId} item={item} today={today} busy={actionLoading === item.timetableId || (item.sessionId !== null && actionLoading === item.sessionId)} onStart={onStart} onEnd={onEnd}/>)}</div>
                     </div>;
                 })}
             </div>)}
