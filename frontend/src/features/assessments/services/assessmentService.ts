@@ -12,3 +12,23 @@ export async function uploadAssessmentAttachment(id: number, file: File): Promis
         headers: { "Content-Type": "multipart/form-data" }
     })).data;
 }
+
+export interface QuestionPaperImportPreview {
+    sourceFilename: string;
+    detectedQuestionCount: number;
+    questions: Array<{
+        questionText: string;
+        questionType: "MCQ" | "DESCRIPTIVE";
+        options: string[];
+        marks: number;
+        position: number;
+    }>;
+    warnings: string[];
+}
+export async function previewQuestionPaper(file: File): Promise<QuestionPaperImportPreview> {
+    const form = new FormData();
+    form.append("file", file);
+    return (await api.post<QuestionPaperImportPreview>("/assessments/faculty/question-paper/preview", form, {
+        headers: { "Content-Type": "multipart/form-data" }
+    })).data;
+}
