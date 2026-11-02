@@ -111,4 +111,13 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="assessments-008-add-answer-sheet-metadata" author="evidyalaya">
+        <addColumn tableName="assessment_answer">
+            <column name="attachment_path" type="VARCHAR(255)"/>
+            <column name="attachment_name" type="VARCHAR(255)"/>
+            <column name="attachment_content_type" type="VARCHAR(150)"/>
+            <column name="attachment_size" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
