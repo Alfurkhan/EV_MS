@@ -118,6 +118,12 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_FACULTY"],
             },
             {
+                icon: ClipboardList,
+                label: "Quiz & Exams",
+                path: "/faculty-assessments",
+                allowedRoles: ["ROLE_FACULTY"],
+            },
+            {
                 icon: BookOpen,
                 label: "My Courses",
                 path: "/courses",
