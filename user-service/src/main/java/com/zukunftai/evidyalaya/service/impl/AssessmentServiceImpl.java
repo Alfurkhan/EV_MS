@@ -147,6 +147,17 @@ public class AssessmentServiceImpl implements AssessmentService {
 
 
     @Override
+    public void deleteDraft(Long id) {
+        Assessment assessment = findOwned(id);
+        if (assessment.getStatus() != AssessmentStatus.DRAFT) {
+            throw error("Only your own draft assessments can be permanently deleted.", HttpStatus.CONFLICT, "ASSESSMENT_NOT_DRAFT");
+        }
+        questionRepository.deleteByAssessmentId(id);
+        assessmentRepository.delete(assessment);
+        deleteStoredFile(assessment.getAttachmentPath());
+    }
+
+    @Override
     public Assessment uploadAttachment(Long id, MultipartFile file) {
         Assessment assessment = findOwned(id);
         if (assessment.getStatus() != AssessmentStatus.DRAFT) {
