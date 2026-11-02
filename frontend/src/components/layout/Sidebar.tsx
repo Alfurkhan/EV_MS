@@ -106,6 +106,12 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_STUDENT"],
             },
             {
+                icon: ClipboardList,
+                label: "Quiz & Exams",
+                path: "/my-assessments",
+                allowedRoles: ["ROLE_STUDENT"],
+            },
+            {
                 icon: GraduationCap,
                 label: "My Classes",
                 path: "/my-classes",
