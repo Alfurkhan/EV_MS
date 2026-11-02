@@ -19,4 +19,6 @@ public class FacultyEvaluationAnswerResponse {
     private BigDecimal marksAwarded;
     private String feedback;
     private boolean manualEvaluation;
+    private String attachmentName;
+    private boolean hasAttachment;
 }
