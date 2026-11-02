@@ -103,6 +103,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
         AssessmentQuestion question = questions.findById(questionId)
                 .filter(q -> q.getAssessment().getId().equals(attempt.getAssessment().getId()))
                 .orElseThrow(() -> error("Question not found for this assessment.", HttpStatus.NOT_FOUND, "ASSESSMENT_QUESTION_NOT_FOUND"));
+        validateStudentAnswer(question, answer);
         Instant now = Instant.now();
         AssessmentAnswer saved = answers.findByAttemptIdAndQuestionId(attemptId, questionId).orElseGet(() ->
                 AssessmentAnswer.builder().attempt(attempt).question(question).createdAt(now).build());
@@ -120,6 +121,41 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
             attempt.setSubmittedAt(now); attempt.setUpdatedAt(now); objectiveGrader.gradeObjectiveAnswers(attempt); attempts.save(attempt);
         }
         return toResponse(attempt);
+    }
+
+    private void validateStudentAnswer(AssessmentQuestion question, JsonNode answer) {
+        if (answer == null || answer.isNull()) return;
+        int optionCount = question.getOptions() == null ? 0 : question.getOptions().size();
+        switch (question.getQuestionType()) {
+            case MCQ, TRUE_FALSE -> {
+                if (!answer.isIntegralNumber() || !answer.canConvertToInt()
+                        || answer.intValue() < 0 || answer.intValue() >= optionCount) {
+                    throw error("Select one of the available answer options.", HttpStatus.BAD_REQUEST,
+                            "ASSESSMENT_INVALID_ANSWER");
+                }
+            }
+            case MULTIPLE_SELECT -> {
+                if (!answer.isArray()) {
+                    throw error("Multiple-select answers must be an array of option indexes.",
+                            HttpStatus.BAD_REQUEST, "ASSESSMENT_INVALID_ANSWER");
+                }
+                Set<Integer> selected = new HashSet<>();
+                for (JsonNode index : answer) {
+                    if (!index.isIntegralNumber() || !index.canConvertToInt()
+                            || index.intValue() < 0 || index.intValue() >= optionCount
+                            || !selected.add(index.intValue())) {
+                        throw error("Multiple-select answers must contain unique available option indexes.",
+                                HttpStatus.BAD_REQUEST, "ASSESSMENT_INVALID_ANSWER");
+                    }
+                }
+            }
+            case SHORT_ANSWER, DESCRIPTIVE -> {
+                if (!answer.isTextual()) {
+                    throw error("Written answers must be submitted as text.", HttpStatus.BAD_REQUEST,
+                            "ASSESSMENT_INVALID_ANSWER");
+                }
+            }
+        }
     }
 
     private void ensureInProgress(AssessmentAttempt attempt) {
