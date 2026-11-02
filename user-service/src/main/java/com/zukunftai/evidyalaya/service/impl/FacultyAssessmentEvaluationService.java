@@ -129,7 +129,9 @@ public class FacultyAssessmentEvaluationService {
                     .options(q.getOptions()).correctAnswer(q.getCorrectAnswer())
                     .submittedAnswer(a == null ? null : a.getAnswer()).maximumMarks(q.getMarks())
                     .marksAwarded(a == null ? null : a.getMarksAwarded())
-                    .feedback(a == null ? null : a.getFeedback()).manualEvaluation(manual).build();
+                    .feedback(a == null ? null : a.getFeedback()).manualEvaluation(manual)
+                    .attachmentName(a == null ? null : a.getAttachmentName())
+                    .hasAttachment(a != null && a.getAttachmentPath() != null).build();
         }).toList();
         boolean complete = responseAnswers.stream().filter(FacultyEvaluationAnswerResponse::isManualEvaluation)
                 .allMatch(a -> a.getSubmittedAnswer() == null || a.getMarksAwarded() != null);
