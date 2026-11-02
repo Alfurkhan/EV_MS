@@ -45,8 +45,15 @@ class AssessmentLiquibaseMigrationTest {
             try {
                 liquibase.update(new Contexts(), new LabelExpression());
             } catch (LiquibaseException exception) {
-                exception.printStackTrace();
-                throw exception;
+                Throwable rootCause = exception;
+                while (rootCause.getCause() != null) {
+                    rootCause = rootCause.getCause();
+                }
+                throw new AssertionError(
+                        "Liquibase changelog parsing failed: " + rootCause.getClass().getName()
+                                + ": " + rootCause.getMessage(),
+                        exception
+                );
             }
 
             assertTrue(tableExists(connection, "assessment"));
