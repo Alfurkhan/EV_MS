@@ -289,21 +289,48 @@ public class AssessmentServiceImpl implements AssessmentService {
         boolean objective = type == AssessmentQuestionType.MCQ
                 || type == AssessmentQuestionType.MULTIPLE_SELECT
                 || type == AssessmentQuestionType.TRUE_FALSE;
-        if (type == AssessmentQuestionType.MCQ || type == AssessmentQuestionType.MULTIPLE_SELECT) {
+        if (objective) {
             if (options == null || options.size() < 2) {
                 throw error("Choice questions require at least two options.", HttpStatus.BAD_REQUEST, "ASSESSMENT_OPTIONS_REQUIRED");
             }
+            Set<String> normalizedOptions = new HashSet<>();
+            for (String option : options) {
+                if (option == null || option.isBlank()
+                        || !normalizedOptions.add(option.trim().toLowerCase(Locale.ROOT))) {
+                    throw error("Answer options must be non-empty and unique.", HttpStatus.BAD_REQUEST, "ASSESSMENT_OPTIONS_INVALID");
+                }
+            }
         }
-        if (type == AssessmentQuestionType.TRUE_FALSE
-                && (options == null || options.size() != 2)) {
+        if (type == AssessmentQuestionType.TRUE_FALSE && options.size() != 2) {
             throw error("True/false questions require exactly two options.", HttpStatus.BAD_REQUEST, "ASSESSMENT_OPTIONS_REQUIRED");
         }
-        if (publishing && objective && (answer == null || answer.isNull() || answer.isMissingNode())) {
+        if (!publishing) return;
+        if (objective && (answer == null || answer.isNull() || answer.isMissingNode())) {
             throw error("Objective questions need a correct answer before publishing.", HttpStatus.BAD_REQUEST, "ASSESSMENT_ANSWER_REQUIRED");
         }
         if (publishing && !objective && answer != null && !answer.isNull()) {
             throw error("Short-answer and descriptive questions are graded manually; do not provide an automatic answer key.", HttpStatus.BAD_REQUEST, "ASSESSMENT_MANUAL_ANSWER_KEY_NOT_ALLOWED");
         }
+        if (type == AssessmentQuestionType.MCQ || type == AssessmentQuestionType.TRUE_FALSE) {
+            if (!isValidOptionIndex(answer, options.size())) {
+                throw error("The correct answer must reference an available option.", HttpStatus.BAD_REQUEST, "ASSESSMENT_ANSWER_INVALID");
+            }
+        } else if (type == AssessmentQuestionType.MULTIPLE_SELECT) {
+            if (!answer.isArray() || answer.isEmpty()) {
+                throw error("Select at least one correct option for a multiple-select question.", HttpStatus.BAD_REQUEST, "ASSESSMENT_ANSWER_INVALID");
+            }
+            Set<Integer> selected = new HashSet<>();
+            for (com.fasterxml.jackson.databind.JsonNode index : answer) {
+                if (!isValidOptionIndex(index, options.size()) || !selected.add(index.intValue())) {
+                    throw error("Multiple-select answers must contain unique, available option indexes.", HttpStatus.BAD_REQUEST, "ASSESSMENT_ANSWER_INVALID");
+                }
+            }
+        }
+    }
+
+    private boolean isValidOptionIndex(com.fasterxml.jackson.databind.JsonNode value, int optionCount) {
+        return value != null && value.isIntegralNumber() && value.canConvertToInt()
+                && value.intValue() >= 0 && value.intValue() < optionCount;
     }
 
     private Assessment findOwned(Long id) {
