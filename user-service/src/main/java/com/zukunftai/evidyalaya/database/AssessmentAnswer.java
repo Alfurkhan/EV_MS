@@ -39,6 +39,10 @@ public class AssessmentAnswer {
     @Column(name = "feedback", columnDefinition = "TEXT")
     private String feedback;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "evaluated_by")
+    private User evaluatedBy;
+
     @Column(name = "evaluated_at")
     private Instant evaluatedAt;
 
