@@ -60,6 +60,8 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
                             .attempted(attempt != null).attemptId(attempt == null ? null : attempt.getId())
                             .attemptStatus(attempt == null ? null : attempt.getStatus().name())
                             .attemptDeadline(attempt == null ? null : attempt.getDeadlineAt())
+                            .resultsPublished(a.isResultsPublished())
+                            .resultScore(a.isResultsPublished() && attempt != null ? attempt.getScore() : null)
                             .hasAttachment(a.getAttachmentPath() != null).attachmentName(a.getAttachmentName()).build();
                 }).toList();
     }
@@ -149,7 +151,11 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
                 .map(a -> StudentAssessmentAnswerResponse.builder().questionId(a.getQuestion().getId()).answer(a.getAnswer()).build()).toList();
         return StudentAssessmentAttemptResponse.builder().id(attempt.getId()).assessmentId(attempt.getAssessment().getId())
                 .assessmentTitle(attempt.getAssessment().getTitle()).status(attempt.getStatus().name()).startedAt(attempt.getStartedAt())
-                .deadlineAt(attempt.getDeadlineAt()).submittedAt(attempt.getSubmittedAt()).questions(qs).answers(saved).build();
+                .deadlineAt(attempt.getDeadlineAt()).submittedAt(attempt.getSubmittedAt())
+                .resultsPublished(attempt.getAssessment().isResultsPublished())
+                .score(attempt.getAssessment().isResultsPublished() ? attempt.getScore() : null)
+                .totalMarks(attempt.getAssessment().isResultsPublished() ? attempt.getAssessment().getTotalMarks() : null)
+                .questions(qs).answers(saved).build();
     }
     private User currentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
