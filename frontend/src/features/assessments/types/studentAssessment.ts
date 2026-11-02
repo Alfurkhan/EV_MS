@@ -1,0 +1,5 @@
+export type StudentAssessmentAvailability = "UPCOMING" | "OPEN" | "CLOSED" | "COMPLETED";
+export interface StudentAssessment { id:number; title:string; description:string|null; assessmentType:string; subjectName:string; facultyName:string; gradeName:string; sectionName:string; timingMode:"FIXED_WINDOW"|"INDIVIDUAL_TIMER"; availableFrom:string; availableUntil:string; durationMinutes:number|null; totalMarks:number; availability:StudentAssessmentAvailability; attempted:boolean; attemptId:number|null; attemptStatus:string|null; attemptDeadline:string|null; }
+export interface StudentQuestion { id:number; questionText:string; questionType:"MCQ"|"MULTIPLE_SELECT"|"TRUE_FALSE"|"SHORT_ANSWER"|"DESCRIPTIVE"; options:string[]|null; marks:number; position:number; }
+export interface StudentSavedAnswer { questionId:number; answer:unknown; }
+export interface StudentAttempt { id:number; assessmentId:number; assessmentTitle:string; status:"IN_PROGRESS"|"SUBMITTED"|"AUTO_SUBMITTED"; startedAt:string; deadlineAt:string; submittedAt:string|null; questions:StudentQuestion[]; answers:StudentSavedAnswer[]; }
