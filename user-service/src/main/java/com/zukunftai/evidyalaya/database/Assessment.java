@@ -74,6 +74,18 @@ public class Assessment {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
+    @Column(name = "attachment_path")
+    private String attachmentPath;
+
+    @Column(name = "attachment_name")
+    private String attachmentName;
+
+    @Column(name = "attachment_content_type")
+    private String attachmentContentType;
+
+    @Column(name = "attachment_size")
+    private Long attachmentSize;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
