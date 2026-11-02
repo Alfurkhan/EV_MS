@@ -125,6 +125,18 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
         return toResponse(attempt);
     }
 
+    @Override
+    public void deleteInProgressAttempt(Long attemptId) {
+        AssessmentAttempt attempt = ownedAttempt(attemptId);
+        autoSubmitIfExpired(attempt);
+        if (attempt.getStatus() != AssessmentAttemptStatus.IN_PROGRESS) {
+            throw error("Only an in-progress attempt can be cancelled. Submitted attempts are permanent academic records.",
+                    HttpStatus.CONFLICT, "ASSESSMENT_ATTEMPT_NOT_CANCELLABLE");
+        }
+        answers.deleteByAttemptId(attemptId);
+        attempts.delete(attempt);
+    }
+
     private void validateStudentAnswer(AssessmentQuestion question, JsonNode answer) {
         if (answer == null || answer.isNull()) return;
         int optionCount = question.getOptions() == null ? 0 : question.getOptions().size();
