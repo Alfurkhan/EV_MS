@@ -14,6 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AssessmentAttemptDeadlineScheduler {
     private final AssessmentAttemptRepository attemptRepository;
+    private final AssessmentObjectiveGrader objectiveGrader;
 
     // Server-side safety net: expire attempts even when the student makes no further API request.
     @Scheduled(fixedDelayString = "${app.assessment-auto-submit-interval-ms:15000}")
@@ -25,6 +26,7 @@ public class AssessmentAttemptDeadlineScheduler {
         for (AssessmentAttempt attempt : expired) {
             if (attempt.getStatus() == AssessmentAttemptStatus.IN_PROGRESS
                     && !attempt.getDeadlineAt().isAfter(submittedAt)) {
+                objectiveGrader.gradeObjectiveAnswers(attempt);
                 attempt.setStatus(AssessmentAttemptStatus.AUTO_SUBMITTED);
                 attempt.setSubmittedAt(submittedAt);
                 attempt.setUpdatedAt(submittedAt);
