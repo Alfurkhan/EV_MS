@@ -60,4 +60,38 @@
             <column name="attachment_size" type="BIGINT"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="assessments-004-create-attempts" author="evidyalaya">
+        <createTable tableName="assessment_attempt">
+            <column name="id" type="BIGINT" autoIncrement="true"><constraints primaryKey="true" primaryKeyName="pk_assessment_attempt" nullable="false"/></column>
+            <column name="assessment_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_attempt_assessment" references="assessment(id)" deleteCascade="true"/></column>
+            <column name="student_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_attempt_student" references="&quot;user&quot;(&quot;ID&quot;)"/></column>
+            <column name="status" type="VARCHAR(24)" defaultValue="IN_PROGRESS"><constraints nullable="false"/></column>
+            <column name="started_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="deadline_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="submitted_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="score" type="NUMERIC(8,2)"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="assessment_attempt" columnNames="assessment_id,student_id" constraintName="uk_assessment_attempt_student"/>
+        <createIndex tableName="assessment_attempt" indexName="idx_assessment_attempt_student"><column name="student_id"/><column name="created_at"/></createIndex>
+    </changeSet>
+
+    <changeSet id="assessments-005-create-answers" author="evidyalaya">
+        <createTable tableName="assessment_answer">
+            <column name="id" type="BIGINT" autoIncrement="true"><constraints primaryKey="true" primaryKeyName="pk_assessment_answer" nullable="false"/></column>
+            <column name="attempt_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_answer_attempt" references="assessment_attempt(id)" deleteCascade="true"/></column>
+            <column name="question_id" type="BIGINT"><constraints nullable="false" foreignKeyName="fk_answer_question" references="assessment_question(id)"/></column>
+            <column name="answer_json" type="JSONB"/>
+            <column name="marks_awarded" type="NUMERIC(8,2)"/>
+            <column name="feedback" type="TEXT"/>
+            <column name="evaluated_at" type="TIMESTAMP WITH TIME ZONE"/>
+            <column name="created_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP WITH TIME ZONE"><constraints nullable="false"/></column>
+        </createTable>
+        <addUniqueConstraint tableName="assessment_answer" columnNames="attempt_id,question_id" constraintName="uk_assessment_answer_question"/>
+        <createIndex tableName="assessment_answer" indexName="idx_answer_attempt"><column name="attempt_id"/></createIndex>
+    </changeSet>
+
 </databaseChangeLog>
