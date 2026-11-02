@@ -869,4 +869,6 @@
         </sql>
     </changeSet>
 
+    <include file="db/changelog/assessment/db.changelog-assessments.xml"/>
+
 </databaseChangeLog>
