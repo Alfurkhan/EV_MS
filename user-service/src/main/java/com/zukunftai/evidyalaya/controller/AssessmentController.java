@@ -98,7 +98,8 @@ public class AssessmentController {
                 .allowOvertime(assessment.isAllowOvertime()).totalMarks(assessment.getTotalMarks())
                 .publishedAt(assessment.getPublishedAt()).createdAt(assessment.getCreatedAt())
                 .updatedAt(assessment.getUpdatedAt()).questions(questions)
-                .hasAttachment(assessment.getAttachmentPath() != null).attachmentName(assessment.getAttachmentName())\n                .attachmentSize(assessment.getAttachmentSize()).build();
+                .hasAttachment(assessment.getAttachmentPath() != null).attachmentName(assessment.getAttachmentName())
+                .attachmentSize(assessment.getAttachmentSize()).build();
     }
 
     private AssessmentQuestionResponse toQuestionResponse(AssessmentQuestion question) {
