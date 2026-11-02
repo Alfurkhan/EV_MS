@@ -75,7 +75,12 @@ public class AssessmentController {
         Path path = assessmentService.resolveStoredAttachment(assessment.getAttachmentPath());
         Resource resource = new UrlResource(path.toUri());
         String name = assessment.getAttachmentName() == null ? "assessment-attachment" : assessment.getAttachmentName().replace("\\r", "").replace("\\n", "");
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
+        MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
+        if (assessment.getAttachmentContentType() != null) {
+            try { contentType = MediaType.parseMediaType(assessment.getAttachmentContentType()); }
+            catch (IllegalArgumentException ignored) { /* retain safe binary fallback */ }
+        }
+        return ResponseEntity.ok().contentType(contentType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(name, StandardCharsets.UTF_8).build().toString())
                 .body(resource);
     }
