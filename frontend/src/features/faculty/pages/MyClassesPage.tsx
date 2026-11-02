@@ -349,10 +349,8 @@ export default function MyClassesPage() {
                 </div>
 
             ) : (
-
                 /* CLASS LIST */
-
-                {filteredClasses.length > 0 ? (
+                filteredClasses.length > 0 ? (
                     <WeeklyTimetableGrid classes={filteredClasses} actionLoading={actionLoading} onStart={handleStart} onEnd={handleEnd} />
                 ) : (
                     <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
@@ -361,7 +359,7 @@ export default function MyClassesPage() {
                         <p className="mt-1 text-sm text-slate-500">Try changing your search or filters to see more classes.</p>
                         <button type="button" onClick={clearFilters} className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Clear filters</button>
                     </div>
-                )}
+                )
             )}
 
             {/* SUMMARY */}
