@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BookOpen, CalendarDays, CheckCircle2, Clock3, ExternalLink, MapPin, Monitor, PlayCircle, Square, ClipboardCheck } from "lucide-react";
+import { BookOpen, CalendarDays, CheckCircle2, Clock3, ExternalLink, Monitor, PlayCircle, Square, ClipboardCheck } from "lucide-react";
 import type { FacultyClass } from "../types/facultyClass";
 
 interface Props {
