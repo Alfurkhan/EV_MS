@@ -34,6 +34,7 @@ public class AssessmentResponse {
     private boolean allowOvertime;
     private BigDecimal totalMarks;
     private LocalDateTime publishedAt;
+    private boolean resultsPublished;
     private Instant createdAt;
     private Instant updatedAt;
     private List<AssessmentQuestionResponse> questions;
