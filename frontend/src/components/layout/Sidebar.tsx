@@ -88,6 +88,12 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_ADMIN"],
             },
             {
+                icon: ClipboardList,
+                label: "Quiz & Exams",
+                path: "/admin-assessments",
+                allowedRoles: ["ROLE_ADMIN"],
+            },
+            {
                 icon: CalendarDays,
                 label: "My Timetable",
                 path: "/my-timetable",
