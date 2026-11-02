@@ -6,11 +6,13 @@ on:
       - deployment/aws-dev
       - feature/faculty-timetable-approval
       - feature/assignments
+      - feature/evidyalaya-final-development
   push:
     branches:
       - feature/faculty-timetable-approval
       - feature/assignments
       - feature/assignment-ux-enhancements
+      - feature/evidyalaya-final-development
 
 permissions:
   contents: read
