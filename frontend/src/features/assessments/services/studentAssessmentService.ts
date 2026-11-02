@@ -6,8 +6,12 @@ export async function getStudentAttempt(id:number):Promise<StudentAttempt>{retur
 export async function saveStudentAnswer(attemptId:number,questionId:number,answer:unknown):Promise<StudentAttempt>{return (await api.put<StudentAttempt>(`/assessments/student/attempts/${attemptId}/answers/${questionId}`,answer)).data;}
 export async function submitStudentAttempt(id:number):Promise<StudentAttempt>{return (await api.post<StudentAttempt>(`/assessments/student/attempts/${id}/submit`)).data;}
 
+export async function getStudentAssessmentAttachment(id:number):Promise<Blob>{
+ return (await api.get<Blob>(`/assessments/${id}/attachment`,{responseType:"blob"})).data;
+}
+
 export async function downloadStudentAssessmentAttachment(id:number,filename:string):Promise<void>{
- const blob=(await api.get<Blob>(`/assessments/${id}/attachment`,{responseType:"blob"})).data;
+ const blob=await getStudentAssessmentAttachment(id);
  const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=filename||"assessment-attachment";document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
