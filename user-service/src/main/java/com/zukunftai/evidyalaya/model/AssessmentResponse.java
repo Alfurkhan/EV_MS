@@ -37,4 +37,7 @@ public class AssessmentResponse {
     private Instant createdAt;
     private Instant updatedAt;
     private List<AssessmentQuestionResponse> questions;
+    private boolean hasAttachment;
+    private String attachmentName;
+    private Long attachmentSize;
 }
