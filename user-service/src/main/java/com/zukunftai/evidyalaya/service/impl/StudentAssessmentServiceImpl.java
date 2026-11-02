@@ -24,6 +24,8 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
     private final AssessmentAnswerRepository answers;
     private final StudentEnrollmentRepository enrollments;
     private final UserRepository users;
+    private static final ZoneId ASSESSMENT_ZONE = ZoneId.of("Asia/Kolkata");
+
     private final AssessmentObjectiveGrader objectiveGrader;
 
     public StudentAssessmentServiceImpl(AssessmentRepository assessments, AssessmentQuestionRepository questions,
@@ -39,7 +41,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
         List<StudentEnrollment> active = enrollments.findByStudentAndActiveTrue(student);
         if (active.isEmpty()) return List.of();
         Set<String> classKeys = active.stream().map(e -> key(e.getAcademicYear().getId(), e.getGrade().getId(), e.getSection().getId())).collect(Collectors.toSet());
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ASSESSMENT_ZONE);
         return assessments.findAll().stream()
                 .filter(a -> a.getStatus() == AssessmentStatus.PUBLISHED)
                 .filter(a -> classKeys.contains(key(a.getAcademicYear().getId(), a.getGrade().getId(), a.getSection().getId())))
@@ -81,7 +83,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
         if (now.isBefore(assessment.getAvailableFrom()) || !now.isBefore(assessment.getAvailableUntil()))
             throw error("This assessment is outside its availability window.", HttpStatus.CONFLICT, "ASSESSMENT_WINDOW_CLOSED");
         Instant started = Instant.now();
-        Instant windowEnd = assessment.getAvailableUntil().atZone(ZoneId.systemDefault()).toInstant();
+        Instant windowEnd = assessment.getAvailableUntil().atZone(ASSESSMENT_ZONE).toInstant();
         Instant deadline = windowEnd;
         if (assessment.getTimingMode() == AssessmentTimingMode.INDIVIDUAL_TIMER) {
             Instant timerEnd = started.plusSeconds(assessment.getDurationMinutes() * 60L);
