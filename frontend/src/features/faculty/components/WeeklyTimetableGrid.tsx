@@ -51,12 +51,14 @@ function ClassTile({ item, today, busy, onStart, onEnd }: {
             <p className="flex items-start gap-1.5 overflow-hidden text-[11px] leading-4 text-slate-500"><CalendarDays size={12} className="mt-0.5 shrink-0"/><span className="line-clamp-2">{dateLabel(item.startDate)} – {dateLabel(item.endDate)}</span></p>
         </div>
         <div className="mt-2 min-h-[20px]">{online && item.meetingLink && <a href={item.meetingLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline"><ExternalLink size={12}/> Meeting link</a>}</div>
-        {item.notes && <p className="mt-2 line-clamp-2 text-[11px] text-slate-500" title={item.notes}>{item.notes}</p>}
+        <div className="mt-2 min-h-[34px] text-[11px] leading-4 text-slate-500">{item.notes ? <p className="line-clamp-2" title={item.notes}>{item.notes}</p> : null}</div>
+        <div className="mt-auto">
         {live && <div className="mt-3 flex flex-col gap-2">
             <button type="button" onClick={() => navigate(`/attendance?sessionId=${item.sessionId}`)} className="inline-flex items-center justify-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100"><ClipboardCheck size={13}/> Attendance</button>
             <button type="button" disabled={busy} onClick={() => onEnd(item)} className="inline-flex items-center justify-center gap-1 rounded-lg bg-red-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"><Square size={12}/> End Class</button>
         </div>}
         {canStart && <button type="button" disabled={busy} onClick={() => onStart(item)} className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"><PlayCircle size={14}/> Start Class</button>}
+        </div>
     </article>;
 }
 
