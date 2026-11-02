@@ -9,3 +9,7 @@ export async function getAssessmentEvaluation(assessmentId: number, attemptId: n
 export async function gradeAssessmentAnswer(assessmentId: number, attemptId: number, questionId: number, marksAwarded: number, feedback: string): Promise<FacultyEvaluationAttempt> {
   return (await api.put<FacultyEvaluationAttempt>(`/assessments/faculty/${assessmentId}/evaluations/${attemptId}/answers/${questionId}`, { marksAwarded, feedback })).data;
 }
+
+export async function publishAssessmentResults(assessmentId: number): Promise<void> {
+  await api.post(`/assessments/faculty/${assessmentId}/publish-results`);
+}
