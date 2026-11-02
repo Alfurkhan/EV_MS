@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface AssessmentAnswerRepository extends JpaRepository<AssessmentAnswer, Long> {
     List<AssessmentAnswer> findByAttemptIdOrderByQuestionPositionAsc(Long attemptId);
+    void deleteByAttemptId(Long attemptId);
     Optional<AssessmentAnswer> findByAttemptIdAndQuestionId(Long attemptId, Long questionId);
 }
