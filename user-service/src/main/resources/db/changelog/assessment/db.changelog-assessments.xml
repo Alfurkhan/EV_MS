@@ -104,4 +104,11 @@
                 referencedColumnNames="ID"/>
     </changeSet>
 
+
+    <changeSet id="assessments-007-add-results-published" author="evidyalaya">
+        <addColumn tableName="assessment">
+            <column name="results_published" type="BOOLEAN" defaultValueBoolean="false"><constraints nullable="false"/></column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
