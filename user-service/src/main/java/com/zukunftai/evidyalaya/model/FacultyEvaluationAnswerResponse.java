@@ -1,5 +1,7 @@
 package com.zukunftai.evidyalaya.model;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import com.zukunftai.evidyalaya.database.AssessmentQuestionType;
 import lombok.Builder;
 import lombok.Getter;
