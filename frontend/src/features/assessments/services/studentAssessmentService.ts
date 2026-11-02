@@ -10,3 +10,12 @@ export async function downloadStudentAssessmentAttachment(id:number,filename:str
  const blob=(await api.get<Blob>(`/assessments/${id}/attachment`,{responseType:"blob"})).data;
  const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=filename||"assessment-attachment";document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+
+export async function uploadStudentAnswerSheet(attemptId:number,questionId:number,file:File):Promise<string>{
+ const data=new FormData();data.append("file",file);
+ return (await api.post<{attachmentName:string}>(`/assessments/student/attempts/${attemptId}/answers/${questionId}/attachment`,data,{headers:{"Content-Type":"multipart/form-data"}})).data.attachmentName;
+}
+export async function downloadStudentAnswerSheet(attemptId:number,questionId:number,filename:string):Promise<void>{
+ const blob=(await api.get<Blob>(`/assessments/attempts/${attemptId}/answers/${questionId}/attachment`,{responseType:"blob"})).data;
+ const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download=filename||"answer-sheet";document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
