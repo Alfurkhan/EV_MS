@@ -93,6 +93,9 @@ export default function MyClassCard({
 
     const today = new Date();
     const weekdays = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const dayLabel = classItem.dayOfWeek
+        ? classItem.dayOfWeek.charAt(0) + classItem.dayOfWeek.slice(1).toLowerCase()
+        : "Day not specified";
     const isScheduledToday =
         classItem.dayOfWeek === weekdays[today.getDay()] &&
         today >= new Date(`${classItem.startDate}T00:00:00`) &&
@@ -245,7 +248,7 @@ export default function MyClassCard({
                     />
 
                     <span>
-                        {classItem.dayOfWeek.charAt(0) + classItem.dayOfWeek.slice(1).toLowerCase()} · {formatDate(classItem.startDate)}
+                        {dayLabel} · {formatDate(classItem.startDate)}
                         {" – "}
                         {formatDate(classItem.endDate)}
                     </span>
