@@ -46,7 +46,11 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
                 .map(a -> {
                     AssessmentAttempt attempt = attempts.findByAssessmentAndStudent(a, student).orElse(null);
                     String availability = now.isBefore(a.getAvailableFrom()) ? "UPCOMING" : now.isAfter(a.getAvailableUntil()) ? "CLOSED" : "OPEN";
-                    if (attempt != null && attempt.getStatus() != AssessmentAttemptStatus.IN_PROGRESS) availability = "COMPLETED";
+                    if (attempt != null) {
+                        if (attempt.getStatus() != AssessmentAttemptStatus.IN_PROGRESS) availability = "COMPLETED";
+                        else if (Instant.now().isBefore(attempt.getDeadlineAt())) availability = "OPEN";
+                        else availability = "CLOSED";
+                    }
                     return StudentAssessmentResponse.builder().id(a.getId()).title(a.getTitle()).description(a.getDescription())
                             .assessmentType(a.getAssessmentType()).subjectName(a.getSubject().getName())
                             .facultyName(a.getFaculty().getFullName()).gradeName(a.getGrade().getName()).sectionName(a.getSection().getName())
