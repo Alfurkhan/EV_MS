@@ -56,7 +56,6 @@ public class AssessmentServiceImpl implements AssessmentService {
     @Transactional(readOnly = true)
     public Assessment getFacultyAssessment(Long id) {
         Assessment assessment = findOwned(id);
-        assessment.getQuestions().size();
         return assessment;
     }
 
