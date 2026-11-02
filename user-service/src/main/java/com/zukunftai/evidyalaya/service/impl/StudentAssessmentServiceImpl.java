@@ -63,15 +63,15 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
         Assessment assessment = assessments.findById(assessmentId).orElseThrow(() -> error("Assessment not found.", HttpStatus.NOT_FOUND, "ASSESSMENT_NOT_FOUND"));
         requireEnrollment(student, assessment);
         if (assessment.getStatus() != AssessmentStatus.PUBLISHED) throw error("This assessment is not available.", HttpStatus.FORBIDDEN, "ASSESSMENT_NOT_PUBLISHED");
-        LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(assessment.getAvailableFrom()) || !now.isBefore(assessment.getAvailableUntil()))
-            throw error("This assessment is outside its availability window.", HttpStatus.CONFLICT, "ASSESSMENT_WINDOW_CLOSED");
         Optional<AssessmentAttempt> existing = attempts.findByAssessmentAndStudent(assessment, student);
         if (existing.isPresent()) {
             AssessmentAttempt attempt = existing.get(); autoSubmitIfExpired(attempt);
             if (attempt.getStatus() != AssessmentAttemptStatus.IN_PROGRESS) throw error("You have already submitted this assessment.", HttpStatus.CONFLICT, "ASSESSMENT_ALREADY_ATTEMPTED");
             return toResponse(attempt);
         }
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(assessment.getAvailableFrom()) || !now.isBefore(assessment.getAvailableUntil()))
+            throw error("This assessment is outside its availability window.", HttpStatus.CONFLICT, "ASSESSMENT_WINDOW_CLOSED");
         Instant started = Instant.now();
         Instant windowEnd = assessment.getAvailableUntil().atZone(ZoneId.systemDefault()).toInstant();
         Instant deadline = windowEnd;
@@ -85,7 +85,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
         return toResponse(attempt);
     }
 
-    @Override @Transactional(readOnly = true)
+    @Override
     public StudentAssessmentAttemptResponse getAttempt(Long attemptId) {
         AssessmentAttempt attempt = ownedAttempt(attemptId); autoSubmitIfExpired(attempt); return toResponse(attempt);
     }
