@@ -33,6 +33,7 @@ import MySubjectsPage
 import MyClassesPage from "./features/faculty/pages/MyClassesPage";
 import FacultyAssignmentsPage from "./features/assignments/pages/FacultyAssignmentsPage";
 import FacultyAssessmentsPage from "./features/assessments/pages/FacultyAssessmentsPage";
+import FacultyAssessmentEvaluationsPage from "./features/assessments/pages/FacultyAssessmentEvaluationsPage";
 import StudentAssignmentsPage from "./features/assignments/pages/StudentAssignmentsPage";
 import StudentAssessmentsPage from "./features/assessments/pages/StudentAssessmentsPage";
 import AdminAssignmentsPage from "./features/assignments/pages/AdminAssignmentsPage";
@@ -208,6 +209,14 @@ export default function App() {
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_FACULTY"]}>
                                 <FacultyAssessmentsPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+                    <Route
+                        path="/faculty-assessments/:assessmentId/evaluations"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_FACULTY"]}>
+                                <FacultyAssessmentEvaluationsPage />
                             </RoleProtectedRoute>
                         }
                     />
