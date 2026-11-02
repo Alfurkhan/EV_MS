@@ -37,7 +37,7 @@ class AssessmentObjectiveGraderTest {
         AssessmentAttempt attempt = AssessmentAttempt.builder().id(20L).assessment(assessment).build();
 
         AssessmentQuestion singleChoice = question(1L, assessment, AssessmentQuestionType.MCQ,
-                "[0]", "2.00");
+                "0", "2.00");
         AssessmentQuestion multipleSelect = question(2L, assessment, AssessmentQuestionType.MULTIPLE_SELECT,
                 "[1,0]", "3.00");
         AssessmentQuestion incorrectChoice = question(3L, assessment, AssessmentQuestionType.TRUE_FALSE,
