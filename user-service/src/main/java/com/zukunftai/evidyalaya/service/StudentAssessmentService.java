@@ -11,4 +11,5 @@ public interface StudentAssessmentService {
     StudentAssessmentAttemptResponse getAttempt(Long attemptId);
     StudentAssessmentAttemptResponse saveAnswer(Long attemptId, Long questionId, JsonNode answer);
     StudentAssessmentAttemptResponse submit(Long attemptId);
+    void deleteInProgressAttempt(Long attemptId);
 }
