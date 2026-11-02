@@ -2,6 +2,7 @@ package com.zukunftai.evidyalaya.repository;
 
 import com.zukunftai.evidyalaya.database.Assessment;
 import com.zukunftai.evidyalaya.database.AssessmentAttempt;
+import com.zukunftai.evidyalaya.database.AssessmentAttemptStatus;
 import com.zukunftai.evidyalaya.database.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
