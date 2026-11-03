@@ -72,7 +72,7 @@ export default function FacultyAssessmentEvaluationsPage() {
         await gradeAssessmentAnswer(id, selected.attemptId, answer.questionId,
           Number(marks[answer.questionId]), feedback[answer.questionId] ?? "");
       }
-      const updated = await getAssessmentEvaluation(id, selected.attemptId);
+      const updated = isAdmin ? await getAdminAssessmentEvaluation(id, selected.attemptId) : await getAssessmentEvaluation(id, selected.attemptId);
       setSelected(updated);
       setItems(old => old.map(x => x.attemptId === updated.attemptId ? updated : x));
       toast.success("All question evaluations saved successfully.");
