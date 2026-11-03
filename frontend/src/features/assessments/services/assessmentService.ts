@@ -37,3 +37,14 @@ export async function previewQuestionPaper(file: File): Promise<QuestionPaperImp
         headers: { "Content-Type": "multipart/form-data" }
     })).data;
 }
+
+export interface AssessmentParticipationReport {
+    totalEnrolledStudents: number;
+    attemptedStudents: number;
+    notAttemptedStudents: number;
+    activeAttempts: number;
+    submittedAttempts: number;
+}
+export async function getAssessmentParticipationReport(id: number): Promise<AssessmentParticipationReport> {
+    return (await api.get<AssessmentParticipationReport>(`/assessments/faculty/${id}/report`)).data;
+}
