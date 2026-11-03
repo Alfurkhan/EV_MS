@@ -34,6 +34,11 @@ export async function getMyTimetableDrafts(): Promise<Timetable[]> {
     return response.data;
 }
 
+export async function getMyAssignmentClasses(): Promise<Timetable[]> {
+    const response = await api.get<Timetable[]>("/timetable/my/assignment-classes");
+    return response.data;
+}
+
 export async function submitTimetableForApproval(id: number): Promise<Timetable> {
     const response = await api.put<Timetable>(`/timetable/id/${id}/submit`);
     return response.data;

@@ -252,6 +252,25 @@ public class TimetableController {
         return ResponseEntity.ok(response);
     }
 
+    /*
+     * ============================================================
+     * GET MY ASSIGNMENT CLASSES
+     * ============================================================
+     *
+     * This endpoint is for the currently authenticated Faculty.
+     */
+
+    @GetMapping("/my/assignment-classes")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<List<TimetableResponse>> getMyAssignmentClasses() {
+        return ResponseEntity.ok(
+                timetableService.getMyAssignmentClasses()
+                        .stream()
+                        .map(this::toResponse)
+                        .toList()
+        );
+    }
+
 
     /*
      * ============================================================

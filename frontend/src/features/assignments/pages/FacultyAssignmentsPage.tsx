@@ -25,6 +25,8 @@ import {
 } from "../services/assignmentService";
 import type { Assignment, AssignmentRequest, AssignmentSubmission } from "../types/assignment";
 import type { AssignmentReport } from "../services/assignmentService";
+import { getMyAssignmentClasses } from "../../timetable/services/timetableService";
+import type { Timetable } from "../../timetable/types/timetable";
 
 type FacultyView = "subjects" | "subject" | "assignments";
 type FormErrors = Partial<Record<keyof AssignmentRequest, string>>;
@@ -63,6 +65,7 @@ export default function FacultyAssignmentsPage() {
     const [grades, setGrades] = useState<Grade[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [teachingAssignments, setTeachingAssignments] = useState<Timetable[]>([]);
     const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
     const [form, setForm] = useState<AssignmentRequest>(blankForm);
     const [errors, setErrors] = useState<FormErrors>({});
@@ -97,12 +100,26 @@ export default function FacultyAssignmentsPage() {
 
     useEffect(() => {
         void refresh();
-        Promise.all([getAcademicYears(), getMySubjects()])
-            .then(([years, subjectList]) => {
+        Promise.all([
+            getAcademicYears(),
+            getMySubjects(),
+            getMyAssignmentClasses(),
+        ])
+            .then(([years, subjectList, timetableList]) => {
                 setAcademicYears(years.filter((year) => year.active));
                 setSubjects(subjectList.filter((subject) => subject.active));
+                setTeachingAssignments(
+                    timetableList.filter(
+                        (entry) => entry.active && entry.status === "APPROVED"
+                    )
+                );
             })
-            .catch((error: any) => toast.error(error?.response?.data?.message ?? "Could not load academic years or assigned subjects."));
+            .catch((error: any) =>
+                toast.error(
+                    error?.response?.data?.message ??
+                    "Could not load academic years, subjects, or teaching assignments."
+                )
+            );
     }, []);
 
     useEffect(() => () => {
@@ -115,6 +132,16 @@ export default function FacultyAssignmentsPage() {
         [assignments, selectedSubjectId],
     );
 
+    const subjectTeachingAssignments = teachingAssignments.filter(
+        (entry) => entry.subjectId === form.subjectId
+    );
+
+    const availableAcademicYears = academicYears.filter((year) =>
+        subjectTeachingAssignments.some(
+            (entry) => entry.academicYearId === year.id
+        )
+    );
+
     const chooseYear = async (value: string) => {
         const id = Number(value);
         setForm((old) => ({ ...old, academicYearId: id, gradeId: 0, sectionId: 0 }));
@@ -122,8 +149,17 @@ export default function FacultyAssignmentsPage() {
         setGrades([]);
         setSections([]);
         if (!id) return;
+
         try {
-            setGrades((await getGradesByAcademicYear(id)).filter((grade) => grade.active));
+            const allowedGradeIds = subjectTeachingAssignments
+                .filter((entry) => entry.academicYearId === id)
+                .map((entry) => entry.gradeId);
+
+            setGrades(
+                (await getGradesByAcademicYear(id)).filter(
+                    (grade) => grade.active && allowedGradeIds.includes(grade.id)
+                )
+            );
         } catch {
             toast.error("Could not load grades for this academic year.");
         }
@@ -135,8 +171,21 @@ export default function FacultyAssignmentsPage() {
         setErrors((old) => ({ ...old, gradeId: undefined, sectionId: undefined }));
         setSections([]);
         if (!id) return;
+
         try {
-            setSections((await getSectionsByGrade(id)).filter((section) => section.active));
+            const allowedSectionIds = subjectTeachingAssignments
+                .filter(
+                    (entry) =>
+                        entry.academicYearId === form.academicYearId &&
+                        entry.gradeId === id
+                )
+                .map((entry) => entry.sectionId);
+
+            setSections(
+                (await getSectionsByGrade(id)).filter(
+                    (section) => section.active && allowedSectionIds.includes(section.id)
+                )
+            );
         } catch {
             toast.error("Could not load sections for this grade.");
         }
@@ -225,8 +274,33 @@ export default function FacultyAssignmentsPage() {
         setFile(null);
         setShowForm(true);
         try {
-            setGrades((await getGradesByAcademicYear(assignment.academicYearId)).filter((grade) => grade.active));
-            setSections((await getSectionsByGrade(assignment.gradeId)).filter((section) => section.active));
+            const allowedEntries = teachingAssignments.filter(
+                (entry) =>
+                    entry.subjectId === assignment.subjectId &&
+                    entry.academicYearId === assignment.academicYearId
+            );
+
+            const allowedGradeIds = allowedEntries.map((entry) => entry.gradeId);
+            const allowedSectionIds = allowedEntries
+                .filter((entry) => entry.gradeId === assignment.gradeId)
+                .map((entry) => entry.sectionId);
+
+            const [gradeList, sectionList] = await Promise.all([
+                getGradesByAcademicYear(assignment.academicYearId),
+                getSectionsByGrade(assignment.gradeId),
+            ]);
+
+            setGrades(
+                gradeList.filter(
+                    (grade) => grade.active && allowedGradeIds.includes(grade.id)
+                )
+            );
+
+            setSections(
+                sectionList.filter(
+                    (section) => section.active && allowedSectionIds.includes(section.id)
+                )
+            );
         } catch {
             toast.error("Assignment details loaded, but grade or section options could not be refreshed.");
         }
@@ -398,7 +472,15 @@ export default function FacultyAssignmentsPage() {
                             <span className="block text-xs font-normal text-slate-500">Students can update a submission until this deadline.</span>
                         </label>
                         <label className="space-y-1 text-sm font-medium text-slate-700">Academic year
-                            <select required aria-invalid={Boolean(errors.academicYearId)} className={fieldClass(Boolean(errors.academicYearId))} value={form.academicYearId || ""} onChange={(event) => void chooseYear(event.target.value)}><option value="">Select academic year</option>{academicYears.map((year) => <option key={year.id} value={year.id}>{year.name}</option>)}</select>
+                            <select required aria-invalid={Boolean(errors.academicYearId)}
+                                    className={fieldClass(Boolean(errors.academicYearId))}
+                                    value={form.academicYearId || ""}
+                                    onChange={(event) => void chooseYear(event.target.value)}>
+                                <option value="">Select academic year</option>
+                                {availableAcademicYears.map((year) => (
+                                    <option key={year.id} value={year.id}>{year.name}</option>
+                                ))}
+                            </select>
                             {errors.academicYearId && <span className="block text-xs font-medium text-rose-600">{errors.academicYearId}</span>}
                         </label>
                         <label className="space-y-1 text-sm font-medium text-slate-700">Grade
