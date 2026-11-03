@@ -102,6 +102,59 @@ public class AssessmentServiceImpl implements AssessmentService {
     }
 
     @Override
+    public Assessment createDraftForFaculty(Long facultyId, AssessmentRequest request) {
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> error("Selected faculty member was not found.", HttpStatus.NOT_FOUND, "FACULTY_NOT_FOUND"));
+        boolean isFaculty = faculty.getRoles().stream()
+                .anyMatch(role -> role.getName().name().equals("FACULTY"));
+        if (!isFaculty) {
+            throw error("The selected user is not a faculty member.", HttpStatus.BAD_REQUEST, "ASSESSMENT_FACULTY_INVALID");
+        }
+        References refs = resolveReferences(faculty, request);
+        validateSchedule(request);
+        Instant now = Instant.now();
+        Assessment assessment = Assessment.builder()
+                .title(request.getTitle().trim())
+                .description(clean(request.getDescription()))
+                .assessmentType(request.getAssessmentType())
+                .status(AssessmentStatus.DRAFT)
+                .academicYear(refs.year()).grade(refs.grade()).section(refs.section())
+                .subject(refs.subject()).faculty(faculty)
+                .timingMode(request.getTimingMode())
+                .availableFrom(request.getAvailableFrom()).availableUntil(request.getAvailableUntil())
+                .durationMinutes(request.getTimingMode() == AssessmentTimingMode.INDIVIDUAL_TIMER ? request.getDurationMinutes() : null)
+                .allowOvertime(request.isAllowOvertime())
+                .totalMarks(request.getTotalMarks())
+                .createdAt(now).updatedAt(now).build();
+        assessmentRepository.save(assessment);
+        replaceQuestions(assessment, request.getQuestions(), false);
+        return assessment;
+    }
+
+    @Override
+    public Assessment publishForAdmin(Long id) {
+        Assessment assessment = assessmentRepository.findById(id)
+                .orElseThrow(() -> error("Assessment not found.", HttpStatus.NOT_FOUND, "ASSESSMENT_NOT_FOUND"));
+        if (assessment.getStatus() != AssessmentStatus.DRAFT) {
+            throw error("Only draft assessments can be published.", HttpStatus.CONFLICT, "ASSESSMENT_NOT_DRAFT");
+        }
+        List<AssessmentQuestion> questions = questionRepository.findByAssessmentIdOrderByPositionAsc(id);
+        if (questions.isEmpty()) {
+            throw error("Add at least one question before publishing.", HttpStatus.BAD_REQUEST, "ASSESSMENT_QUESTIONS_REQUIRED");
+        }
+        BigDecimal marks = questions.stream().map(AssessmentQuestion::getMarks).reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (marks.compareTo(assessment.getTotalMarks()) != 0) {
+            throw error("The sum of question marks must equal the assessment total marks.", HttpStatus.BAD_REQUEST, "ASSESSMENT_MARKS_MISMATCH");
+        }
+        for (AssessmentQuestion question : questions) validateQuestion(question.getQuestionType(),
+                question.getOptions(), question.getCorrectAnswer(), true);
+        assessment.setStatus(AssessmentStatus.PUBLISHED);
+        assessment.setPublishedAt(LocalDateTime.now(ASSESSMENT_ZONE));
+        assessment.setUpdatedAt(Instant.now());
+        return assessmentRepository.save(assessment);
+    }
+
+    @Override
     public Assessment updateDraft(Long id, AssessmentRequest request) {
         Assessment assessment = findOwned(id);
         if (assessment.getStatus() != AssessmentStatus.DRAFT) {
