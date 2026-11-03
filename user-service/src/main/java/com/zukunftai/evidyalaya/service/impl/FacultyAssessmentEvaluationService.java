@@ -144,6 +144,13 @@ public class FacultyAssessmentEvaluationService {
     }
 
     private Assessment ownedAssessment(Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean admin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        if (admin) {
+            return assessments.findById(id)
+                    .orElseThrow(() -> error("Assessment not found.", HttpStatus.NOT_FOUND, "ASSESSMENT_NOT_FOUND"));
+        }
         return assessments.findByIdAndFaculty(id, currentUser())
                 .orElseThrow(() -> error("Assessment not found or you do not own it.", HttpStatus.NOT_FOUND, "ASSESSMENT_NOT_FOUND"));
     }
