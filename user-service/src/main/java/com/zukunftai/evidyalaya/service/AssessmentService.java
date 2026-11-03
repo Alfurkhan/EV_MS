@@ -11,6 +11,8 @@ public interface AssessmentService {
     List<Assessment> getFacultyAssessments();
     Assessment getFacultyAssessment(Long id);
     Assessment createDraft(AssessmentRequest request);
+    Assessment createDraftForFaculty(Long facultyId, AssessmentRequest request);
+    Assessment publishForAdmin(Long id);
     Assessment updateDraft(Long id, AssessmentRequest request);
     Assessment publish(Long id);
     void deleteDraft(Long id);
