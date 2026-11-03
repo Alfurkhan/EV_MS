@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { ArrowLeft, CheckCircle2, Clock3, RefreshCw, Save, Download } from "lucide-react";
 import { getAssessmentEvaluations, getAssessmentEvaluation, gradeAssessmentAnswer, publishAssessmentResults } from "../services/facultyEvaluationService";
+import { getAdminAssessmentEvaluations, getAdminAssessmentEvaluation, gradeAdminAssessmentAnswer, publishAdminAssessmentResults } from "../services/adminAssessmentService";
 import { downloadStudentAnswerSheet } from "../services/studentAssessmentService";
 import type { FacultyEvaluationAttempt } from "../types/facultyEvaluation";
 
@@ -11,6 +12,9 @@ const pretty = (value: unknown) => value == null ? "No answer submitted" : typeo
 
 export default function FacultyAssessmentEvaluationsPage() {
   const { assessmentId } = useParams();
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin-assessments/");
+  const backPath = isAdmin ? "/admin-assessments" : "/faculty-assessments";
   const id = Number(assessmentId);
   const [items, setItems] = useState<FacultyEvaluationAttempt[]>([]);
   const [selected, setSelected] = useState<FacultyEvaluationAttempt | null>(null);
@@ -23,16 +27,16 @@ export default function FacultyAssessmentEvaluationsPage() {
   const refresh = async () => {
     setLoading(true);
     try {
-      const rows = await getAssessmentEvaluations(id);
+      const rows = isAdmin ? await getAdminAssessmentEvaluations(id) : await getAssessmentEvaluations(id);
       setItems(rows);
       if (selected) {
         const current = rows.find(x => x.attemptId === selected.attemptId);
-        if (current) setSelected(await getAssessmentEvaluation(id, current.attemptId));
+        if (current) setSelected(isAdmin ? await getAdminAssessmentEvaluation(id, current.attemptId) : await getAssessmentEvaluation(id, current.attemptId));
       }
     } catch (e:any) { toast.error(e?.response?.data?.message ?? "Could not load submissions."); }
     finally { setLoading(false); }
   };
-  useEffect(() => { void refresh(); }, [id]);
+  useEffect(() => { void refresh(); }, [id, isAdmin]);
   useEffect(() => {
     if (!selected) return;
     const m:Record<number,string>={}, f:Record<number,string>={};
@@ -41,13 +45,13 @@ export default function FacultyAssessmentEvaluationsPage() {
   }, [selected?.attemptId, selected?.answers]);
 
   const open = async (attemptId:number) => {
-    try { setSelected(await getAssessmentEvaluation(id, attemptId)); }
+    try { setSelected(isAdmin ? await getAdminAssessmentEvaluation(id, attemptId) : await getAssessmentEvaluation(id, attemptId)); }
     catch(e:any) { toast.error(e?.response?.data?.message ?? "Could not open submission."); }
   };
   const publishResults = async () => {
     if (!window.confirm("Publish results for all submitted attempts? Students will be able to see their scores.")) return;
     setPublishing(true);
-    try { await publishAssessmentResults(id); toast.success("Results published to students."); await refresh(); }
+    try { if(isAdmin) await publishAdminAssessmentResults(id); else await publishAssessmentResults(id); toast.success("Results published to students."); await refresh(); }
     catch(e:any) { toast.error(e?.response?.data?.message ?? "Results could not be published."); }
     finally { setPublishing(false); }
   };
@@ -79,7 +83,7 @@ export default function FacultyAssessmentEvaluationsPage() {
 
   return <div className="mx-auto max-w-6xl space-y-5">
     <header className="flex flex-wrap items-center justify-between gap-3">
-      <div><Link to="/faculty-assessments" className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600"><ArrowLeft size={15}/> Back to Quiz &amp; Exams</Link><h1 className="mt-2 text-2xl font-bold text-slate-900">Assessment evaluations</h1><p className="mt-1 text-sm text-slate-500">Review submissions and grade short-answer or descriptive responses.</p></div>
+      <div><Link to={backPath} className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600"><ArrowLeft size={15}/> Back to Quiz &amp; Exams</Link><h1 className="mt-2 text-2xl font-bold text-slate-900">{isAdmin?"Admin assessment evaluation":"Assessment evaluations"}</h1><p className="mt-1 text-sm text-slate-500">Review submissions and grade short-answer or descriptive responses.</p></div>
       <div className="flex gap-2"><button onClick={()=>void refresh()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"><RefreshCw size={15}/> Refresh</button><button disabled={publishing||items.length===0||items.some(x=>!x.evaluationComplete)} onClick={()=>void publishResults()} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?"Publishing…":"Publish results"}</button></div>
     </header>
     <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
