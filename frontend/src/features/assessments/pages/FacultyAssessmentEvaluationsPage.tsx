@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ArrowLeft, CheckCircle2, Clock3, RefreshCw, Save, Download, FileText } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock3, RefreshCw, Save, Download } from "lucide-react";
 import { getAssessmentEvaluations, getAssessmentEvaluation, gradeAssessmentAnswer, publishAssessmentResults } from "../services/facultyEvaluationService";
 import { downloadStudentAnswerSheet } from "../services/studentAssessmentService";
 import type { FacultyEvaluationAttempt } from "../types/facultyEvaluation";
