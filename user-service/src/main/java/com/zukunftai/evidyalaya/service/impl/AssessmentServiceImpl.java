@@ -4,6 +4,7 @@ import com.zukunftai.evidyalaya.database.*;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.AssessmentQuestionRequest;
 import com.zukunftai.evidyalaya.model.AssessmentRequest;
+import com.zukunftai.evidyalaya.model.AssessmentParticipationReportResponse;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.AssessmentService;
 import org.springframework.http.HttpStatus;
@@ -161,6 +162,22 @@ public class AssessmentServiceImpl implements AssessmentService {
         questionRepository.deleteByAssessmentId(id);
         assessmentRepository.delete(assessment);
         deleteStoredFile(assessment.getAttachmentPath());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AssessmentParticipationReportResponse getParticipationReport(Long id) {
+        Assessment assessment = findOwned(id);
+        List<AssessmentAttempt> rows = attemptRepository.findAll().stream()
+                .filter(attempt -> attempt.getAssessment().getId().equals(id))
+                .toList();
+        long total = enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(
+                assessment.getAcademicYear(), assessment.getGrade(), assessment.getSection());
+        long attempted = rows.stream().map(attempt -> attempt.getStudent().getId()).distinct().count();
+        long active = rows.stream().filter(attempt -> attempt.getStatus() == AssessmentAttemptStatus.IN_PROGRESS).count();
+        long submitted = rows.size() - active;
+        return new AssessmentParticipationReportResponse(total, attempted,
+                Math.max(0, total - attempted), active, submitted);
     }
 
     @Override
