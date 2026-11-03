@@ -61,6 +61,12 @@ public class AssessmentController {
     }
 
 
+    @GetMapping("/faculty/{id}/report")
+    @PreAuthorize("hasRole('FACULTY')")
+    public AssessmentParticipationReportResponse participationReport(@PathVariable Long id) {
+        return assessmentService.getParticipationReport(id);
+    }
+
     @DeleteMapping("/faculty/{id}")
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<Void> deleteDraft(@PathVariable Long id) {
