@@ -71,7 +71,9 @@ export default function FacultyAssessmentEvaluationsPage() {
     setSaving(true);
     try {
       for (const answer of pending) {
-        await gradeAssessmentAnswer(id, selected.attemptId, answer.questionId,
+        if (isAdmin) await gradeAdminAssessmentAnswer(id, selected.attemptId, answer.questionId,
+          Number(marks[answer.questionId]), feedback[answer.questionId] ?? "");
+        else await gradeAssessmentAnswer(id, selected.attemptId, answer.questionId,
           Number(marks[answer.questionId]), feedback[answer.questionId] ?? "");
       }
       const updated = isAdmin ? await getAdminAssessmentEvaluation(id, selected.attemptId) : await getAssessmentEvaluation(id, selected.attemptId);
