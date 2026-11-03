@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import ConfirmDialog from "../../../components/ConfirmDialog";
 import { ArrowLeft, CheckCircle2, Clock3, RefreshCw, Save, Download } from "lucide-react";
 import { getAssessmentEvaluations, getAssessmentEvaluation, gradeAssessmentAnswer, publishAssessmentResults } from "../services/facultyEvaluationService";
 import { getAdminAssessmentEvaluations, getAdminAssessmentEvaluation, gradeAdminAssessmentAnswer, publishAdminAssessmentResults } from "../services/adminAssessmentService";
@@ -23,6 +24,7 @@ export default function FacultyAssessmentEvaluationsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [confirmPublish,setConfirmPublish]=useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -49,7 +51,7 @@ export default function FacultyAssessmentEvaluationsPage() {
     catch(e:any) { toast.error(e?.response?.data?.message ?? "Could not open submission."); }
   };
   const publishResults = async () => {
-    if (!window.confirm("Publish results for all submitted attempts? Students will be able to see their scores.")) return;
+    setConfirmPublish(false);
     setPublishing(true);
     try { if(isAdmin) await publishAdminAssessmentResults(id); else await publishAssessmentResults(id); toast.success("Results published to students."); await refresh(); }
     catch(e:any) { toast.error(e?.response?.data?.message ?? "Results could not be published."); }
@@ -84,7 +86,7 @@ export default function FacultyAssessmentEvaluationsPage() {
   return <div className="mx-auto max-w-6xl space-y-5">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div><Link to={backPath} className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600"><ArrowLeft size={15}/> Back to Quiz &amp; Exams</Link><h1 className="mt-2 text-2xl font-bold text-slate-900">{isAdmin?"Admin assessment evaluation":"Assessment evaluations"}</h1><p className="mt-1 text-sm text-slate-500">Review submissions and grade short-answer or descriptive responses.</p></div>
-      <div className="flex gap-2"><button onClick={()=>void refresh()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"><RefreshCw size={15}/> Refresh</button><button disabled={publishing||items.length===0||items.some(x=>!x.evaluationComplete)} onClick={()=>void publishResults()} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?"Publishing…":"Publish results"}</button></div>
+      <div className="flex gap-2"><button onClick={()=>void refresh()} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"><RefreshCw size={15}/> Refresh</button><button disabled={publishing||items.length===0||items.some(x=>!x.evaluationComplete)} onClick={()=>setConfirmPublish(true)} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">{publishing?"Publishing…":"Publish results"}</button></div>
     </header>
     <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
       <section className="rounded-xl border border-slate-200 bg-white p-4">
@@ -101,5 +103,6 @@ export default function FacultyAssessmentEvaluationsPage() {
           </article>)}<div className="sticky bottom-4 flex justify-end rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur"><button disabled={saving||selected.answers.every(a=>!a.manualEvaluation||a.submittedAnswer==null)} onClick={()=>void saveAll()} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><Save size={16}/>{saving?"Saving evaluations…":"Save evaluation"}</button></div></>}
       </section>
     </div>
+    <ConfirmDialog open={confirmPublish} title="Publish assessment results?" message="Students will be able to view their scores after publication. Make sure all evaluations are complete before continuing." confirmLabel="Publish results" busy={publishing} onCancel={()=>setConfirmPublish(false)} onConfirm={()=>void publishResults()}/>
   </div>;
 }
