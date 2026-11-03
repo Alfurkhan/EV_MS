@@ -164,6 +164,15 @@ export default function App() {
                         }
                     />
                     <Route
+                        path="/admin-assessments/:assessmentId/evaluations"
+                        element={
+                            <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                                <FacultyAssessmentEvaluationsPage />
+                            </RoleProtectedRoute>
+                        }
+                    />
+
+                    <Route
                         path="/admin-assessments"
                         element={
                             <RoleProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
