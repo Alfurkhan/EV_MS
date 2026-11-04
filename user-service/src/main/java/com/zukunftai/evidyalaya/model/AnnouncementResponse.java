@@ -6,5 +6,5 @@ public record AnnouncementResponse(
     Long academicYearId, Long gradeId, Long sectionId, AnnouncementPriority priority,
     AnnouncementStatus status, String authorName, LocalDateTime scheduledAt,
     LocalDateTime expiresAt, LocalDateTime publishedAt, long readCount,
-    long unreadCount, LocalDateTime readAt, Instant createdAt, Instant updatedAt
+    long unreadCount, LocalDateTime readAt, boolean canManage, Instant createdAt, Instant updatedAt
 ) {}
