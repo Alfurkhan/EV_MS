@@ -14,6 +14,7 @@ import FacultyPage from "./features/faculty/pages/FacultyPage";
 import Attendance from "./pages/Attendance";
 import Courses from "./pages/Courses";
 import Notifications from "./pages/Notifications";
+import AnnouncementsPage from "./features/announcements/pages/AnnouncementsPage";
 import Settings from "./pages/Settings";
 import StudentsPage from "./features/students/pages/StudentsPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
@@ -79,6 +80,17 @@ export default function App() {
                     <Route
                         path="/notifications"
                         element={<Notifications />}
+                    />
+
+                    <Route
+                        path="/announcements"
+                        element={
+                            <RoleProtectedRoute
+                                allowedRoles={["ROLE_ADMIN", "ROLE_FACULTY", "ROLE_STUDENT"]}
+                            >
+                                <AnnouncementsPage />
+                            </RoleProtectedRoute>
+                        }
                     />
 
                     {/* Student + Faculty + Admin */}
