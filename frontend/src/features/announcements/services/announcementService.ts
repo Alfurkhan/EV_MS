@@ -21,3 +21,6 @@ export async function updateAnnouncement(id:number,data:AnnouncementRequest){ret
 export async function publishAnnouncement(id:number){return (await api.post<Announcement>(`/announcements/${id}/publish`)).data;}
 export async function archiveAnnouncement(id:number){await api.post(`/announcements/${id}/archive`);}
 export async function markAnnouncementRead(id:number){await api.post(`/announcements/${id}/read`);}
+
+export async function markAllAnnouncementsRead(){await api.post("/announcements/read-all");}
+export async function deleteAnnouncement(id:number){await api.delete(`/announcements/${id}`);}
