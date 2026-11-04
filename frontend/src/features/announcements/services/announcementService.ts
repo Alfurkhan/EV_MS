@@ -1,4 +1,4 @@
-import api from "../../../../api/axios";
+import api from "../../../api/axios";
 
 export type Priority = "NORMAL" | "IMPORTANT" | "URGENT";
 export type Audience = "ALL" | "STUDENTS" | "FACULTY" | "CLASS";
