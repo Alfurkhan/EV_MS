@@ -872,4 +872,6 @@
 
     <include file="db/changelog/assessment/db.changelog-assessments.xml"/>
 
+    <include file="db/changelog/notifications/db.changelog-notifications.xml"/>
+
 </databaseChangeLog>
