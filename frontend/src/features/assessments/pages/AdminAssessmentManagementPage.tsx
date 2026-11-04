@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { ArrowLeft, BookOpen, CalendarClock, Plus, Send, Trash2, Users, FileUp, Paperclip, FileSearch, X, Save } from "lucide-react";
+import { ArrowLeft, BookOpen, CalendarClock, Plus, Send, Trash2, Users, FileUp, Paperclip, X, Save } from "lucide-react";
 import { getAcademicYears, type AcademicYear } from "../../academic/services/academicYearService";
 import { getGradesByAcademicYear, type Grade } from "../../academic/services/gradeService";
 import { getSectionsByGrade, type Section } from "../../academic/services/sectionService";
