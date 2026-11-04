@@ -203,12 +203,17 @@ public class AnnouncementServiceImpl {
     }
     private AnnouncementResponse response(Announcement a,User viewer) {
         AnnouncementRecipient own=recipients.findByAnnouncementAndUser(a,viewer).orElse(null);
+        boolean admin=hasRole(viewer,RoleName.ROLE_ADMIN);
+        boolean facultyOwner=hasRole(viewer,RoleName.ROLE_FACULTY) && a.getCreatedBy().getId().equals(viewer.getId());
+        boolean canViewReadStatus=admin || facultyOwner;
+        boolean canManage=a.getCreatedBy().getId().equals(viewer.getId()) || admin;
         return new AnnouncementResponse(a.getId(),a.getTitle(),a.getMessage(),a.getAudienceType(),
                 a.getAcademicYear()==null?null:a.getAcademicYear().getId(),a.getGrade()==null?null:a.getGrade().getId(),
                 a.getSection()==null?null:a.getSection().getId(),a.getPriority(),a.getStatus(),
                 a.getCreatedBy().getFullName(),a.getScheduledAt(),a.getExpiresAt(),a.getPublishedAt(),
-                recipients.countByAnnouncementAndReadAtIsNotNull(a),recipients.countByAnnouncementAndReadAtIsNull(a),
-                own==null?null:own.getReadAt(),a.getCreatedBy().getId().equals(viewer.getId()) || hasRole(viewer,RoleName.ROLE_ADMIN),a.getCreatedAt(),a.getUpdatedAt());
+                canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNotNull(a):0,
+                canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNull(a):0,
+                own==null?null:own.getReadAt(),canManage,a.getCreatedAt(),a.getUpdatedAt());
     }
     private NotificationResponse notificationResponse(Notification n) {
         return new NotificationResponse(n.getId(),n.getSourceType(),n.getSourceId(),n.getTitle(),n.getMessage(),n.getCategory(),
