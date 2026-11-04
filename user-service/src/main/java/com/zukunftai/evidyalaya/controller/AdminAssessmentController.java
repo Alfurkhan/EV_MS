@@ -1,5 +1,6 @@
 package com.zukunftai.evidyalaya.controller;
 import com.zukunftai.evidyalaya.model.AdminAssessmentOverviewResponse;
+import com.zukunftai.evidyalaya.model.AssessmentParticipationReportResponse;
 import com.zukunftai.evidyalaya.model.AssessmentRequest;
 import com.zukunftai.evidyalaya.service.AssessmentService;
 import com.zukunftai.evidyalaya.service.impl.FacultyAssessmentEvaluationService;
@@ -26,6 +27,7 @@ public class AdminAssessmentController {
  private final QuestionPaperImportService questionPaperImportService;
  @GetMapping public List<AdminAssessmentOverviewResponse.Item> list(){return service.list();}
  @GetMapping("/{id}") public AdminAssessmentOverviewResponse.Detail detail(@PathVariable Long id){return service.detail(id);}
+ @GetMapping("/{id}/report") public AssessmentParticipationReportResponse report(@PathVariable Long id){return assessmentService.getParticipationReportForAdmin(id);}
  @PostMapping("/faculty/{facultyId}/drafts")
  public ResponseEntity<Long> createForFaculty(@PathVariable Long facultyId, @Valid @RequestBody AssessmentRequest request) {
   return ResponseEntity.status(201).body(assessmentService.createDraftForFaculty(facultyId, request).getId());
