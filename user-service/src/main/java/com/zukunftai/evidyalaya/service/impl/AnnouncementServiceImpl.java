@@ -126,11 +126,23 @@ public class AnnouncementServiceImpl {
         LocalDateTime now=LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
         notifications.findTop100ByUserOrderByCreatedAtDesc(currentUser()).stream().filter(n->n.getReadAt()==null).forEach(n->n.setReadAt(now));
     }
-    public NotificationResponse updateManualNotification(Long id, String title, String message, String priority, String targetUrl) {
+    public NotificationResponse createManualNotification(ManualNotificationRequest request) {
+        User actor=currentUser();
+        if(!hasRole(actor,RoleName.ROLE_ADMIN)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        User target=users.findById(request.userId()).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Recipient not found."));
+        Notification n=Notification.builder().user(target).sourceType("MANUAL").title(request.title().trim())
+                .message(request.message().trim()).category(request.category().trim()).priority(request.priority())
+                .targetUrl(request.targetUrl()).createdAt(Instant.now()).updatedAt(Instant.now()).build();
+        return notificationResponse(notifications.save(n));
+    }
+
+    public NotificationResponse updateManualNotification(Long id, ManualNotificationRequest request) {
         User actor=currentUser(); if(!hasRole(actor,RoleName.ROLE_ADMIN)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         Notification n=notifications.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
         if(!"MANUAL".equals(n.getSourceType())) throw new ResponseStatusException(HttpStatus.CONFLICT,"System-generated notifications cannot be edited.");
-        n.setTitle(title.trim()); n.setMessage(message.trim()); n.setPriority(priority); n.setTargetUrl(targetUrl); n.setUpdatedAt(Instant.now());
+        if(!n.getUser().getId().equals(request.userId())) throw new ResponseStatusException(HttpStatus.CONFLICT,"A notification cannot be reassigned to another user.");
+        n.setTitle(request.title().trim()); n.setMessage(request.message().trim()); n.setCategory(request.category().trim());
+        n.setPriority(request.priority()); n.setTargetUrl(request.targetUrl()); n.setUpdatedAt(Instant.now());
         return notificationResponse(n);
     }
 
