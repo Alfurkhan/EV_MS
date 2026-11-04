@@ -62,11 +62,18 @@ public class AnnouncementServiceImpl {
     public AnnouncementResponse update(Long id, AnnouncementRequest request) {
         User actor=currentUser();
         Announcement a=announcements.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if(!a.getCreatedBy().getId().equals(actor.getId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        boolean admin=hasRole(actor,RoleName.ROLE_ADMIN);
+        if(!admin && !a.getCreatedBy().getId().equals(actor.getId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         if(a.getStatus()==AnnouncementStatus.ARCHIVED) throw new ResponseStatusException(HttpStatus.CONFLICT,"Archived announcements cannot be edited.");
-        if(a.getStatus()==AnnouncementStatus.PUBLISHED && !recipients.findByAnnouncement(a).isEmpty())
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"A published announcement with recipients cannot be edited. Archive it and publish a corrected announcement.");
-        validateTarget(request,actor,hasRole(actor,RoleName.ROLE_ADMIN));
+        if(a.getStatus()==AnnouncementStatus.PUBLISHED) {
+            a.setTitle(request.title().trim()); a.setMessage(request.message().trim()); a.setPriority(request.priority()); a.setUpdatedAt(Instant.now());
+            for(Notification n:notifications.findAll().stream().filter(n->"ANNOUNCEMENT".equals(n.getSourceType()) && id.equals(n.getSourceId())).toList()) {
+                n.setTitle(a.getTitle()); n.setMessage(a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage());
+                n.setPriority(a.getPriority().name()); n.setUpdatedAt(Instant.now());
+            }
+            return response(announcements.save(a),actor);
+        }
+        validateTarget(request,actor,admin);
         a.setTitle(request.title().trim()); a.setMessage(request.message().trim()); a.setAudienceType(request.audienceType());
         a.setAcademicYear(request.academicYearId()==null?null:years.findById(request.academicYearId()).orElseThrow());
         a.setGrade(request.gradeId()==null?null:grades.findById(request.gradeId()).orElseThrow());
@@ -179,7 +186,7 @@ public class AnnouncementServiceImpl {
                 a.getSection()==null?null:a.getSection().getId(),a.getPriority(),a.getStatus(),
                 a.getCreatedBy().getFullName(),a.getScheduledAt(),a.getExpiresAt(),a.getPublishedAt(),
                 recipients.countByAnnouncementAndReadAtIsNotNull(a),recipients.countByAnnouncementAndReadAtIsNull(a),
-                own==null?null:own.getReadAt(),a.getCreatedAt(),a.getUpdatedAt());
+                own==null?null:own.getReadAt(),a.getCreatedBy().getId().equals(viewer.getId()) || hasRole(viewer,RoleName.ROLE_ADMIN),a.getCreatedAt(),a.getUpdatedAt());
     }
     private NotificationResponse notificationResponse(Notification n) {
         return new NotificationResponse(n.getId(),n.getSourceType(),n.getSourceId(),n.getTitle(),n.getMessage(),n.getCategory(),
