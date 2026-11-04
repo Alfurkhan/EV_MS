@@ -18,6 +18,7 @@ public interface AssessmentService {
     void deleteDraft(Long id);
     AssessmentParticipationReportResponse getParticipationReport(Long id);
     Assessment uploadAttachment(Long id, MultipartFile file);
+    Assessment uploadAttachmentForAdmin(Long id, MultipartFile file);
     Assessment getAssessmentForAttachment(Long id);
     Path resolveStoredAttachment(String storedPath);
 }
