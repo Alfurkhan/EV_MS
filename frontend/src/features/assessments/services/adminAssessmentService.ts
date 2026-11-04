@@ -1,6 +1,7 @@
 import api from "../../../api/axios";
 import type {AdminAssessmentItem,AdminAssessmentDetail} from "../types/adminAssessment";
 import type {AssessmentRequest} from "../types/assessment";
+import type {AssessmentParticipationReport} from "./assessmentService";
 import type {QuestionPaperImportPreview} from "./assessmentService";
 import type {FacultyEvaluationAttempt} from "../types/facultyEvaluation";
 export async function getAdminAssessments(){return (await api.get<AdminAssessmentItem[]>("/assessments/admin")).data;}
@@ -32,4 +33,8 @@ export async function previewAdminQuestionPaper(file:File):Promise<QuestionPaper
 export async function uploadAdminAssessmentAttachment(id:number,file:File):Promise<void>{
  const form=new FormData();form.append("file",file);
  await api.post(`/assessments/admin/${id}/attachment`,form,{headers:{"Content-Type":"multipart/form-data"}});
+}
+
+export async function getAdminAssessmentParticipationReport(id:number):Promise<AssessmentParticipationReport>{
+ return (await api.get<AssessmentParticipationReport>(`/assessments/admin/${id}/report`)).data;
 }
