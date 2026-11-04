@@ -134,7 +134,7 @@ public class AnnouncementServiceImpl {
     }
     public void markAllRead() {
         LocalDateTime now=LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
-        notifications.findTop100ByUserOrderByCreatedAtDesc(currentUser()).stream().filter(n->n.getReadAt()==null).forEach(n->n.setReadAt(now));
+        notifications.findByUserAndReadAtIsNull(currentUser()).forEach(n->n.setReadAt(now));
     }
     public NotificationResponse createManualNotification(ManualNotificationRequest request) {
         User actor=currentUser();
