@@ -12,6 +12,7 @@ import {
     ClipboardList,
     School,
     Bell,
+    Megaphone,
     Settings,
     LogOut,
 } from "lucide-react";
@@ -156,6 +157,16 @@ const menu: MenuSection[] = [
     {
         section: "SYSTEM",
         items: [
+            {
+                icon: Megaphone,
+                label: "Announcements",
+                path: "/announcements",
+                allowedRoles: [
+                    "ROLE_STUDENT",
+                    "ROLE_FACULTY",
+                    "ROLE_ADMIN",
+                ],
+            },
             {
                 icon: Bell,
                 label: "Notifications",
