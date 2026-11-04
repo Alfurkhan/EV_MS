@@ -34,10 +34,13 @@ public class AnnouncementServiceImpl {
     public List<AnnouncementResponse> list() {
         User user=currentUser();
         Map<Long, Announcement> visible=new LinkedHashMap<>();
-        recipients.findByUserOrderByDeliveredAtDesc(user).forEach(r->visible.put(r.getAnnouncement().getId(),r.getAnnouncement()));
-        announcements.findByCreatedByOrderByCreatedAtDesc(user).stream()
-                .filter(a->a.getStatus()==AnnouncementStatus.DRAFT || a.getStatus()==AnnouncementStatus.SCHEDULED)
-                .forEach(a->visible.putIfAbsent(a.getId(),a));
+        if(hasRole(user,RoleName.ROLE_ADMIN)) {
+            announcements.findAll().stream().sorted(Comparator.comparing(Announcement::getCreatedAt).reversed())
+                    .forEach(a->visible.put(a.getId(),a));
+        } else {
+            recipients.findByUserOrderByDeliveredAtDesc(user).forEach(r->visible.put(r.getAnnouncement().getId(),r.getAnnouncement()));
+            announcements.findByCreatedByOrderByCreatedAtDesc(user).forEach(a->visible.putIfAbsent(a.getId(),a));
+        }
         return visible.values().stream().map(a->response(a,user)).toList();
     }
 
