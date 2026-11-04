@@ -8,7 +8,7 @@ export interface Announcement {
   academicYearId:number|null; gradeId:number|null; sectionId:number|null;
   priority:Priority; status:AnnouncementStatus; authorName:string;
   scheduledAt:string|null; expiresAt:string|null; publishedAt:string|null;
-  readCount:number; unreadCount:number; readAt:string|null; createdAt:string; updatedAt:string;
+  readCount:number; unreadCount:number; readAt:string|null; canManage:boolean; createdAt:string; updatedAt:string;
 }
 export interface AnnouncementRequest {
   title:string; message:string; audienceType:Audience; academicYearId:number|null;
