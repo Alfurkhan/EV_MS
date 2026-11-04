@@ -26,4 +26,9 @@ public class AnnouncementController {
     @ResponseStatus(HttpStatus.NO_CONTENT) public void archive(@PathVariable Long id){ service.archive(id); }
     @PostMapping("/{id}/read") @PreAuthorize("hasAnyRole('ADMIN','FACULTY','STUDENT')")
     @ResponseStatus(HttpStatus.NO_CONTENT) public void markRead(@PathVariable Long id){ service.markAnnouncementRead(id); }
+
+    @PostMapping("/read-all") @PreAuthorize("hasAnyRole('ADMIN','FACULTY','STUDENT')")
+    @ResponseStatus(HttpStatus.NO_CONTENT) public void markAllRead(){ service.markAllAnnouncementsRead(); }
+    @DeleteMapping("/{id}") @PreAuthorize("hasAnyRole('ADMIN','FACULTY')")
+    @ResponseStatus(HttpStatus.NO_CONTENT) public void delete(@PathVariable Long id){ service.delete(id); }
 }
