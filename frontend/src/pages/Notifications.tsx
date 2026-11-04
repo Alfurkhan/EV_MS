@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Bell, CheckCheck, Pencil, Plus, X, ExternalLink } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { NotificationItem, ManualNotificationRequest, createManualNotification, getNotifications, markAllNotificationsRead, markNotificationRead, updateManualNotification } from "../features/notifications/services/notificationService";
+import { createManualNotification, getNotifications, markAllNotificationsRead, markNotificationRead, updateManualNotification } from "../features/notifications/services/notificationService";
+import type { NotificationItem, ManualNotificationRequest } from "../features/notifications/services/notificationService";
 
 const field="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
 const priorityClass:Record<string,string>={NORMAL:"bg-slate-100 text-slate-700",IMPORTANT:"bg-amber-100 text-amber-800",URGENT:"bg-rose-100 text-rose-800"};
