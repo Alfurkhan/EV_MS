@@ -140,7 +140,6 @@ public class AnnouncementServiceImpl {
         User actor=currentUser(); if(!hasRole(actor,RoleName.ROLE_ADMIN)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         Notification n=notifications.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
         if(!"MANUAL".equals(n.getSourceType())) throw new ResponseStatusException(HttpStatus.CONFLICT,"System-generated notifications cannot be edited.");
-        if(!n.getUser().getId().equals(request.userId())) throw new ResponseStatusException(HttpStatus.CONFLICT,"A notification cannot be reassigned to another user.");
         n.setTitle(request.title().trim()); n.setMessage(request.message().trim()); n.setCategory(request.category().trim());
         n.setPriority(request.priority()); n.setTargetUrl(request.targetUrl()); n.setUpdatedAt(Instant.now());
         return notificationResponse(n);
