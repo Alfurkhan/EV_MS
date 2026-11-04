@@ -116,6 +116,27 @@ public class AnnouncementServiceImpl {
         a.setStatus(AnnouncementStatus.ARCHIVED); a.setArchivedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata"))); a.setUpdatedAt(Instant.now());
     }
 
+
+    public void markAllAnnouncementsRead() {
+        User user=currentUser();
+        LocalDateTime now=LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+        for(AnnouncementRecipient r:recipients.findByUserOrderByDeliveredAtDesc(user)) {
+            if(r.getReadAt()==null && r.getAnnouncement().getStatus()==AnnouncementStatus.PUBLISHED) r.setReadAt(now);
+        }
+    }
+
+    public void delete(Long id) {
+        User actor=currentUser();
+        Announcement a=announcements.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if(!hasRole(actor,RoleName.ROLE_ADMIN) && !a.getCreatedBy().getId().equals(actor.getId()))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        List<Notification> linked=notifications.findAll().stream()
+                .filter(n->"ANNOUNCEMENT".equals(n.getSourceType()) && id.equals(n.getSourceId())).toList();
+        notifications.deleteAll(linked);
+        recipients.deleteAll(recipients.findByAnnouncement(a));
+        announcements.delete(a);
+    }
+
     public void markAnnouncementRead(Long id) {
         User user=currentUser(); Announcement a=announcements.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
         AnnouncementRecipient r=recipients.findByAnnouncementAndUser(a,user).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
