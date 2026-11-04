@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { Megaphone, Plus, Pencil, Send, Archive, X, Paperclip } from "lucide-react";
+import { Megaphone, Plus, Pencil, Send, Archive, X } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getAcademicYears, type AcademicYear } from "../../academic/services/academicYearService";
 import { getGradesByAcademicYear, type Grade } from "../../academic/services/gradeService";
 import { getSectionsByGrade, type Section } from "../../academic/services/sectionService";
 import { getMyAssignmentClasses } from "../../timetable/services/timetableService";
 import type { Timetable } from "../../timetable/types/timetable";
-import { Announcement, AnnouncementRequest, Audience, Priority, archiveAnnouncement, createAnnouncement, getAnnouncements, publishAnnouncement, updateAnnouncement } from "../services/announcementService";
+import { archiveAnnouncement, createAnnouncement, getAnnouncements, publishAnnouncement, updateAnnouncement } from "../services/announcementService";
+import type { Announcement, AnnouncementRequest, Audience, Priority } from "../services/announcementService";
 
 const blank:AnnouncementRequest={title:"",message:"",audienceType:"ALL",academicYearId:null,gradeId:null,sectionId:null,priority:"NORMAL",scheduledAt:null,expiresAt:null};
 const input="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100";
