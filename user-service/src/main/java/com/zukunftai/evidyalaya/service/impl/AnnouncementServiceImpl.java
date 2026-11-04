@@ -152,6 +152,25 @@ public class AnnouncementServiceImpl {
         return notificationResponse(n);
     }
 
+    public void processScheduledAnnouncements() {
+        LocalDateTime now=LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
+        for(Announcement a:announcements.findByStatusAndScheduledAtLessThanEqual(AnnouncementStatus.SCHEDULED,now)) {
+            List<User> targets=resolveRecipients(a);
+            if(targets.isEmpty()) continue;
+            a.setStatus(AnnouncementStatus.PUBLISHED); a.setPublishedAt(now); a.setUpdatedAt(Instant.now());
+            for(User target:targets) {
+                recipients.save(AnnouncementRecipient.builder().announcement(a).user(target).deliveredAt(now).build());
+                notifications.save(Notification.builder().user(target).sourceType("ANNOUNCEMENT").sourceId(a.getId())
+                        .title(a.getTitle()).message(a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage())
+                        .category("ANNOUNCEMENTS").priority(a.getPriority().name()).targetUrl("/announcements")
+                        .deduplicationKey("ANNOUNCEMENT:"+a.getId()+":"+target.getId()).createdAt(Instant.now()).updatedAt(Instant.now()).build());
+            }
+        }
+        for(Announcement a:announcements.findByStatusAndExpiresAtLessThanEqual(AnnouncementStatus.PUBLISHED,now)) {
+            a.setStatus(AnnouncementStatus.ARCHIVED); a.setArchivedAt(now); a.setUpdatedAt(Instant.now());
+        }
+    }
+
     private List<User> resolveRecipients(Announcement a) {
         if(a.getAudienceType()==AnnouncementAudience.CLASS) {
             if(a.getCreatedBy().getRoles().stream().anyMatch(r->r.getName()==RoleName.ROLE_FACULTY)
