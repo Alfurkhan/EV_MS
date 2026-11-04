@@ -17,6 +17,7 @@ public interface AssessmentService {
     Assessment publish(Long id);
     void deleteDraft(Long id);
     AssessmentParticipationReportResponse getParticipationReport(Long id);
+    AssessmentParticipationReportResponse getParticipationReportForAdmin(Long id);
     Assessment uploadAttachment(Long id, MultipartFile file);
     Assessment uploadAttachmentForAdmin(Long id, MultipartFile file);
     Assessment getAssessmentForAttachment(Long id);
