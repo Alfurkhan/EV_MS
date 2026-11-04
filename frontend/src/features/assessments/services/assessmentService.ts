@@ -38,12 +38,22 @@ export async function previewQuestionPaper(file: File): Promise<QuestionPaperImp
     })).data;
 }
 
+export interface AssessmentParticipationStudent {
+    studentId: number;
+    studentName: string;
+    email: string;
+    status: "NOT_STARTED" | "IN_PROGRESS" | "SUBMITTED" | "AUTO_SUBMITTED";
+    startedAt: string | null;
+    submittedAt: string | null;
+    score: number | null;
+}
 export interface AssessmentParticipationReport {
     totalEnrolledStudents: number;
     attemptedStudents: number;
     notAttemptedStudents: number;
     activeAttempts: number;
     submittedAttempts: number;
+    students: AssessmentParticipationStudent[];
 }
 export async function getAssessmentParticipationReport(id: number): Promise<AssessmentParticipationReport> {
     return (await api.get<AssessmentParticipationReport>(`/assessments/faculty/${id}/report`)).data;
