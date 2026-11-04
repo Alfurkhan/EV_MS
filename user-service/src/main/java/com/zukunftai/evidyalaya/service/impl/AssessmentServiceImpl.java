@@ -106,7 +106,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         User faculty = userRepository.findById(facultyId)
                 .orElseThrow(() -> error("Selected faculty member was not found.", HttpStatus.NOT_FOUND, "FACULTY_NOT_FOUND"));
         boolean isFaculty = faculty.getRoles().stream()
-                .anyMatch(role -> role.getName().name().equals("FACULTY"));
+                .anyMatch(role -> role.getName() == RoleName.ROLE_FACULTY);
         if (!isFaculty) {
             throw error("The selected user is not a faculty member.", HttpStatus.BAD_REQUEST, "ASSESSMENT_FACULTY_INVALID");
         }
@@ -221,21 +221,56 @@ public class AssessmentServiceImpl implements AssessmentService {
     @Transactional(readOnly = true)
     public AssessmentParticipationReportResponse getParticipationReport(Long id) {
         Assessment assessment = findOwned(id);
+        List<StudentEnrollment> enrollments = enrollmentRepository
+                .findByAcademicYearAndGradeAndSectionAndActiveTrue(
+                        assessment.getAcademicYear(), assessment.getGrade(), assessment.getSection());
         List<AssessmentAttempt> rows = attemptRepository.findAll().stream()
                 .filter(attempt -> attempt.getAssessment().getId().equals(id))
                 .toList();
-        long total = enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(
-                assessment.getAcademicYear(), assessment.getGrade(), assessment.getSection());
-        long attempted = rows.stream().map(attempt -> attempt.getStudent().getId()).distinct().count();
+        Map<Long, AssessmentAttempt> attemptsByStudent = new HashMap<>();
+        rows.forEach(attempt -> attemptsByStudent.put(attempt.getStudent().getId(), attempt));
+        List<AssessmentParticipationReportResponse.StudentParticipation> students = enrollments.stream()
+                .map(enrollment -> {
+                    User student = enrollment.getStudent();
+                    AssessmentAttempt attempt = attemptsByStudent.get(student.getId());
+                    String status = attempt == null ? "NOT_STARTED" : attempt.getStatus().name();
+                    return new AssessmentParticipationReportResponse.StudentParticipation(
+                            student.getId(), student.getFullName(), student.getEmail(), status,
+                            attempt == null ? null : attempt.getStartedAt(),
+                            attempt == null ? null : attempt.getSubmittedAt(),
+                            attempt == null ? null : attempt.getScore());
+                })
+                .sorted(Comparator.comparing(AssessmentParticipationReportResponse.StudentParticipation::studentName,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
+        long total = enrollments.size();
+        long attempted = students.stream().filter(student -> !"NOT_STARTED".equals(student.status())).count();
         long active = rows.stream().filter(attempt -> attempt.getStatus() == AssessmentAttemptStatus.IN_PROGRESS).count();
-        long submitted = rows.size() - active;
+        long submitted = rows.stream().filter(attempt -> attempt.getStatus() != AssessmentAttemptStatus.IN_PROGRESS).count();
         return new AssessmentParticipationReportResponse(total, attempted,
-                Math.max(0, total - attempted), active, submitted);
+                Math.max(0, total - attempted), active, submitted, students);
     }
 
     @Override
     public Assessment uploadAttachment(Long id, MultipartFile file) {
         Assessment assessment = findOwned(id);
+        if (assessment.getStatus() != AssessmentStatus.DRAFT) {
+            throw error("Attachments can only be changed while an assessment is a draft.", HttpStatus.CONFLICT, "ASSESSMENT_NOT_DRAFT");
+        }
+        StoredFile stored = storeFile(file);
+        deleteStoredFile(assessment.getAttachmentPath());
+        assessment.setAttachmentPath(stored.path());
+        assessment.setAttachmentName(stored.name());
+        assessment.setAttachmentContentType(stored.contentType());
+        assessment.setAttachmentSize(stored.size());
+        assessment.setUpdatedAt(Instant.now());
+        return assessmentRepository.save(assessment);
+    }
+
+    @Override
+    public Assessment uploadAttachmentForAdmin(Long id, MultipartFile file) {
+        Assessment assessment = assessmentRepository.findById(id)
+                .orElseThrow(() -> error("Assessment not found.", HttpStatus.NOT_FOUND, "ASSESSMENT_NOT_FOUND"));
         if (assessment.getStatus() != AssessmentStatus.DRAFT) {
             throw error("Attachments can only be changed while an assessment is a draft.", HttpStatus.CONFLICT, "ASSESSMENT_NOT_DRAFT");
         }
