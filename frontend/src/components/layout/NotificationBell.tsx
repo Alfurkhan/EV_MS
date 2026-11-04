@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { getNotifications, getUnreadNotificationCount, markAllNotificationsRead, markNotificationRead, NotificationItem } from "../../features/notifications/services/notificationService";
+import { getNotifications, getUnreadNotificationCount, markAllNotificationsRead, markNotificationRead } from "../../features/notifications/services/notificationService";
+import type { NotificationItem } from "../../features/notifications/services/notificationService";
 
 export default function NotificationBell(){
  const [open,setOpen]=useState(false),[items,setItems]=useState<NotificationItem[]>([]),[unread,setUnread]=useState(0);
