@@ -1,6 +1,8 @@
 package com.zukunftai.evidyalaya.service.impl;
 
 import com.zukunftai.evidyalaya.database.Notification;
+import com.zukunftai.evidyalaya.database.Role;
+import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.repository.NotificationRepository;
@@ -13,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -48,6 +51,28 @@ class NotificationServiceImplTest {
         verify(notificationRepository, times(2)).save(captor.capture());
         assertEquals(2, created);
         assertEquals(List.of("ASSIGNMENT:55:101", "ASSIGNMENT:55:202"),
+                captor.getAllValues().stream().map(Notification::getDeduplicationKey).toList());
+    }
+
+    @Test
+    void addsEnabledAdminsToFacultyActivityAndKeepsRecipientDeduplication() {
+        User student = User.builder().id(401L).build();
+        User admin = User.builder().id(402L).accountEnabled(true).accountDeleted(false)
+                .roles(Set.of(new Role(1L, RoleName.ROLE_ADMIN))).build();
+        User disabledAdmin = User.builder().id(403L).accountEnabled(false).accountDeleted(false)
+                .roles(Set.of(new Role(2L, RoleName.ROLE_ADMIN))).build();
+        User deletedAdmin = User.builder().id(404L).accountEnabled(true).accountDeleted(true)
+                .roles(Set.of(new Role(3L, RoleName.ROLE_ADMIN))).build();
+        NotificationCommand command = new NotificationCommand(
+                "ASSESSMENT", 88L, "Assessment published", "A faculty member published an assessment.",
+                "ASSESSMENTS", "NORMAL", "/assessments", "ASSESSMENT:88");
+        when(userRepository.findAll()).thenReturn(List.of(admin, disabledAdmin, deletedAdmin));
+        when(notificationRepository.existsByDeduplicationKey(anyString())).thenReturn(false);
+        int created = notificationService.createForUsersAndAdmins(List.of(student, admin), command);
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepository, times(2)).save(captor.capture());
+        assertEquals(2, created);
+        assertEquals(List.of("ASSESSMENT:88:401", "ASSESSMENT:88:402"),
                 captor.getAllValues().stream().map(Notification::getDeduplicationKey).toList());
     }
 
