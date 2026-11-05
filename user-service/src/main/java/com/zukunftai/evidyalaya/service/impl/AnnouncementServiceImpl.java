@@ -3,6 +3,7 @@ package com.zukunftai.evidyalaya.service.impl;
 import com.zukunftai.evidyalaya.database.*;
 import com.zukunftai.evidyalaya.model.*;
 import com.zukunftai.evidyalaya.repository.*;
+import com.zukunftai.evidyalaya.service.NotificationService;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +18,7 @@ public class AnnouncementServiceImpl {
     private final AnnouncementRepository announcements;
     private final AnnouncementRecipientRepository recipients;
     private final NotificationRepository notifications;
+    private final NotificationService notificationService;
     private final UserRepository users;
     private final StudentEnrollmentRepository enrollments;
     private final TimetableRepository timetables;
@@ -26,8 +28,10 @@ public class AnnouncementServiceImpl {
 
     public AnnouncementServiceImpl(AnnouncementRepository announcements, AnnouncementRecipientRepository recipients,
             NotificationRepository notifications, UserRepository users, StudentEnrollmentRepository enrollments,
-            TimetableRepository timetables, AcademicYearRepository years, GradeRepository grades, SectionRepository sections) {
+            TimetableRepository timetables, AcademicYearRepository years, GradeRepository grades, SectionRepository sections,
+            NotificationService notificationService) {
         this.announcements=announcements; this.recipients=recipients; this.notifications=notifications; this.users=users;
+        this.notificationService=notificationService;
         this.enrollments=enrollments; this.timetables=timetables; this.years=years; this.grades=grades; this.sections=sections;
     }
 
@@ -103,11 +107,11 @@ public class AnnouncementServiceImpl {
         for(User target:targets) {
             AnnouncementRecipient recipient=AnnouncementRecipient.builder().announcement(a).user(target).deliveredAt(now).build();
             recipients.save(recipient);
-            notifications.save(Notification.builder().user(target).sourceType("ANNOUNCEMENT").sourceId(a.getId())
-                    .title(a.getTitle()).message(a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage())
-                    .category("ANNOUNCEMENTS").priority(a.getPriority().name()).targetUrl("/announcements")
-                    .deduplicationKey("ANNOUNCEMENT:"+a.getId()+":"+target.getId()).createdAt(Instant.now()).updatedAt(Instant.now()).build());
         }
+        notificationService.createForUsers(targets, new NotificationCommand(
+                "ANNOUNCEMENT", a.getId(), a.getTitle(),
+                a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
+                "ANNOUNCEMENTS", a.getPriority().name(), "/announcements", "ANNOUNCEMENT:"+a.getId()));
         return response(a,actor);
     }
 
@@ -144,39 +148,6 @@ public class AnnouncementServiceImpl {
         if(r.getReadAt()==null) r.setReadAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
     }
 
-    public List<NotificationResponse> notifications() {
-        User user=currentUser();
-        return this.notifications.findTop100ByUserOrderByCreatedAtDesc(user).stream().map(this::notificationResponse).toList();
-    }
-    public long unreadCount() { return notifications.countByUserAndReadAtIsNull(currentUser()); }
-    public NotificationResponse markRead(Long id) {
-        User user=currentUser(); Notification n=notifications.findByIdAndUser(id,user).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if(n.getReadAt()==null) n.setReadAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
-        return notificationResponse(n);
-    }
-    public void markAllRead() {
-        LocalDateTime now=LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
-        notifications.findByUserAndReadAtIsNull(currentUser()).forEach(n->n.setReadAt(now));
-    }
-    public NotificationResponse createManualNotification(ManualNotificationRequest request) {
-        User actor=currentUser();
-        if(!hasRole(actor,RoleName.ROLE_ADMIN)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        User target=users.findById(request.userId()).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Recipient not found."));
-        Notification n=Notification.builder().user(target).sourceType("MANUAL").title(request.title().trim())
-                .message(request.message().trim()).category(request.category().trim()).priority(request.priority())
-                .targetUrl(request.targetUrl()).createdAt(Instant.now()).updatedAt(Instant.now()).build();
-        return notificationResponse(notifications.save(n));
-    }
-
-    public NotificationResponse updateManualNotification(Long id, ManualNotificationRequest request) {
-        User actor=currentUser(); if(!hasRole(actor,RoleName.ROLE_ADMIN)) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        Notification n=notifications.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if(!"MANUAL".equals(n.getSourceType())) throw new ResponseStatusException(HttpStatus.CONFLICT,"System-generated notifications cannot be edited.");
-        n.setTitle(request.title().trim()); n.setMessage(request.message().trim()); n.setCategory(request.category().trim());
-        n.setPriority(request.priority()); n.setTargetUrl(request.targetUrl()); n.setUpdatedAt(Instant.now());
-        return notificationResponse(n);
-    }
-
     public void processScheduledAnnouncements() {
         LocalDateTime now=LocalDateTime.now(ZoneId.of("Asia/Kolkata"));
         for(Announcement a:announcements.findByStatusAndScheduledAtLessThanEqual(AnnouncementStatus.SCHEDULED,now)) {
@@ -185,11 +156,11 @@ public class AnnouncementServiceImpl {
             a.setStatus(AnnouncementStatus.PUBLISHED); a.setPublishedAt(now); a.setUpdatedAt(Instant.now());
             for(User target:targets) {
                 recipients.save(AnnouncementRecipient.builder().announcement(a).user(target).deliveredAt(now).build());
-                notifications.save(Notification.builder().user(target).sourceType("ANNOUNCEMENT").sourceId(a.getId())
-                        .title(a.getTitle()).message(a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage())
-                        .category("ANNOUNCEMENTS").priority(a.getPriority().name()).targetUrl("/announcements")
-                        .deduplicationKey("ANNOUNCEMENT:"+a.getId()+":"+target.getId()).createdAt(Instant.now()).updatedAt(Instant.now()).build());
             }
+            notificationService.createForUsers(targets, new NotificationCommand(
+                    "ANNOUNCEMENT", a.getId(), a.getTitle(),
+                    a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
+                    "ANNOUNCEMENTS", a.getPriority().name(), "/announcements", "ANNOUNCEMENT:"+a.getId()));
         }
         for(Announcement a:announcements.findByStatusAndExpiresAtLessThanEqual(AnnouncementStatus.PUBLISHED,now)) {
             a.setStatus(AnnouncementStatus.ARCHIVED); a.setArchivedAt(now); a.setUpdatedAt(Instant.now());
@@ -287,10 +258,6 @@ public class AnnouncementServiceImpl {
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNotNull(a):0,
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNull(a):0,
                 own==null?null:own.getReadAt(),canManage,a.getCreatedAt(),a.getUpdatedAt());
-    }
-    private NotificationResponse notificationResponse(Notification n) {
-        return new NotificationResponse(n.getId(),n.getSourceType(),n.getSourceId(),n.getTitle(),n.getMessage(),n.getCategory(),
-                n.getPriority(),n.getTargetUrl(),n.getReadAt()!=null,n.getReadAt(),n.getCreatedAt());
     }
     private User currentUser() {
         var auth=SecurityContextHolder.getContext().getAuthentication();
