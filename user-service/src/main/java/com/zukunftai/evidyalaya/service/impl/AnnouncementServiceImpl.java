@@ -203,6 +203,9 @@ public class AnnouncementServiceImpl {
                 for(Timetable assignment:a.getTimetableAssignments()) {
                     if(!assignment.isActive() || assignment.getStatus()!=TimetableStatus.APPROVED)
                         throw new ResponseStatusException(HttpStatus.CONFLICT,"A selected subject assignment is no longer active and approved.");
+                    if(a.getCreatedBy().getRoles().stream().anyMatch(r->r.getName()==RoleName.ROLE_FACULTY)
+                            && !assignment.getFaculty().getId().equals(a.getCreatedBy().getId()))
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN,"A selected subject assignment is no longer assigned to the announcement author.");
                     enrollments.findByAcademicYearAndGradeAndSectionAndActiveTrue(assignment.getAcademicYear(),assignment.getGrade(),assignment.getSection())
                             .stream().map(StudentEnrollment::getStudent).forEach(targets::add);
                 }
@@ -275,7 +278,9 @@ public class AnnouncementServiceImpl {
         return new AnnouncementResponse(a.getId(),a.getTitle(),a.getMessage(),a.getAudienceType(),
                 a.getAcademicYear()==null?null:a.getAcademicYear().getId(),a.getGrade()==null?null:a.getGrade().getId(),
                 a.getSection()==null?null:a.getSection().getId(),a.getTargetScope(),subjectName,
-                a.getTimetableAssignments().stream().map(Timetable::getId).toList(),a.getPriority(),a.getStatus(),
+                a.getTimetableAssignments().stream().map(Timetable::getId).toList(),
+                a.getTimetableAssignments().stream().map(t->t.getAcademicYear().getName()+" · "+t.getGrade().getName()+" · "+t.getSection().getName()).distinct().toList(),
+                a.getPriority(),a.getStatus(),
                 a.getCreatedBy().getFullName(),a.getScheduledAt(),a.getExpiresAt(),a.getPublishedAt(),
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNotNull(a):0,
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNull(a):0,
