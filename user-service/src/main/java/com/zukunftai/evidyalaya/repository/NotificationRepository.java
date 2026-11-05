@@ -11,4 +11,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Optional<Notification> findByIdAndUser(Long id, User user);
     List<Notification> findByUserAndReadAtIsNull(User user);
     boolean existsByDeduplicationKey(String deduplicationKey);
+    List<Notification> findBySourceTypeAndSourceId(String sourceType, Long sourceId);
 }
