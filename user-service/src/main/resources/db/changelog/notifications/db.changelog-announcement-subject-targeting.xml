@@ -19,11 +19,17 @@
             );
             CREATE INDEX idx_announcement_timetable_assignment_timetable
                 ON announcement_timetable_assignment(timetable_id);
+            ALTER TABLE announcement DROP CONSTRAINT IF EXISTS chk_announcement_class_target;
             ALTER TABLE announcement
                 ADD CONSTRAINT chk_announcement_target_scope CHECK (target_scope IN ('CLASS','SUBJECT'));
             ALTER TABLE announcement
-                ADD CONSTRAINT chk_announcement_subject_target
-                CHECK (target_scope <> 'SUBJECT' OR audience_type = 'CLASS');
+                ADD CONSTRAINT chk_announcement_class_target CHECK (
+                    (audience_type = 'CLASS' AND (
+                        (target_scope = 'CLASS' AND academic_year_id IS NOT NULL AND grade_id IS NOT NULL AND section_id IS NOT NULL)
+                        OR (target_scope = 'SUBJECT' AND academic_year_id IS NULL AND grade_id IS NULL AND section_id IS NULL)
+                    ))
+                    OR (audience_type <> 'CLASS' AND target_scope = 'CLASS' AND section_id IS NULL)
+                );
         </sql>
     </changeSet>
 </databaseChangeLog>
