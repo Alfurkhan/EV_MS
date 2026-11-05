@@ -106,7 +106,7 @@ public class AnnouncementServiceImpl {
             AnnouncementRecipient recipient=AnnouncementRecipient.builder().announcement(a).user(target).deliveredAt(now).build();
             recipients.save(recipient);
         }
-        notifyPublicationRecipients(a, targets);
+        notifyPublicationRecipients(a, targets, hasRole(actor, RoleName.ROLE_FACULTY));
         return response(a,actor);
     }
 
@@ -150,14 +150,14 @@ public class AnnouncementServiceImpl {
             for(User target:targets) {
                 recipients.save(AnnouncementRecipient.builder().announcement(a).user(target).deliveredAt(now).build());
             }
-            notifyPublicationRecipients(a, targets);
+            notifyPublicationRecipients(a, targets, hasRole(a.getCreatedBy(), RoleName.ROLE_FACULTY));
         }
         for(Announcement a:announcements.findByStatusAndExpiresAtLessThanEqual(AnnouncementStatus.PUBLISHED,now)) {
             a.setStatus(AnnouncementStatus.ARCHIVED); a.setArchivedAt(now); a.setUpdatedAt(Instant.now());
         }
     }
 
-    private void notifyPublicationRecipients(Announcement announcement, List<User> targets) {
+    private void notifyPublicationRecipients(Announcement announcement, List<User> targets, boolean includeAdminOversight) {
         String audienceContext = "";
         if (announcement.getAudienceType() == AnnouncementAudience.CLASS) {
             if (announcement.getTargetScope() == AnnouncementTargetScope.SUBJECT
@@ -177,7 +177,7 @@ public class AnnouncementServiceImpl {
                 message.length() > 1000 ? message.substring(0, 997) + "..." : message,
                 "ANNOUNCEMENTS", announcement.getPriority().name(),
                 "/announcements", "ANNOUNCEMENT:" + announcement.getId());
-        if (hasRole(announcement.getCreatedBy(), RoleName.ROLE_FACULTY)) {
+        if (includeAdminOversight) {
             notificationService.createForUsersAndAdmins(targets, command);
         } else {
             notificationService.createForUsers(targets, command);
