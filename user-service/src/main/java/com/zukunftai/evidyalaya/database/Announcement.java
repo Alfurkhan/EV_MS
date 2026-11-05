@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -15,6 +17,13 @@ public class Announcement {
     @Column(nullable = false, columnDefinition = "TEXT") private String message;
     @Enumerated(EnumType.STRING) @Column(name = "audience_type", nullable = false, length = 20)
     private AnnouncementAudience audienceType;
+    @Enumerated(EnumType.STRING) @Column(name = "target_scope", nullable = false, length = 20)
+    @Builder.Default private AnnouncementTargetScope targetScope = AnnouncementTargetScope.CLASS;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "announcement_timetable_assignment",
+            joinColumns = @JoinColumn(name = "announcement_id"),
+            inverseJoinColumns = @JoinColumn(name = "timetable_id"))
+    @Builder.Default private List<Timetable> timetableAssignments = new ArrayList<>();
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "academic_year_id") private AcademicYear academicYear;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "grade_id") private Grade grade;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "section_id") private Section section;
