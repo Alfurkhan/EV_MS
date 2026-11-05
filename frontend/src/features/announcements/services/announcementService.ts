@@ -7,7 +7,7 @@ export type AnnouncementStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED
 export interface Announcement {
   id:number; title:string; message:string; audienceType:Audience;
   academicYearId:number|null; gradeId:number|null; sectionId:number|null;
-  targetScope:AnnouncementTargetScope; subjectName:string|null; timetableAssignmentIds:number[];
+  targetScope:AnnouncementTargetScope; subjectName:string|null; timetableAssignmentIds:number[]; targetClassLabels:string[];
   priority:Priority; status:AnnouncementStatus; authorName:string;
   scheduledAt:string|null; expiresAt:string|null; publishedAt:string|null;
   readCount:number; unreadCount:number; readAt:string|null; canManage:boolean; createdAt:string; updatedAt:string;
