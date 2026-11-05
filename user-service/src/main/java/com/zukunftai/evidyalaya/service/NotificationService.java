@@ -22,4 +22,8 @@ public interface NotificationService {
     NotificationResponse updateManualNotification(Long id, ManualNotificationRequest request);
 
     int createForUsers(Collection<User> recipients, NotificationCommand command);
+
+    void updateForSource(String sourceType, Long sourceId, String title, String message, String priority);
+
+    void deleteForSource(String sourceType, Long sourceId);
 }
