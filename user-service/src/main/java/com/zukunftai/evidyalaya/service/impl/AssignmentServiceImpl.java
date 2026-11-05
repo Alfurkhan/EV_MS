@@ -5,8 +5,10 @@ import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.AssignmentGradeRequest;
 import com.zukunftai.evidyalaya.model.AssignmentRequest;
 import com.zukunftai.evidyalaya.model.AssignmentSubmissionRequest;
+import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.AssignmentService;
+import com.zukunftai.evidyalaya.service.NotificationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -38,7 +40,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final UserRepository userRepository;
     private final StudentEnrollmentRepository enrollmentRepository;
     private final TimetableRepository timetableRepository;
-    private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
 
     @Value("${app.assignment-storage-dir:uploads/assignments}")
     private String storageDirectory;
@@ -56,7 +58,7 @@ public class AssignmentServiceImpl implements AssignmentService {
             UserRepository userRepository,
             StudentEnrollmentRepository enrollmentRepository,
             TimetableRepository timetableRepository,
-            NotificationRepository notificationRepository) {
+            NotificationService notificationService) {
         this.assignmentRepository = assignmentRepository;
         this.submissionRepository = submissionRepository;
         this.academicYearRepository = academicYearRepository;
@@ -66,7 +68,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         this.userRepository = userRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.timetableRepository = timetableRepository;
-        this.notificationRepository = notificationRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -129,25 +131,18 @@ public class AssignmentServiceImpl implements AssignmentService {
         List<User> students = enrollmentRepository.findByAcademicYearAndGradeAndSectionAndActiveTrue(
                         assignment.getAcademicYear(), assignment.getGrade(), assignment.getSection())
                 .stream().map(StudentEnrollment::getStudent).distinct().toList();
-        Instant notifiedAt = Instant.now();
         String message = "A new " + assignment.getSubject().getName() + " assignment is available for "
                 + assignment.getGrade().getName() + " - " + assignment.getSection().getName()
                 + ". Due: " + assignment.getDueAt() + ".";
-        for (User student : students) {
-            notificationRepository.save(Notification.builder()
-                    .user(student)
-                    .sourceType("ASSIGNMENT")
-                    .sourceId(assignment.getId())
-                    .title("New assignment: " + assignment.getTitle())
-                    .message(message)
-                    .category("ASSIGNMENTS")
-                    .priority("NORMAL")
-                    .targetUrl("/assignments")
-                    .deduplicationKey("ASSIGNMENT:" + assignment.getId() + ":" + student.getId())
-                    .createdAt(notifiedAt)
-                    .updatedAt(notifiedAt)
-                    .build());
-        }
+        notificationService.createForUsers(students, new NotificationCommand(
+                "ASSIGNMENT",
+                assignment.getId(),
+                "New assignment: " + assignment.getTitle(),
+                message,
+                "ASSIGNMENTS",
+                "NORMAL",
+                "/assignments",
+                "ASSIGNMENT:" + assignment.getId()));
         return published;
     }
 
