@@ -28,7 +28,7 @@
                         (target_scope = 'CLASS' AND academic_year_id IS NOT NULL AND grade_id IS NOT NULL AND section_id IS NOT NULL)
                         OR (target_scope = 'SUBJECT' AND academic_year_id IS NULL AND grade_id IS NULL AND section_id IS NULL)
                     ))
-                    OR (audience_type <> 'CLASS' AND target_scope = 'CLASS' AND section_id IS NULL)
+                    OR (audience_type &lt;&gt; 'CLASS' AND target_scope = 'CLASS' AND section_id IS NULL)
                 );
         </sql>
     </changeSet>
