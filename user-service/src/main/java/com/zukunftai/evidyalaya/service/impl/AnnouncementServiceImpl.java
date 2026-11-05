@@ -54,7 +54,7 @@ public class AnnouncementServiceImpl {
         if(request.scheduledAt()!=null && request.expiresAt()!=null && !request.expiresAt().isAfter(request.scheduledAt()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Expiry must be after scheduled publication.");
         Announcement a=Announcement.builder().title(request.title().trim()).message(request.message().trim())
-                .audienceType(request.audienceType()).academicYear(request.academicYearId()==null?null:years.findById(request.academicYearId()).orElseThrow())
+                .audienceType(request.audienceType()).targetScope(scope(request)).timetableAssignments(resolveAssignments(request,actor,admin)).academicYear(request.academicYearId()==null?null:years.findById(request.academicYearId()).orElseThrow())
                 .grade(request.gradeId()==null?null:grades.findById(request.gradeId()).orElseThrow())
                 .section(request.sectionId()==null?null:sections.findById(request.sectionId()).orElseThrow())
                 .priority(request.priority()).status(request.scheduledAt()!=null && request.scheduledAt().isAfter(now)?AnnouncementStatus.SCHEDULED:AnnouncementStatus.DRAFT)
@@ -78,6 +78,7 @@ public class AnnouncementServiceImpl {
         }
         validateTarget(request,actor,admin);
         a.setTitle(request.title().trim()); a.setMessage(request.message().trim()); a.setAudienceType(request.audienceType());
+        a.setTargetScope(scope(request)); a.setTimetableAssignments(resolveAssignments(request,actor,admin));
         a.setAcademicYear(request.academicYearId()==null?null:years.findById(request.academicYearId()).orElseThrow());
         a.setGrade(request.gradeId()==null?null:grades.findById(request.gradeId()).orElseThrow());
         a.setSection(request.sectionId()==null?null:sections.findById(request.sectionId()).orElseThrow());
@@ -197,6 +198,16 @@ public class AnnouncementServiceImpl {
 
     private List<User> resolveRecipients(Announcement a) {
         if(a.getAudienceType()==AnnouncementAudience.CLASS) {
+            if(a.getTargetScope()==AnnouncementTargetScope.SUBJECT) {
+                Set<User> targets=new LinkedHashSet<>();
+                for(Timetable assignment:a.getTimetableAssignments()) {
+                    if(!assignment.isActive() || assignment.getStatus()!=TimetableStatus.APPROVED)
+                        throw new ResponseStatusException(HttpStatus.CONFLICT,"A selected subject assignment is no longer active and approved.");
+                    enrollments.findByAcademicYearAndGradeAndSectionAndActiveTrue(assignment.getAcademicYear(),assignment.getGrade(),assignment.getSection())
+                            .stream().map(StudentEnrollment::getStudent).forEach(targets::add);
+                }
+                return new ArrayList<>(targets);
+            }
             if(a.getCreatedBy().getRoles().stream().anyMatch(r->r.getName()==RoleName.ROLE_FACULTY)
                     && timetables.findByFacultyAndStatusAndActiveTrue(a.getCreatedBy(),TimetableStatus.APPROVED).stream()
                     .noneMatch(t->t.getAcademicYear().getId().equals(a.getAcademicYear().getId())
@@ -212,13 +223,44 @@ public class AnnouncementServiceImpl {
                         : r.getName()==RoleName.ROLE_FACULTY)).toList();
     }
 
+    private AnnouncementTargetScope scope(AnnouncementRequest request) {
+        return request.targetScope()==null?AnnouncementTargetScope.CLASS:request.targetScope();
+    }
+
+    private List<Timetable> resolveAssignments(AnnouncementRequest request, User actor, boolean admin) {
+        if(request.audienceType()!=AnnouncementAudience.CLASS || scope(request)!=AnnouncementTargetScope.SUBJECT)
+            return new ArrayList<>();
+        List<Long> ids=request.timetableAssignmentIds()==null?List.of():request.timetableAssignmentIds().stream().distinct().toList();
+        if(ids.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Select at least one class assignment for this subject.");
+        List<Timetable> selected=timetables.findAllById(ids);
+        if(selected.size()!=ids.size()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"One or more selected timetable assignments do not exist.");
+        LocalDate today=LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        for(Timetable t:selected) {
+            if(!t.isActive() || t.getStatus()!=TimetableStatus.APPROVED || today.isBefore(t.getStartDate()) || today.isAfter(t.getEndDate()))
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Only currently active, approved timetable assignments can be targeted.");
+            if(!admin && !t.getFaculty().getId().equals(actor.getId()))
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,"You can only target your own approved subject assignments.");
+        }
+        Long subjectId=selected.get(0).getSubject().getId();
+        if(selected.stream().anyMatch(t->!t.getSubject().getId().equals(subjectId)))
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"All selected class assignments must belong to the same subject.");
+        return selected;
+    }
+
     private void validateTarget(AnnouncementRequest r, User actor, boolean admin) {
         if(!admin && r.audienceType()!=AnnouncementAudience.CLASS) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Faculty can only publish to assigned classes.");
-        if(r.audienceType()==AnnouncementAudience.CLASS && (r.academicYearId()==null||r.gradeId()==null||r.sectionId()==null))
+        if(r.audienceType()==AnnouncementAudience.CLASS && scope(r)==AnnouncementTargetScope.CLASS
+                && (r.academicYearId()==null||r.gradeId()==null||r.sectionId()==null))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Select academic year, grade and section.");
-        if(!admin && r.audienceType()==AnnouncementAudience.CLASS) {
+        if(r.audienceType()==AnnouncementAudience.CLASS && scope(r)==AnnouncementTargetScope.SUBJECT) {
+            if(r.timetableAssignmentIds()==null || r.timetableAssignmentIds().isEmpty())
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Select at least one class assignment for this subject.");
+            if(r.academicYearId()!=null||r.gradeId()!=null||r.sectionId()!=null)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Subject targeting uses timetable assignments, not a single class target.");
+        }
+        if(!admin && r.audienceType()==AnnouncementAudience.CLASS && scope(r)==AnnouncementTargetScope.CLASS) {
             boolean assigned=timetables.findByFacultyAndStatusAndActiveTrue(actor,TimetableStatus.APPROVED).stream()
-                    .anyMatch(t->t.getAcademicYear().getId().equals(r.academicYearId())&&t.getGrade().getId().equals(r.gradeId())&&t.getSection().getId().equals(r.sectionId()));
+                    .anyMatch(t->t.isActive()&&t.getAcademicYear().getId().equals(r.academicYearId())&&t.getGrade().getId().equals(r.gradeId())&&t.getSection().getId().equals(r.sectionId()));
             if(!assigned) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"You can only target classes assigned to you.");
         }
     }
@@ -228,9 +270,12 @@ public class AnnouncementServiceImpl {
         boolean facultyOwner=hasRole(viewer,RoleName.ROLE_FACULTY) && a.getCreatedBy().getId().equals(viewer.getId());
         boolean canViewReadStatus=admin || facultyOwner;
         boolean canManage=a.getCreatedBy().getId().equals(viewer.getId()) || admin;
+        String subjectName=a.getTargetScope()==AnnouncementTargetScope.SUBJECT && !a.getTimetableAssignments().isEmpty()
+                ?a.getTimetableAssignments().get(0).getSubject().getName():null;
         return new AnnouncementResponse(a.getId(),a.getTitle(),a.getMessage(),a.getAudienceType(),
                 a.getAcademicYear()==null?null:a.getAcademicYear().getId(),a.getGrade()==null?null:a.getGrade().getId(),
-                a.getSection()==null?null:a.getSection().getId(),a.getPriority(),a.getStatus(),
+                a.getSection()==null?null:a.getSection().getId(),a.getTargetScope(),subjectName,
+                a.getTimetableAssignments().stream().map(Timetable::getId).toList(),a.getPriority(),a.getStatus(),
                 a.getCreatedBy().getFullName(),a.getScheduledAt(),a.getExpiresAt(),a.getPublishedAt(),
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNotNull(a):0,
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNull(a):0,
