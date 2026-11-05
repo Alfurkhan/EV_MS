@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -108,6 +109,21 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setTargetUrl(request.targetUrl());
         notification.setUpdatedAt(Instant.now());
         return toResponse(notification);
+    }
+
+    /**
+     * Adds enabled, non-deleted Admin users to the event recipients. The
+     * regular creation path deduplicates recipients and uses stable event keys.
+     */
+    @Override
+    public int createForUsersAndAdmins(Collection<User> recipients, NotificationCommand command) {
+        List<User> combined = new ArrayList<>();
+        if (recipients != null) combined.addAll(recipients);
+        users.findAll().stream()
+                .filter(user -> user.isAccountEnabled() && !user.isAccountDeleted())
+                .filter(user -> hasRole(user, RoleName.ROLE_ADMIN))
+                .forEach(combined::add);
+        return createForUsers(combined, command);
     }
 
     /**
