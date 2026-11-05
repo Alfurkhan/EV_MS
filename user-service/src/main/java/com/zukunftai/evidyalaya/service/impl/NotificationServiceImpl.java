@@ -135,19 +135,22 @@ public class NotificationServiceImpl implements NotificationService {
                     ? null
                     : command.deduplicationKeyPrefix() + ":" + recipient.getId();
 
+            if (deduplicationKey != null && deduplicationKey.length() > 180) {
+                throw new IllegalArgumentException("Notification deduplication keys must be 180 characters or fewer.");
+            }
             if (deduplicationKey != null && notifications.existsByDeduplicationKey(deduplicationKey)) {
                 continue;
             }
 
             Notification notification = Notification.builder()
                     .user(recipient)
-                    .sourceType(command.sourceType())
+                    .sourceType(limit(command.sourceType(), 20))
                     .sourceId(command.sourceId())
-                    .title(command.title())
-                    .message(command.message())
-                    .category(command.category())
-                    .priority(command.priority())
-                    .targetUrl(command.targetUrl())
+                    .title(limit(command.title(), 200))
+                    .message(limit(command.message(), 1000))
+                    .category(limit(command.category(), 30))
+                    .priority(limit(command.priority(), 20))
+                    .targetUrl(limit(command.targetUrl(), 500))
                     .deduplicationKey(deduplicationKey)
                     .createdAt(now)
                     .updatedAt(now)
@@ -156,6 +159,32 @@ public class NotificationServiceImpl implements NotificationService {
             created++;
         }
         return created;
+    }
+
+    @Override
+    public void updateForSource(String sourceType, Long sourceId, String title, String message, String priority) {
+        String safeTitle = limit(title, 200);
+        String safeMessage = limit(message, 1000);
+        String safePriority = limit(priority, 20);
+        Instant now = Instant.now();
+        notifications.findBySourceTypeAndSourceId(sourceType, sourceId).forEach(notification -> {
+            notification.setTitle(safeTitle);
+            notification.setMessage(safeMessage);
+            notification.setPriority(safePriority);
+            notification.setUpdatedAt(now);
+        });
+    }
+
+    @Override
+    public void deleteForSource(String sourceType, Long sourceId) {
+        notifications.deleteAll(notifications.findBySourceTypeAndSourceId(sourceType, sourceId));
+    }
+
+    private String limit(String value, int maxLength) {
+        if (value == null || value.length() <= maxLength) {
+            return value;
+        }
+        return value.substring(0, maxLength);
     }
 
     private NotificationResponse toResponse(Notification notification) {
