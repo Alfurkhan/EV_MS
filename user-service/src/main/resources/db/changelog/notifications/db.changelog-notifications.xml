@@ -29,7 +29,7 @@
                 CONSTRAINT chk_announcement_status CHECK (status IN ('DRAFT','SCHEDULED','PUBLISHED','ARCHIVED')),
                 CONSTRAINT chk_announcement_class_target CHECK (
                     (audience_type = 'CLASS' AND academic_year_id IS NOT NULL AND grade_id IS NOT NULL AND section_id IS NOT NULL)
-                    OR (audience_type <> 'CLASS' AND section_id IS NULL)
+                    OR (audience_type &lt;> 'CLASS' AND section_id IS NULL)
                 )
             );
             CREATE INDEX idx_announcement_status_schedule ON announcement(status, scheduled_at);
