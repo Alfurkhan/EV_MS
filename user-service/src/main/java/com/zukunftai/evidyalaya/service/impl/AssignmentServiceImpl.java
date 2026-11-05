@@ -131,10 +131,11 @@ public class AssignmentServiceImpl implements AssignmentService {
         List<User> students = enrollmentRepository.findByAcademicYearAndGradeAndSectionAndActiveTrue(
                         assignment.getAcademicYear(), assignment.getGrade(), assignment.getSection())
                 .stream().map(StudentEnrollment::getStudent).distinct().toList();
-        String message = "A new " + assignment.getSubject().getName() + " assignment is available for "
+        String message = "A new " + assignment.getSubject().getName() + " assignment was published by "
+                + assignment.getFaculty().getFullName() + " for "
                 + assignment.getGrade().getName() + " - " + assignment.getSection().getName()
                 + ". Due: " + assignment.getDueAt() + ".";
-        notificationService.createForUsers(students, new NotificationCommand(
+        notificationService.createForUsersAndAdmins(students, new NotificationCommand(
                 "ASSIGNMENT",
                 assignment.getId(),
                 "New assignment: " + assignment.getTitle(),
