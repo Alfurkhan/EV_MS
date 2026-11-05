@@ -17,7 +17,6 @@ import java.util.*;
 public class AnnouncementServiceImpl {
     private final AnnouncementRepository announcements;
     private final AnnouncementRecipientRepository recipients;
-    private final NotificationRepository notifications;
     private final NotificationService notificationService;
     private final UserRepository users;
     private final StudentEnrollmentRepository enrollments;
@@ -27,10 +26,10 @@ public class AnnouncementServiceImpl {
     private final SectionRepository sections;
 
     public AnnouncementServiceImpl(AnnouncementRepository announcements, AnnouncementRecipientRepository recipients,
-            NotificationRepository notifications, UserRepository users, StudentEnrollmentRepository enrollments,
+            UserRepository users, StudentEnrollmentRepository enrollments,
             TimetableRepository timetables, AcademicYearRepository years, GradeRepository grades, SectionRepository sections,
             NotificationService notificationService) {
-        this.announcements=announcements; this.recipients=recipients; this.notifications=notifications; this.users=users;
+        this.announcements=announcements; this.recipients=recipients; this.users=users;
         this.notificationService=notificationService;
         this.enrollments=enrollments; this.timetables=timetables; this.years=years; this.grades=grades; this.sections=sections;
     }
@@ -74,10 +73,9 @@ public class AnnouncementServiceImpl {
         if(a.getStatus()==AnnouncementStatus.ARCHIVED) throw new ResponseStatusException(HttpStatus.CONFLICT,"Archived announcements cannot be edited.");
         if(a.getStatus()==AnnouncementStatus.PUBLISHED) {
             a.setTitle(request.title().trim()); a.setMessage(request.message().trim()); a.setPriority(request.priority()); a.setUpdatedAt(Instant.now());
-            for(Notification n:notifications.findAll().stream().filter(n->"ANNOUNCEMENT".equals(n.getSourceType()) && id.equals(n.getSourceId())).toList()) {
-                n.setTitle(a.getTitle()); n.setMessage(a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage());
-                n.setPriority(a.getPriority().name()); n.setUpdatedAt(Instant.now());
-            }
+            notificationService.updateForSource("ANNOUNCEMENT", id, a.getTitle(),
+                    a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
+                    a.getPriority().name());
             return response(announcements.save(a),actor);
         }
         validateTarget(request,actor,admin);
@@ -135,9 +133,7 @@ public class AnnouncementServiceImpl {
         Announcement a=announcements.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
         if(!hasRole(actor,RoleName.ROLE_ADMIN) && !a.getCreatedBy().getId().equals(actor.getId()))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        List<Notification> linked=notifications.findAll().stream()
-                .filter(n->"ANNOUNCEMENT".equals(n.getSourceType()) && id.equals(n.getSourceId())).toList();
-        notifications.deleteAll(linked);
+        notificationService.deleteForSource("ANNOUNCEMENT", id);
         recipients.deleteAll(recipients.findByAnnouncement(a));
         announcements.delete(a);
     }
