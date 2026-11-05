@@ -251,6 +251,8 @@ public class AnnouncementServiceImpl {
     }
 
     private void validateTarget(AnnouncementRequest r, User actor, boolean admin) {
+        if(r.audienceType()!=AnnouncementAudience.CLASS && scope(r)!=AnnouncementTargetScope.CLASS)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Subject targeting is available only for class announcements.");
         if(!admin && r.audienceType()!=AnnouncementAudience.CLASS) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Faculty can only publish to assigned classes.");
         if(r.audienceType()==AnnouncementAudience.CLASS && scope(r)==AnnouncementTargetScope.CLASS
                 && (r.academicYearId()==null||r.gradeId()==null||r.sectionId()==null))
