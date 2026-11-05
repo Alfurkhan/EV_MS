@@ -14,6 +14,7 @@ on:
       - feature/assignment-ux-enhancements
       - feature/evidyalaya-final-development
       - feature/notification-foundation
+      - feature/notification-admin-oversight
 
 permissions:
   contents: read
