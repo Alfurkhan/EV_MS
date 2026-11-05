@@ -106,10 +106,7 @@ public class AnnouncementServiceImpl {
             AnnouncementRecipient recipient=AnnouncementRecipient.builder().announcement(a).user(target).deliveredAt(now).build();
             recipients.save(recipient);
         }
-        notificationService.createForUsers(targets, new NotificationCommand(
-                "ANNOUNCEMENT", a.getId(), a.getTitle(),
-                a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
-                "ANNOUNCEMENTS", a.getPriority().name(), "/announcements", "ANNOUNCEMENT:"+a.getId()));
+        notifyPublicationRecipients(a, targets);
         return response(a,actor);
     }
 
@@ -153,13 +150,37 @@ public class AnnouncementServiceImpl {
             for(User target:targets) {
                 recipients.save(AnnouncementRecipient.builder().announcement(a).user(target).deliveredAt(now).build());
             }
-            notificationService.createForUsers(targets, new NotificationCommand(
-                    "ANNOUNCEMENT", a.getId(), a.getTitle(),
-                    a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
-                    "ANNOUNCEMENTS", a.getPriority().name(), "/announcements", "ANNOUNCEMENT:"+a.getId()));
+            notifyPublicationRecipients(a, targets);
         }
         for(Announcement a:announcements.findByStatusAndExpiresAtLessThanEqual(AnnouncementStatus.PUBLISHED,now)) {
             a.setStatus(AnnouncementStatus.ARCHIVED); a.setArchivedAt(now); a.setUpdatedAt(Instant.now());
+        }
+    }
+
+    private void notifyPublicationRecipients(Announcement announcement, List<User> targets) {
+        String audienceContext = "";
+        if (announcement.getAudienceType() == AnnouncementAudience.CLASS) {
+            if (announcement.getTargetScope() == AnnouncementTargetScope.SUBJECT
+                    && !announcement.getTimetableAssignments().isEmpty()) {
+                Timetable assignment = announcement.getTimetableAssignments().get(0);
+                audienceContext = " for " + assignment.getSubject().getName() + ", "
+                        + assignment.getGrade().getName() + " - " + assignment.getSection().getName();
+            } else if (announcement.getGrade() != null && announcement.getSection() != null) {
+                audienceContext = " for " + announcement.getGrade().getName()
+                        + " - " + announcement.getSection().getName();
+            }
+        }
+        String message = "Published by " + announcement.getCreatedBy().getFullName()
+                + audienceContext + ". " + announcement.getMessage();
+        NotificationCommand command = new NotificationCommand(
+                "ANNOUNCEMENT", announcement.getId(), announcement.getTitle(),
+                message.length() > 1000 ? message.substring(0, 997) + "..." : message,
+                "ANNOUNCEMENTS", announcement.getPriority().name(),
+                "/announcements", "ANNOUNCEMENT:" + announcement.getId());
+        if (hasRole(announcement.getCreatedBy(), RoleName.ROLE_FACULTY)) {
+            notificationService.createForUsersAndAdmins(targets, command);
+        } else {
+            notificationService.createForUsers(targets, command);
         }
     }
 
