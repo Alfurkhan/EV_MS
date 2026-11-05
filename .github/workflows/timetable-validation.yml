@@ -6,7 +6,16 @@ on:
       - deployment/aws-dev
       - feature/faculty-timetable-approval
       - feature/assignments
+name: Timetable workflow validation
+
+on:
+  pull_request:
+    branches:
+      - deployment/aws-dev
+      - feature/faculty-timetable-approval
+      - feature/assignments
       - feature/evidyalaya-final-development
+      - feature/notification-foundation
   push:
     branches:
       - feature/faculty-timetable-approval
