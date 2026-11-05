@@ -40,7 +40,7 @@ export default function Notifications(){
   if(!target)return;
   if(!n.read)await markRead(n.id);
   if(target.startsWith("/")){navigate(target);return;}
-  if(/^https?:\\/\\//i.test(target)){window.location.assign(target);return;}
+  if(/^https?:\/\//i.test(target)){window.location.assign(target);return;}
   toast.error("This notification has an unsupported destination.");
  };
  const visible=items.filter(n=>filter==="ALL"||!n.read);
