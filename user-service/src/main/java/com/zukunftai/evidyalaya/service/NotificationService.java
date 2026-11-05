@@ -23,6 +23,8 @@ public interface NotificationService {
 
     int createForUsers(Collection<User> recipients, NotificationCommand command);
 
+    int createForUsersAndAdmins(Collection<User> recipients, NotificationCommand command);
+
     void updateForSource(String sourceType, Long sourceId, String title, String message, String priority);
 
     void deleteForSource(String sourceType, Long sourceId);
