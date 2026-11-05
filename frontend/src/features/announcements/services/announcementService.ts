@@ -2,17 +2,19 @@ import api from "../../../api/axios";
 
 export type Priority = "NORMAL" | "IMPORTANT" | "URGENT";
 export type Audience = "ALL" | "STUDENTS" | "FACULTY" | "CLASS";
+export type AnnouncementTargetScope = "CLASS" | "SUBJECT";
 export type AnnouncementStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
 export interface Announcement {
   id:number; title:string; message:string; audienceType:Audience;
   academicYearId:number|null; gradeId:number|null; sectionId:number|null;
+  targetScope:AnnouncementTargetScope; subjectName:string|null; timetableAssignmentIds:number[];
   priority:Priority; status:AnnouncementStatus; authorName:string;
   scheduledAt:string|null; expiresAt:string|null; publishedAt:string|null;
   readCount:number; unreadCount:number; readAt:string|null; canManage:boolean; createdAt:string; updatedAt:string;
 }
 export interface AnnouncementRequest {
   title:string; message:string; audienceType:Audience; academicYearId:number|null;
-  gradeId:number|null; sectionId:number|null; priority:Priority;
+  gradeId:number|null; sectionId:number|null; targetScope:AnnouncementTargetScope; timetableAssignmentIds:number[]; priority:Priority;
   scheduledAt:string|null; expiresAt:string|null;
 }
 export async function getAnnouncements(){return (await api.get<Announcement[]>("/announcements")).data;}
