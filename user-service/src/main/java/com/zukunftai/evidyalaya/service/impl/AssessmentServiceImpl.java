@@ -5,8 +5,10 @@ import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.AssessmentQuestionRequest;
 import com.zukunftai.evidyalaya.model.AssessmentRequest;
 import com.zukunftai.evidyalaya.model.AssessmentParticipationReportResponse;
+import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.AssessmentService;
+import com.zukunftai.evidyalaya.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
@@ -36,6 +38,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final TimetableRepository timetableRepository;
     private final StudentEnrollmentRepository enrollmentRepository;
     private final AssessmentAttemptRepository attemptRepository;
+    private final NotificationService notificationService;
 
     @Value("${app.assessment-storage-dir:uploads/assessments}")
     private String storageDirectory;
@@ -51,7 +54,8 @@ public class AssessmentServiceImpl implements AssessmentService {
             UserRepository userRepository,
             TimetableRepository timetableRepository,
             StudentEnrollmentRepository enrollmentRepository,
-            AssessmentAttemptRepository attemptRepository) {
+            AssessmentAttemptRepository attemptRepository,
+            NotificationService notificationService) {
         this.assessmentRepository = assessmentRepository;
         this.questionRepository = questionRepository;
         this.academicYearRepository = academicYearRepository;
@@ -62,6 +66,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         this.timetableRepository = timetableRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.attemptRepository = attemptRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -151,7 +156,9 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessment.setStatus(AssessmentStatus.PUBLISHED);
         assessment.setPublishedAt(LocalDateTime.now(ASSESSMENT_ZONE));
         assessment.setUpdatedAt(Instant.now());
-        return assessmentRepository.save(assessment);
+        Assessment published = assessmentRepository.save(assessment);
+        notifyPublishedAssessment(published, true);
+        return published;
     }
 
     @Override
@@ -199,7 +206,9 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessment.setStatus(AssessmentStatus.PUBLISHED);
         assessment.setPublishedAt(LocalDateTime.now(ASSESSMENT_ZONE));
         assessment.setUpdatedAt(Instant.now());
-        return assessmentRepository.save(assessment);
+        Assessment published = assessmentRepository.save(assessment);
+        notifyPublishedAssessment(published, false);
+        return published;
     }
 
 
@@ -390,6 +399,31 @@ public class AssessmentServiceImpl implements AssessmentService {
     }
 
     private record StoredFile(String path, String name, String contentType, long size) {}
+
+    private void notifyPublishedAssessment(Assessment assessment, boolean publishedByAdmin) {
+        List<User> students = enrollmentRepository
+                .findByAcademicYearAndGradeAndSectionAndActiveTrue(
+                        assessment.getAcademicYear(), assessment.getGrade(), assessment.getSection())
+                .stream().map(StudentEnrollment::getStudent).distinct().toList();
+
+        String message = "A new " + assessment.getSubject().getName() + " assessment was published by "
+                + assessment.getFaculty().getFullName() + " for "
+                + assessment.getGrade().getName() + " - " + assessment.getSection().getName()
+                + ". Available from " + assessment.getAvailableFrom()
+                + " until " + assessment.getAvailableUntil() + ".";
+        NotificationCommand command = new NotificationCommand(
+                "ASSESSMENT", assessment.getId(), "New assessment: " + assessment.getTitle(),
+                message, "ASSESSMENTS", "NORMAL", "/assessments",
+                "ASSESSMENT:" + assessment.getId());
+
+        if (publishedByAdmin) {
+            List<User> affectedUsers = new ArrayList<>(students);
+            affectedUsers.add(assessment.getFaculty());
+            notificationService.createForUsers(affectedUsers, command);
+        } else {
+            notificationService.createForUsersAndAdmins(students, command);
+        }
+    }
 
     private References resolveReferences(User faculty, AssessmentRequest request) {
         AcademicYear year = require(academicYearRepository.findById(request.getAcademicYearId()).orElse(null), "Academic year not found.");
