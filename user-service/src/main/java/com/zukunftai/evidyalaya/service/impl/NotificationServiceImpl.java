@@ -41,7 +41,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional(readOnly = true)
     public List<NotificationResponse> listForCurrentUser() {
         User user = currentUser();
-        return notifications.findTop100ByUserOrderByCreatedAtDesc(user)
+        return notifications.findByUserOrderByCreatedAtDesc(user)
                 .stream().map(this::toResponse).toList();
     }
 
