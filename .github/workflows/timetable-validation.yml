@@ -15,6 +15,7 @@ on:
       - feature/evidyalaya-final-development
       - feature/notification-foundation
       - feature/notification-admin-oversight
+      - feature/notification-lifecycle-phase-2
 
 permissions:
   contents: read
