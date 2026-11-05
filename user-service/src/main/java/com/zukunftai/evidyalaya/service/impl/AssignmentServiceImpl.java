@@ -38,6 +38,7 @@ public class AssignmentServiceImpl implements AssignmentService {
     private final UserRepository userRepository;
     private final StudentEnrollmentRepository enrollmentRepository;
     private final TimetableRepository timetableRepository;
+    private final NotificationRepository notificationRepository;
 
     @Value("${app.assignment-storage-dir:uploads/assignments}")
     private String storageDirectory;
@@ -54,7 +55,8 @@ public class AssignmentServiceImpl implements AssignmentService {
             SubjectRepository subjectRepository,
             UserRepository userRepository,
             StudentEnrollmentRepository enrollmentRepository,
-            TimetableRepository timetableRepository) {
+            TimetableRepository timetableRepository,
+            NotificationRepository notificationRepository) {
         this.assignmentRepository = assignmentRepository;
         this.submissionRepository = submissionRepository;
         this.academicYearRepository = academicYearRepository;
@@ -64,6 +66,7 @@ public class AssignmentServiceImpl implements AssignmentService {
         this.userRepository = userRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.timetableRepository = timetableRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @Override
@@ -119,7 +122,33 @@ public class AssignmentServiceImpl implements AssignmentService {
         }
         assignment.setStatus(AssignmentStatus.PUBLISHED);
         assignment.setUpdatedAt(Instant.now());
-        return assignmentRepository.save(assignment);
+        Assignment published = assignmentRepository.save(assignment);
+
+        // Notify every active student enrolled in the assignment's class.
+        // The deduplication key prevents duplicate delivery if this flow is retried.
+        List<User> students = enrollmentRepository.findByAcademicYearAndGradeAndSectionAndActiveTrue(
+                        assignment.getAcademicYear(), assignment.getGrade(), assignment.getSection())
+                .stream().map(StudentEnrollment::getStudent).distinct().toList();
+        Instant notifiedAt = Instant.now();
+        String message = "A new " + assignment.getSubject().getName() + " assignment is available for "
+                + assignment.getGrade().getName() + " - " + assignment.getSection().getName()
+                + ". Due: " + assignment.getDueAt() + ".";
+        for (User student : students) {
+            notificationRepository.save(Notification.builder()
+                    .user(student)
+                    .sourceType("ASSIGNMENT")
+                    .sourceId(assignment.getId())
+                    .title("New assignment: " + assignment.getTitle())
+                    .message(message)
+                    .category("ASSIGNMENTS")
+                    .priority("NORMAL")
+                    .targetUrl("/assignments")
+                    .deduplicationKey("ASSIGNMENT:" + assignment.getId() + ":" + student.getId())
+                    .createdAt(notifiedAt)
+                    .updatedAt(notifiedAt)
+                    .build());
+        }
+        return published;
     }
 
     @Override
