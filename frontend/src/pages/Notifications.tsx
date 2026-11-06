@@ -28,6 +28,7 @@ export default function Notifications(){
    case "ANNOUNCEMENT": return "/announcements";
    case "ASSIGNMENT": return isStudent?"/my-assignments":isFaculty?"/faculty-assignments":"/assignments";
    case "ASSESSMENT": return isStudent?"/my-assessments":isFaculty?"/faculty-assessments":"/admin-assessments";
+   case "RESULT": return isStudent?"/my-assessments":isFaculty?"/faculty-assessments":"/admin-assessments";
    case "TIMETABLE": return isStudent?"/my-timetable":isFaculty?"/my-classes":"/timetable";
    case "CLASS_SESSION": return isStudent?"/my-timetable":isFaculty?"/my-classes":"/timetable";
    case "ATTENDANCE": return "/attendance";
