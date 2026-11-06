@@ -42,6 +42,9 @@ public class AssessmentAttempt {
     @Column(name = "score", precision = 8, scale = 2)
     private BigDecimal score;
 
+    @Column(name = "published_score", precision = 8, scale = 2)
+    private BigDecimal publishedScore;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
