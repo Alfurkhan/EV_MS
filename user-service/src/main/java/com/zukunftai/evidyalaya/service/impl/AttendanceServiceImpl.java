@@ -209,6 +209,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         Instant now = Instant.now();
         String eventId = UUID.randomUUID().toString();
         List<Attendance> notificationCandidates = new ArrayList<>();
+        Set<Long> newlyCreatedAttendanceIds = new HashSet<>();
         Map<AttendanceStatus, Long> changedStatusCounts =
                 new EnumMap<>(AttendanceStatus.class);
         int newRecords = 0;
@@ -248,6 +249,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
             if (statusChanged) {
                 notificationCandidates.add(saved);
+                if (isNewRecord) {
+                    newlyCreatedAttendanceIds.add(saved.getId());
+                }
                 changedStatusCounts.merge(item.getStatus(), 1L, Long::sum);
                 if (isNewRecord) {
                     newRecords++;
@@ -265,8 +269,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                     + session.getSessionDate();
 
             for (Attendance changed : notificationCandidates) {
-                boolean newlyRecorded = changed.getCreatedAt() != null
-                        && changed.getCreatedAt().equals(changed.getUpdatedAt());
+                boolean newlyRecorded = newlyCreatedAttendanceIds.contains(changed.getId());
                 String title = newlyRecorded ? "Attendance recorded" : "Attendance updated";
                 String message = newlyRecorded
                         ? "Your attendance for " + sessionLabel + " was recorded as "
