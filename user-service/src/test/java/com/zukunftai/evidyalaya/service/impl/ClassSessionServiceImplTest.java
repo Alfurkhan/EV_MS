@@ -99,7 +99,7 @@ class ClassSessionServiceImplTest {
             session.setId(80L);
             return session;
         });
-        when(studentEnrollmentRepository.findByAcademicYearAndGradeAndSectionAndActiveTrue(year, grade, section))
+        lenient().when(studentEnrollmentRepository.findByAcademicYearAndGradeAndSectionAndActiveTrue(year, grade, section))
                 .thenReturn(List.of(enrollment));
         return new Fixture();
     }
