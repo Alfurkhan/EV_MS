@@ -7,6 +7,8 @@ on:
       - feature/faculty-timetable-approval
       - feature/assignments
       - feature/evidyalaya-final-development
+      - feature/notification-lifecycle-phase-2
+      - feature/notification-producers
   push:
     branches:
       - feature/faculty-timetable-approval
@@ -16,6 +18,7 @@ on:
       - feature/notification-foundation
       - feature/notification-admin-oversight
       - feature/notification-lifecycle-phase-2
+      - feature/notification-producers
 
 permissions:
   contents: read
