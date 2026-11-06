@@ -11,6 +11,7 @@ import com.zukunftai.evidyalaya.database.TimetableStatus;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.StudentSubjectResponse;
+import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.repository.AcademicYearRepository;
 import com.zukunftai.evidyalaya.repository.GradeRepository;
 import com.zukunftai.evidyalaya.repository.StudentEnrollmentRepository;
@@ -18,6 +19,7 @@ import com.zukunftai.evidyalaya.repository.SubjectRepository;
 import com.zukunftai.evidyalaya.repository.TimetableRepository;
 import com.zukunftai.evidyalaya.repository.UserRepository;
 import com.zukunftai.evidyalaya.service.SubjectService;
+import com.zukunftai.evidyalaya.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +31,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
 
 @Service
 @Transactional
@@ -45,6 +50,7 @@ public class SubjectServiceImpl implements SubjectService {
     private final StudentEnrollmentRepository enrollmentRepository;
 
     private final TimetableRepository timetableRepository;
+    private final NotificationService notificationService;
 
 
     public SubjectServiceImpl(
@@ -53,7 +59,8 @@ public class SubjectServiceImpl implements SubjectService {
             GradeRepository gradeRepository,
             AcademicYearRepository academicYearRepository,
             StudentEnrollmentRepository enrollmentRepository,
-            TimetableRepository timetableRepository
+            TimetableRepository timetableRepository,
+            NotificationService notificationService
     ) {
         this.subjectRepository = subjectRepository;
         this.userRepository = userRepository;
@@ -61,6 +68,7 @@ public class SubjectServiceImpl implements SubjectService {
         this.academicYearRepository = academicYearRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.timetableRepository = timetableRepository;
+        this.notificationService = notificationService;
     }
 
 
@@ -132,221 +140,6 @@ public class SubjectServiceImpl implements SubjectService {
                                 "SUBJECT_NOT_FOUND"
                         )
                 );
-    }
-
-
-    @Override
-    public Subject updateSubject(
-            Long id,
-            String name,
-            String code,
-            String description,
-            boolean active
-    ) {
-
-        Subject subject = getSubjectById(id);
-
-        String normalizedName = normalize(name);
-        String normalizedCode = normalize(code);
-
-        subjectRepository.findByName(normalizedName)
-                .filter(existing ->
-                        !existing.getId().equals(id)
-                )
-                .ifPresent(existing -> {
-                    throw new APIException(
-                            "A subject with this name already exists.",
-                            HttpStatus.CONFLICT,
-                            "SUBJECT_NAME_ALREADY_EXISTS"
-                    );
-                });
-
-        subjectRepository.findByCode(normalizedCode)
-                .filter(existing ->
-                        !existing.getId().equals(id)
-                )
-                .ifPresent(existing -> {
-                    throw new APIException(
-                            "A subject with this code already exists.",
-                            HttpStatus.CONFLICT,
-                            "SUBJECT_CODE_ALREADY_EXISTS"
-                    );
-                });
-
-        subject.setName(normalizedName);
-        subject.setCode(normalizedCode);
-
-        subject.setDescription(
-                description == null
-                        ? null
-                        : description.trim()
-        );
-
-        subject.setActive(active);
-        subject.setUpdatedAt(Instant.now());
-
-        return subjectRepository.save(subject);
-    }
-
-
-    @Override
-    public void deleteSubject(Long id) {
-
-        Subject subject = getSubjectById(id);
-
-        subjectRepository.delete(subject);
-    }
-
-
-    @Override
-    public void assignFacultyToSubject(
-            Long subjectId,
-            Long facultyId
-    ) {
-
-        Subject subject =
-                getSubjectById(subjectId);
-
-        User faculty =
-                userRepository.findById(facultyId)
-                        .orElseThrow(() ->
-                                new APIException(
-                                        "Faculty not found.",
-                                        HttpStatus.NOT_FOUND,
-                                        "FACULTY_NOT_FOUND"
-                                )
-                        );
-
-        boolean isFaculty =
-                faculty.getRoles() != null &&
-                        faculty.getRoles()
-                                .stream()
-                                .anyMatch(role ->
-                                        role.getName() ==
-                                                RoleName.ROLE_FACULTY
-                                );
-
-        if (!isFaculty) {
-
-            throw new APIException(
-                    "The selected user is not a Faculty member.",
-                    HttpStatus.BAD_REQUEST,
-                    "USER_IS_NOT_FACULTY"
-            );
-        }
-
-        if (subject.getFaculties().contains(faculty)) {
-
-            throw new APIException(
-                    "This Faculty is already assigned to the subject.",
-                    HttpStatus.CONFLICT,
-                    "FACULTY_ALREADY_ASSIGNED"
-            );
-        }
-
-        subject.getFaculties().add(faculty);
-
-        subject.setUpdatedAt(Instant.now());
-
-        subjectRepository.save(subject);
-    }
-
-
-    @Override
-    public void removeFacultyFromSubject(
-            Long subjectId,
-            Long facultyId
-    ) {
-
-        Subject subject =
-                getSubjectById(subjectId);
-
-        User faculty =
-                userRepository.findById(facultyId)
-                        .orElseThrow(() ->
-                                new APIException(
-                                        "Faculty not found.",
-                                        HttpStatus.NOT_FOUND,
-                                        "FACULTY_NOT_FOUND"
-                                )
-                        );
-
-        if (!subject.getFaculties().remove(faculty)) {
-
-            throw new APIException(
-                    "This Faculty is not assigned to the subject.",
-                    HttpStatus.NOT_FOUND,
-                    "FACULTY_ASSIGNMENT_NOT_FOUND"
-            );
-        }
-
-        subject.setUpdatedAt(Instant.now());
-
-        subjectRepository.save(subject);
-    }
-
-
-    @Override
-    public void assignSubjectToGrade(
-            Long subjectId,
-            Long gradeId
-    ) {
-
-        Subject subject = getSubjectById(subjectId);
-
-        Grade grade =
-                gradeRepository.findById(gradeId)
-                        .orElseThrow(() ->
-                                new APIException(
-                                        "Grade not found.",
-                                        HttpStatus.NOT_FOUND,
-                                        "GRADE_NOT_FOUND"
-                                )
-                        );
-
-        if (grade.getSubjects().contains(subject)) {
-
-            throw new APIException(
-                    "This Subject is already assigned to the Grade.",
-                    HttpStatus.CONFLICT,
-                    "SUBJECT_ALREADY_ASSIGNED"
-            );
-        }
-
-        grade.getSubjects().add(subject);
-
-        gradeRepository.save(grade);
-    }
-
-
-    @Override
-    public void removeSubjectFromGrade(
-            Long subjectId,
-            Long gradeId
-    ) {
-
-        Subject subject = getSubjectById(subjectId);
-
-        Grade grade =
-                gradeRepository.findById(gradeId)
-                        .orElseThrow(() ->
-                                new APIException(
-                                        "Grade not found.",
-                                        HttpStatus.NOT_FOUND,
-                                        "GRADE_NOT_FOUND"
-                                )
-                        );
-
-        if (!grade.getSubjects().remove(subject)) {
-
-            throw new APIException(
-                    "This Subject is not assigned to the Grade.",
-                    HttpStatus.NOT_FOUND,
-                    "SUBJECT_GRADE_ASSIGNMENT_NOT_FOUND"
-            );
-        }
-
-        gradeRepository.save(grade);
     }
 
 
@@ -626,6 +419,46 @@ public class SubjectServiceImpl implements SubjectService {
                 .toList();
     }
 
+
+
+    private List<User> activeStudentsForGrade(Grade grade) {
+        return enrollmentRepository.findByGradeAndActiveTrue(grade).stream()
+                .map(StudentEnrollment::getStudent)
+                .filter(Objects::nonNull)
+                .filter(student -> student.getId() != null)
+                .toList();
+    }
+
+    private void notifySubjectFaculty(Subject subject, String title, String message, String eventKey) {
+        notificationService.createForUsers(
+                withoutCurrentActor(new ArrayList<>(subject.getFaculties())),
+                new NotificationCommand("SUBJECT", subject.getId(), title, message,
+                        "SUBJECTS", "NORMAL", "/courses", eventKey));
+    }
+
+    private void notifySubjectStudents(Subject subject, String title, String message, String eventKey) {
+        List<User> students = new ArrayList<>();
+        if (subject.getGrades() != null) {
+            subject.getGrades().forEach(grade -> students.addAll(activeStudentsForGrade(grade)));
+        }
+        notificationService.createForUsers(withoutCurrentActor(students),
+                new NotificationCommand("SUBJECT", subject.getId(), title, message,
+                        "SUBJECTS", "NORMAL", "/my-subjects", eventKey));
+    }
+
+    private List<User> withoutCurrentActor(Collection<User> recipients) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return recipients.stream().filter(Objects::nonNull).toList();
+        }
+        Long actorId = userRepository.findByUsername(authentication.getName())
+                .map(User::getId).orElse(null);
+        if (actorId == null) {
+            return recipients.stream().filter(Objects::nonNull).toList();
+        }
+        return recipients.stream().filter(Objects::nonNull)
+                .filter(user -> !actorId.equals(user.getId())).toList();
+    }
 
     private String normalize(String value) {
 
