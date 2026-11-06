@@ -63,7 +63,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
                             .attemptStatus(attempt == null ? null : attempt.getStatus().name())
                             .attemptDeadline(attempt == null ? null : attempt.getDeadlineAt())
                             .resultsPublished(a.isResultsPublished())
-                            .resultScore(a.isResultsPublished() && attempt != null ? attempt.getScore() : null)
+                            .resultScore(a.isResultsPublished() && attempt != null ? attempt.getPublishedScore() : null)
                             .hasAttachment(a.getAttachmentPath() != null).attachmentName(a.getAttachmentName()).build();
                 }).toList();
     }
@@ -203,7 +203,7 @@ public class StudentAssessmentServiceImpl implements StudentAssessmentService {
                 .assessmentTitle(attempt.getAssessment().getTitle()).status(attempt.getStatus().name()).startedAt(attempt.getStartedAt())
                 .deadlineAt(attempt.getDeadlineAt()).submittedAt(attempt.getSubmittedAt())
                 .resultsPublished(attempt.getAssessment().isResultsPublished())
-                .score(attempt.getAssessment().isResultsPublished() ? attempt.getScore() : null)
+                .score(attempt.getAssessment().isResultsPublished() ? attempt.getPublishedScore() : null)
                 .totalMarks(attempt.getAssessment().isResultsPublished() ? attempt.getAssessment().getTotalMarks() : null)
                 .questions(qs).answers(saved).build();
     }
