@@ -29,6 +29,8 @@ import com.zukunftai.evidyalaya.model.AttendanceStatus;
 import com.zukunftai.evidyalaya.model.FacultyClassAttendancePoint;
 import com.zukunftai.evidyalaya.model.FacultyClassAttendanceSummary;
 import com.zukunftai.evidyalaya.model.FacultyWeeklyClassAttendanceResponse;
+import com.zukunftai.evidyalaya.model.NotificationCommand;
+import com.zukunftai.evidyalaya.service.NotificationService;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -41,6 +43,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.EnumMap;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -50,17 +54,20 @@ public class AttendanceServiceImpl implements AttendanceService {
     private final ClassSessionRepository classSessionRepository;
     private final StudentEnrollmentRepository studentEnrollmentRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public AttendanceServiceImpl(
             AttendanceRepository attendanceRepository,
             ClassSessionRepository classSessionRepository,
             StudentEnrollmentRepository studentEnrollmentRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            NotificationService notificationService
     ) {
         this.attendanceRepository = attendanceRepository;
         this.classSessionRepository = classSessionRepository;
         this.studentEnrollmentRepository = studentEnrollmentRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -200,6 +207,12 @@ public class AttendanceServiceImpl implements AttendanceService {
         );
 
         Instant now = Instant.now();
+        String eventId = UUID.randomUUID().toString();
+        List<Attendance> notificationCandidates = new ArrayList<>();
+        Map<AttendanceStatus, Long> changedStatusCounts =
+                new EnumMap<>(AttendanceStatus.class);
+        int newRecords = 0;
+        int statusChanges = 0;
 
         for (AttendanceRequest item :
                 request.getAttendance()) {
@@ -223,11 +236,86 @@ public class AttendanceServiceImpl implements AttendanceService {
                                             .build()
                             );
 
+            boolean isNewRecord = attendance.getId() == null;
+            AttendanceStatus previousStatus = attendance.getStatus();
+            boolean statusChanged = isNewRecord || previousStatus != item.getStatus();
+
             attendance.setStatus(item.getStatus());
             attendance.setRemarks(item.getRemarks());
             attendance.setUpdatedAt(now);
 
-            attendanceRepository.save(attendance);
+            Attendance saved = attendanceRepository.save(attendance);
+
+            if (statusChanged) {
+                notificationCandidates.add(saved);
+                changedStatusCounts.merge(item.getStatus(), 1L, Long::sum);
+                if (isNewRecord) {
+                    newRecords++;
+                } else {
+                    statusChanges++;
+                }
+            }
+        }
+
+        if (!notificationCandidates.isEmpty()) {
+            String subjectName = timetable.getSubject().getName();
+            String classLabel = "Grade " + timetable.getGrade().getName()
+                    + " - " + timetable.getSection().getName();
+            String sessionLabel = subjectName + " (" + classLabel + ") on "
+                    + session.getSessionDate();
+
+            for (Attendance changed : notificationCandidates) {
+                boolean newlyRecorded = changed.getCreatedAt() != null
+                        && changed.getCreatedAt().equals(changed.getUpdatedAt());
+                String title = newlyRecorded ? "Attendance recorded" : "Attendance updated";
+                String message = newlyRecorded
+                        ? "Your attendance for " + sessionLabel + " was recorded as "
+                                + changed.getStatus() + "."
+                        : "Your attendance for " + sessionLabel + " was updated to "
+                                + changed.getStatus() + ".";
+                notificationService.createForUsers(
+                        List.of(changed.getStudent()),
+                        new NotificationCommand(
+                                "ATTENDANCE",
+                                changed.getId(),
+                                title,
+                                message,
+                                "ATTENDANCE",
+                                "NORMAL",
+                                "/attendance",
+                                "ATTENDANCE:SESSION:" + session.getId()
+                                        + ":BATCH:" + eventId + ":STUDENT:"
+                                        + changed.getStudent().getId()
+                        )
+                );
+            }
+
+            StringBuilder summary = new StringBuilder()
+                    .append("Attendance for ").append(sessionLabel)
+                    .append(" was submitted. ")
+                    .append(newRecords).append(" new record(s), ")
+                    .append(statusChanges).append(" status change(s).");
+            for (AttendanceStatus status : AttendanceStatus.values()) {
+                long count = changedStatusCounts.getOrDefault(status, 0L);
+                if (count > 0) {
+                    summary.append(" ").append(status).append(": ").append(count).append(".");
+                }
+            }
+
+            notificationService.createForUsersAndAdmins(
+                    List.of(),
+                    new NotificationCommand(
+                            "ATTENDANCE",
+                            session.getId(),
+                            "Attendance submitted",
+                            summary.toString(),
+                            "ATTENDANCE",
+                            "NORMAL",
+                            "/attendance",
+                            "ATTENDANCE:SESSION:" + session.getId()
+                                    + ":BATCH:" + eventId + ":ADMIN_SUMMARY"
+                    )
+            );
         }
 
         return attendanceRepository
