@@ -130,4 +130,31 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="assessments-009-results-revision-snapshot" author="evidyalaya">
+        <addColumn tableName="assessment">
+            <column name="results_revision" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published_results_revision" type="BIGINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="assessment_attempt">
+            <column name="published_score" type="NUMERIC(8,2)"/>
+        </addColumn>
+        <sql>
+            UPDATE assessment
+            SET results_revision = 1,
+                published_results_revision = 1
+            WHERE results_published = TRUE;
+
+            UPDATE assessment_attempt attempt
+            SET published_score = attempt.score
+            FROM assessment
+            WHERE assessment.id = attempt.assessment_id
+              AND assessment.results_published = TRUE;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
