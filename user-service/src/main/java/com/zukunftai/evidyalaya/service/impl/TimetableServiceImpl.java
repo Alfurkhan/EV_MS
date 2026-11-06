@@ -13,6 +13,7 @@ import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.database.MeetingPlatform;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.TimetableRequest;
+import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.repository.AcademicYearRepository;
 import com.zukunftai.evidyalaya.repository.GradeRepository;
 import com.zukunftai.evidyalaya.repository.SectionRepository;
@@ -21,6 +22,7 @@ import com.zukunftai.evidyalaya.repository.SubjectRepository;
 import com.zukunftai.evidyalaya.repository.TimetableRepository;
 import com.zukunftai.evidyalaya.repository.UserRepository;
 import com.zukunftai.evidyalaya.service.TimetableService;
+import com.zukunftai.evidyalaya.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,8 +31,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Objects;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -46,6 +52,7 @@ public class TimetableServiceImpl implements TimetableService {
     private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
     private final StudentEnrollmentRepository enrollmentRepository;
+    private final NotificationService notificationService;
 
     public TimetableServiceImpl(
             TimetableRepository timetableRepository,
@@ -54,7 +61,8 @@ public class TimetableServiceImpl implements TimetableService {
             SectionRepository sectionRepository,
             SubjectRepository subjectRepository,
             UserRepository userRepository,
-            StudentEnrollmentRepository enrollmentRepository
+            StudentEnrollmentRepository enrollmentRepository,
+            NotificationService notificationService
     ) {
         this.timetableRepository = timetableRepository;
         this.academicYearRepository = academicYearRepository;
@@ -63,6 +71,7 @@ public class TimetableServiceImpl implements TimetableService {
         this.subjectRepository = subjectRepository;
         this.userRepository = userRepository;
         this.enrollmentRepository = enrollmentRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -153,7 +162,15 @@ public class TimetableServiceImpl implements TimetableService {
                         .updatedAt(now)
                         .build();
 
-        return timetableRepository.save(timetable);
+        Timetable saved = timetableRepository.save(timetable);
+        if (saved.isActive() && currentUserIsAdmin()) {
+            String eventKey = "TIMETABLE:" + saved.getId() + ":CREATED:" + saved.getUpdatedAt().toEpochMilli();
+            notifyTimetableRecipients(saved, "Timetable published", "Timetable published",
+                    timetableMessage(saved, "A new approved timetable has been published."),
+                    timetableMessage(saved, "A new class has been added to your timetable."),
+                    eventKey);
+        }
+        return saved;
     }
 
     @Override
@@ -207,7 +224,17 @@ public class TimetableServiceImpl implements TimetableService {
         timetable.setStatus(TimetableStatus.PENDING_APPROVAL);
         timetable.setActive(false);
         timetable.setUpdatedAt(Instant.now());
-        return timetableRepository.save(timetable);
+        Timetable submitted = timetableRepository.save(timetable);
+        notificationService.createForUsers(
+                activeAdminsExcludingCurrentActor(),
+                new NotificationCommand(
+                        "TIMETABLE", submitted.getId(), "Timetable awaiting approval",
+                        timetableMessage(submitted, "A faculty member submitted a timetable for approval."),
+                        "TIMETABLES", "NORMAL", "/timetable",
+                        "TIMETABLE:" + submitted.getId() + ":SUBMITTED:" + submitted.getUpdatedAt().toEpochMilli()
+                )
+        );
+        return submitted;
     }
 
     @Override
@@ -243,7 +270,13 @@ public class TimetableServiceImpl implements TimetableService {
         timetable.setStatus(TimetableStatus.APPROVED);
         timetable.setActive(true);
         timetable.setUpdatedAt(Instant.now());
-        return timetableRepository.save(timetable);
+        Timetable approved = timetableRepository.save(timetable);
+        String eventKey = "TIMETABLE:" + approved.getId() + ":APPROVED:" + approved.getUpdatedAt().toEpochMilli();
+        notifyTimetableRecipients(approved, "Timetable approved", "Timetable approved",
+                timetableMessage(approved, "Your timetable request has been approved."),
+                timetableMessage(approved, "A new approved class has been added to your timetable."),
+                eventKey);
+        return approved;
     }
 
     @Override
@@ -260,7 +293,17 @@ public class TimetableServiceImpl implements TimetableService {
         timetable.setStatus(TimetableStatus.REJECTED);
         timetable.setActive(false);
         timetable.setUpdatedAt(Instant.now());
-        return timetableRepository.save(timetable);
+        Timetable rejected = timetableRepository.save(timetable);
+        notificationService.createForUsers(
+                withoutCurrentActor(List.of(rejected.getFaculty())),
+                new NotificationCommand(
+                        "TIMETABLE", rejected.getId(), "Timetable request rejected",
+                        "Your timetable request was rejected. Reason: " + normalizedReason,
+                        "TIMETABLES", "IMPORTANT", "/my-classes",
+                        "TIMETABLE:" + rejected.getId() + ":REJECTED:" + rejected.getUpdatedAt().toEpochMilli()
+                )
+        );
+        return rejected;
     }
 
     @Override
@@ -297,7 +340,13 @@ public class TimetableServiceImpl implements TimetableService {
                     "TIMETABLE_NOT_APPROVED"
             );
         }
-        return updateTimetableInternal(id, request);
+        TimetableSnapshot before = TimetableSnapshot.from(existing);
+        Timetable updated = updateTimetableInternal(id, request);
+        if (before.hasMeaningfulChanges(updated)) {
+            String eventKey = "TIMETABLE:" + updated.getId() + ":UPDATED:" + updated.getUpdatedAt().toEpochMilli();
+            notifyTimetableSnapshotChanges(before, updated, eventKey);
+        }
+        return updated;
     }
 
     private Timetable updateTimetableInternal(
@@ -403,9 +452,12 @@ public class TimetableServiceImpl implements TimetableService {
     @Override
     public void deleteTimetable(Long id) {
 
-        Timetable timetable =
-                getTimetableById(id);
-
+        Timetable timetable = getTimetableById(id);
+        String eventKey = "TIMETABLE:" + timetable.getId() + ":DELETED:" + Instant.now().toEpochMilli();
+        notifyTimetableRecipients(timetable, "Timetable removed", "Timetable removed",
+                timetableMessage(timetable, "Your timetable entry has been removed."),
+                timetableMessage(timetable, "A class has been removed from your timetable."),
+                eventKey);
         timetableRepository.delete(timetable);
     }
 
@@ -427,7 +479,12 @@ public class TimetableServiceImpl implements TimetableService {
         timetable.setActive(false);
         timetable.setUpdatedAt(Instant.now());
 
-        timetableRepository.save(timetable);
+        Timetable disabled = timetableRepository.save(timetable);
+        String eventKey = "TIMETABLE:" + disabled.getId() + ":DISABLED:" + disabled.getUpdatedAt().toEpochMilli();
+        notifyTimetableRecipients(disabled, "Timetable disabled", "Timetable disabled",
+                timetableMessage(disabled, "This timetable entry has been disabled."),
+                timetableMessage(disabled, "A class in your timetable has been disabled."),
+                eventKey);
     }
 
     @Override
@@ -505,7 +562,12 @@ public class TimetableServiceImpl implements TimetableService {
         timetable.setActive(true);
         timetable.setUpdatedAt(Instant.now());
 
-        timetableRepository.save(timetable);
+        Timetable enabled = timetableRepository.save(timetable);
+        String eventKey = "TIMETABLE:" + enabled.getId() + ":ENABLED:" + enabled.getUpdatedAt().toEpochMilli();
+        notifyTimetableRecipients(enabled, "Timetable enabled", "Timetable enabled",
+                timetableMessage(enabled, "This timetable entry has been enabled."),
+                timetableMessage(enabled, "A class has been added back to your timetable."),
+                eventKey);
     }
 
     @Override
@@ -1245,6 +1307,113 @@ public class TimetableServiceImpl implements TimetableService {
                     HttpStatus.BAD_REQUEST,
                     "INVALID_MEETING_LINK"
             );
+        }
+    }
+
+
+    private void notifyTimetableRecipients(Timetable timetable,
+            String facultyTitle, String studentTitle,
+            String facultyMessage, String studentMessage, String eventKey) {
+        if (timetable.getFaculty() != null) {
+            notificationService.createForUsers(withoutCurrentActor(List.of(timetable.getFaculty())),
+                    new NotificationCommand("TIMETABLE", timetable.getId(), facultyTitle, facultyMessage,
+                            "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY"));
+        }
+        List<User> students = activeStudentsForCohort(
+                timetable.getAcademicYear(), timetable.getGrade(), timetable.getSection());
+        notificationService.createForUsers(withoutCurrentActor(students),
+                new NotificationCommand("TIMETABLE", timetable.getId(), studentTitle, studentMessage,
+                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS"));
+    }
+
+    private void notifyTimetableSnapshotChanges(TimetableSnapshot before, Timetable after, String eventKey) {
+        List<User> facultyRecipients = new ArrayList<>();
+        facultyRecipients.add(before.faculty());
+        facultyRecipients.add(after.getFaculty());
+        notificationService.createForUsers(withoutCurrentActor(facultyRecipients),
+                new NotificationCommand("TIMETABLE", after.getId(), "Timetable updated",
+                        timetableMessage(after, "An approved timetable entry has changed. Please review your classes."),
+                        "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY"));
+
+        List<User> studentRecipients = new ArrayList<>();
+        studentRecipients.addAll(activeStudentsForCohort(before.academicYear(), before.grade(), before.section()));
+        studentRecipients.addAll(activeStudentsForCohort(after.getAcademicYear(), after.getGrade(), after.getSection()));
+        notificationService.createForUsers(withoutCurrentActor(studentRecipients),
+                new NotificationCommand("TIMETABLE", after.getId(), "Timetable updated",
+                        timetableMessage(after, "Your class timetable has changed. Please review your updated schedule."),
+                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS"));
+    }
+
+    private List<User> activeStudentsForCohort(AcademicYear year, Grade grade, Section section) {
+        return enrollmentRepository.findByAcademicYearAndGradeAndSectionAndActiveTrue(year, grade, section)
+                .stream().map(StudentEnrollment::getStudent)
+                .filter(Objects::nonNull).filter(student -> student.getId() != null).toList();
+    }
+
+    private String timetableMessage(Timetable timetable, String prefix) {
+        return prefix + " " + timetable.getSubject().getName() + " for "
+                + timetable.getGrade().getName() + " - " + timetable.getSection().getName()
+                + " on " + timetable.getDayOfWeek() + " from " + timetable.getStartTime()
+                + " to " + timetable.getEndTime() + ".";
+    }
+
+    private List<User> withoutCurrentActor(Collection<User> recipients) {
+        Long actorId = currentActorId();
+        return recipients.stream().filter(Objects::nonNull)
+                .filter(user -> user.getId() != null && !user.getId().equals(actorId)).toList();
+    }
+
+    private Long currentActorId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+        return userRepository.findByUsername(authentication.getName()).map(User::getId).orElse(null);
+    }
+
+    private List<User> activeAdminsExcludingCurrentActor() {
+        Long actorId = currentActorId();
+        return userRepository.findAll().stream()
+                .filter(user -> user.isAccountEnabled() && !user.isAccountDeleted())
+                .filter(user -> user.getRoles() != null && user.getRoles().stream()
+                        .anyMatch(role -> role.getName() == RoleName.ROLE_ADMIN))
+                .filter(user -> actorId == null || !actorId.equals(user.getId()))
+                .toList();
+    }
+
+    private boolean currentUserIsAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private record TimetableSnapshot(AcademicYear academicYear, Grade grade, Section section,
+            Subject subject, User faculty, java.time.DayOfWeek dayOfWeek,
+            LocalTime startTime, LocalTime endTime, ClassType classType,
+            LocalDate startDate, LocalDate endDate, String room, String meetingLink,
+            String notes, boolean active) {
+        private static TimetableSnapshot from(Timetable timetable) {
+            return new TimetableSnapshot(timetable.getAcademicYear(), timetable.getGrade(),
+                    timetable.getSection(), timetable.getSubject(), timetable.getFaculty(),
+                    timetable.getDayOfWeek(), timetable.getStartTime(), timetable.getEndTime(),
+                    timetable.getClassType(), timetable.getStartDate(), timetable.getEndDate(),
+                    timetable.getRoom(), timetable.getMeetingLink(), timetable.getNotes(), timetable.isActive());
+        }
+
+        private boolean hasMeaningfulChanges(Timetable timetable) {
+            return !Objects.equals(academicYear.getId(), timetable.getAcademicYear().getId())
+                    || !Objects.equals(grade.getId(), timetable.getGrade().getId())
+                    || !Objects.equals(section.getId(), timetable.getSection().getId())
+                    || !Objects.equals(subject.getId(), timetable.getSubject().getId())
+                    || !Objects.equals(faculty.getId(), timetable.getFaculty().getId())
+                    || !Objects.equals(dayOfWeek, timetable.getDayOfWeek())
+                    || !Objects.equals(startTime, timetable.getStartTime())
+                    || !Objects.equals(endTime, timetable.getEndTime())
+                    || !Objects.equals(classType, timetable.getClassType())
+                    || !Objects.equals(startDate, timetable.getStartDate())
+                    || !Objects.equals(endDate, timetable.getEndDate())
+                    || !Objects.equals(room, timetable.getRoom())
+                    || !Objects.equals(meetingLink, timetable.getMeetingLink())
+                    || !Objects.equals(notes, timetable.getNotes())
+                    || active != timetable.isActive();
         }
     }
 
