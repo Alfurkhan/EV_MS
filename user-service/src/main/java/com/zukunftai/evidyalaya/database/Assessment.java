@@ -77,6 +77,12 @@ public class Assessment {
     @Column(name = "results_published", nullable = false)
     private boolean resultsPublished;
 
+    @Column(name = "results_revision", nullable = false)
+    private long resultsRevision;
+
+    @Column(name = "published_results_revision", nullable = false)
+    private long publishedResultsRevision;
+
     @Column(name = "attachment_path")
     private String attachmentPath;
 
