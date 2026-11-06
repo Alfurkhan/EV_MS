@@ -144,6 +144,154 @@ public class SubjectServiceImpl implements SubjectService {
 
 
     @Override
+    public Subject updateSubject(Long id, String name, String code, String description, boolean active) {
+        Subject subject = getSubjectById(id);
+        String normalizedName = normalize(name);
+        String normalizedCode = normalize(code);
+
+        subjectRepository.findByName(normalizedName)
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new APIException("A subject with this name already exists.",
+                            HttpStatus.CONFLICT, "SUBJECT_NAME_ALREADY_EXISTS");
+                });
+        subjectRepository.findByCode(normalizedCode)
+                .filter(existing -> !existing.getId().equals(id))
+                .ifPresent(existing -> {
+                    throw new APIException("A subject with this code already exists.",
+                            HttpStatus.CONFLICT, "SUBJECT_CODE_ALREADY_EXISTS");
+                });
+
+        String normalizedDescription = description == null ? null : description.trim();
+        boolean changed = !Objects.equals(subject.getName(), normalizedName)
+                || !Objects.equals(subject.getCode(), normalizedCode)
+                || !Objects.equals(subject.getDescription(), normalizedDescription)
+                || subject.isActive() != active;
+
+        subject.setName(normalizedName);
+        subject.setCode(normalizedCode);
+        subject.setDescription(normalizedDescription);
+        subject.setActive(active);
+        subject.setUpdatedAt(Instant.now());
+        Subject saved = subjectRepository.save(subject);
+
+        if (changed) {
+            String eventKey = "SUBJECT:" + saved.getId() + ":UPDATED:" + saved.getUpdatedAt().toEpochMilli();
+            notifySubjectFaculty(saved, "Subject details updated",
+                    "The details for " + saved.getName() + " (" + saved.getCode() + ") have been updated.",
+                    eventKey + ":FACULTY");
+            notifySubjectStudents(saved, "Subject details updated",
+                    "The details for " + saved.getName() + " (" + saved.getCode() + ") have been updated.",
+                    eventKey + ":STUDENTS");
+        }
+        return saved;
+    }
+
+    @Override
+    public void deleteSubject(Long id) {
+        Subject subject = getSubjectById(id);
+        String eventKey = "SUBJECT:" + subject.getId() + ":DELETED:" + Instant.now().toEpochMilli();
+        notifySubjectFaculty(subject, "Subject removed",
+                subject.getName() + " (" + subject.getCode() + ") has been removed.",
+                eventKey + ":FACULTY");
+        notifySubjectStudents(subject, "Subject removed",
+                subject.getName() + " (" + subject.getCode() + ") has been removed from your grade.",
+                eventKey + ":STUDENTS");
+        subjectRepository.delete(subject);
+    }
+
+    @Override
+    public void assignFacultyToSubject(Long subjectId, Long facultyId) {
+        Subject subject = getSubjectById(subjectId);
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException("Faculty not found.",
+                        HttpStatus.NOT_FOUND, "FACULTY_NOT_FOUND"));
+        boolean isFaculty = faculty.getRoles() != null && faculty.getRoles().stream()
+                .anyMatch(role -> role.getName() == RoleName.ROLE_FACULTY);
+        if (!isFaculty) {
+            throw new APIException("The selected user is not a Faculty member.",
+                    HttpStatus.BAD_REQUEST, "USER_IS_NOT_FACULTY");
+        }
+        if (subject.getFaculties().contains(faculty)) {
+            throw new APIException("This Faculty is already assigned to the subject.",
+                    HttpStatus.CONFLICT, "FACULTY_ALREADY_ASSIGNED");
+        }
+        subject.getFaculties().add(faculty);
+        subject.setUpdatedAt(Instant.now());
+        subjectRepository.save(subject);
+
+        notificationService.createForUsers(withoutCurrentActor(List.of(faculty)),
+                new NotificationCommand("SUBJECT", subject.getId(), "Subject assigned",
+                        "You have been assigned to teach " + subject.getName() + " (" + subject.getCode() + ").",
+                        "SUBJECTS", "NORMAL", "/courses",
+                        "SUBJECT:" + subject.getId() + ":FACULTY_ASSIGNED:" + faculty.getId()
+                                + ":" + subject.getUpdatedAt().toEpochMilli()));
+    }
+
+    @Override
+    public void removeFacultyFromSubject(Long subjectId, Long facultyId) {
+        Subject subject = getSubjectById(subjectId);
+        User faculty = userRepository.findById(facultyId)
+                .orElseThrow(() -> new APIException("Faculty not found.",
+                        HttpStatus.NOT_FOUND, "FACULTY_NOT_FOUND"));
+        if (!subject.getFaculties().remove(faculty)) {
+            throw new APIException("This Faculty is not assigned to the subject.",
+                    HttpStatus.NOT_FOUND, "FACULTY_ASSIGNMENT_NOT_FOUND");
+        }
+        subject.setUpdatedAt(Instant.now());
+        subjectRepository.save(subject);
+
+        notificationService.createForUsers(withoutCurrentActor(List.of(faculty)),
+                new NotificationCommand("SUBJECT", subject.getId(), "Subject assignment removed",
+                        "You are no longer assigned to teach " + subject.getName() + " (" + subject.getCode() + ").",
+                        "SUBJECTS", "NORMAL", "/courses",
+                        "SUBJECT:" + subject.getId() + ":FACULTY_REMOVED:" + faculty.getId()
+                                + ":" + subject.getUpdatedAt().toEpochMilli()));
+    }
+
+    @Override
+    public void assignSubjectToGrade(Long subjectId, Long gradeId) {
+        Subject subject = getSubjectById(subjectId);
+        Grade grade = gradeRepository.findById(gradeId)
+                .orElseThrow(() -> new APIException("Grade not found.",
+                        HttpStatus.NOT_FOUND, "GRADE_NOT_FOUND"));
+        if (grade.getSubjects().contains(subject)) {
+            throw new APIException("This Subject is already assigned to the Grade.",
+                    HttpStatus.CONFLICT, "SUBJECT_ALREADY_ASSIGNED");
+        }
+        grade.getSubjects().add(subject);
+        gradeRepository.save(grade);
+
+        notificationService.createForUsers(withoutCurrentActor(activeStudentsForGrade(grade)),
+                new NotificationCommand("SUBJECT", subject.getId(), "New subject added",
+                        subject.getName() + " (" + subject.getCode() + ") has been added to your grade.",
+                        "SUBJECTS", "NORMAL", "/my-subjects",
+                        "SUBJECT:" + subject.getId() + ":GRADE_ASSIGNED:" + grade.getId()
+                                + ":" + Instant.now().toEpochMilli()));
+    }
+
+    @Override
+    public void removeSubjectFromGrade(Long subjectId, Long gradeId) {
+        Subject subject = getSubjectById(subjectId);
+        Grade grade = gradeRepository.findById(gradeId)
+                .orElseThrow(() -> new APIException("Grade not found.",
+                        HttpStatus.NOT_FOUND, "GRADE_NOT_FOUND"));
+        if (!grade.getSubjects().remove(subject)) {
+            throw new APIException("This Subject is not assigned to the Grade.",
+                    HttpStatus.NOT_FOUND, "SUBJECT_GRADE_ASSIGNMENT_NOT_FOUND");
+        }
+        gradeRepository.save(grade);
+
+        notificationService.createForUsers(withoutCurrentActor(activeStudentsForGrade(grade)),
+                new NotificationCommand("SUBJECT", subject.getId(), "Subject removed",
+                        subject.getName() + " (" + subject.getCode() + ") has been removed from your grade.",
+                        "SUBJECTS", "NORMAL", "/my-subjects",
+                        "SUBJECT:" + subject.getId() + ":GRADE_REMOVED:" + grade.getId()
+                                + ":" + Instant.now().toEpochMilli()));
+    }
+
+
+    @Override
     @Transactional(readOnly = true)
     public List<Subject> getSubjectsForFaculty(
             Long facultyId
