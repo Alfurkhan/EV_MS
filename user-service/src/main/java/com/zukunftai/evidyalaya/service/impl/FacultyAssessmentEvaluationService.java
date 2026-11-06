@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.zukunftai.evidyalaya.service.NotificationService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
@@ -23,15 +24,18 @@ public class FacultyAssessmentEvaluationService {
     private final AssessmentQuestionRepository questions;
     private final AssessmentAnswerRepository answers;
     private final UserRepository users;
+    private final NotificationService notificationService;
 
     public FacultyAssessmentEvaluationService(AssessmentRepository assessments,
             AssessmentAttemptRepository attempts, AssessmentQuestionRepository questions,
-            AssessmentAnswerRepository answers, UserRepository users) {
+            AssessmentAnswerRepository answers, UserRepository users,
+            NotificationService notificationService) {
         this.assessments = assessments;
         this.attempts = attempts;
         this.questions = questions;
         this.answers = answers;
         this.users = users;
+        this.notificationService = notificationService;
     }
 
     @Transactional(readOnly = true)
@@ -79,8 +83,15 @@ public class FacultyAssessmentEvaluationService {
         AssessmentAnswer answer = answers.findByAttemptIdAndQuestionId(attemptId, questionId)
                 .orElseGet(() -> AssessmentAnswer.builder().attempt(attempt).question(question)
                         .createdAt(now).build());
+        BigDecimal previousMarks = answer.getMarksAwarded();
+        String previousFeedback = answer.getFeedback();
+        String updatedFeedback = request.getFeedback() == null ? null : request.getFeedback().trim();
+        boolean evaluationChanged = previousMarks == null
+                || previousMarks.compareTo(request.getMarksAwarded()) != 0
+                || !Objects.equals(previousFeedback, updatedFeedback);
+
         answer.setMarksAwarded(request.getMarksAwarded());
-        answer.setFeedback(request.getFeedback() == null ? null : request.getFeedback().trim());
+        answer.setFeedback(updatedFeedback);
         answer.setEvaluatedBy(currentUser());
         answer.setEvaluatedAt(now);
         answer.setUpdatedAt(now);
@@ -88,13 +99,19 @@ public class FacultyAssessmentEvaluationService {
         recalculateScore(attempt);
         attempt.setUpdatedAt(now);
         attempts.save(attempt);
+
+        if (evaluationChanged) {
+            assessment.setResultsRevision(assessment.getResultsRevision() + 1);
+            assessment.setUpdatedAt(now);
+            assessments.save(assessment);
+        }
+
         return toResponse(attempt);
     }
 
     public void publishResults(Long assessmentId) {
         Assessment assessment = ownedAssessment(assessmentId);
-        List<AssessmentAttempt> allAttempts = attempts.findAll().stream()
-                .filter(a -> a.getAssessment().getId().equals(assessmentId)).toList();
+        List<AssessmentAttempt> allAttempts = attempts.findByAssessment(assessment);
         if (allAttempts.stream().anyMatch(a -> a.getStatus() == AssessmentAttemptStatus.IN_PROGRESS)) {
             throw error("Results cannot be published while students still have active attempts.",
                     HttpStatus.CONFLICT, "ASSESSMENT_ATTEMPTS_IN_PROGRESS");
@@ -105,8 +122,49 @@ public class FacultyAssessmentEvaluationService {
                         HttpStatus.CONFLICT, "ASSESSMENT_EVALUATION_PENDING");
             }
         }
+        if (assessment.isResultsPublished()
+                && assessment.getPublishedResultsRevision() == assessment.getResultsRevision()) {
+            return;
+        }
+
+        boolean republishing = assessment.isResultsPublished();
+        allAttempts.forEach(attempt -> attempt.setPublishedScore(attempt.getScore()));
+        if (!allAttempts.isEmpty()) {
+            attempts.saveAll(allAttempts);
+        }
+
         assessment.setResultsPublished(true);
+        assessment.setPublishedResultsRevision(assessment.getResultsRevision());
+        assessment.setUpdatedAt(Instant.now());
         assessments.save(assessment);
+
+        List<User> recipients = allAttempts.stream()
+                .map(AssessmentAttempt::getStudent)
+                .filter(Objects::nonNull)
+                .filter(student -> student.getId() != null)
+                .toList();
+
+        if (!recipients.isEmpty()) {
+            String title = republishing ? "Assessment results updated" : "Assessment results published";
+            String message = "Results for " + assessment.getTitle() + " ("
+                    + assessment.getSubject().getName() + ") have been "
+                    + (republishing ? "updated and republished" : "published")
+                    + ". Open Quiz & Exams to view your result.";
+            notificationService.createForUsers(
+                    recipients,
+                    new NotificationCommand(
+                            "RESULT",
+                            assessment.getId(),
+                            title,
+                            message,
+                            "RESULTS",
+                            "NORMAL",
+                            "/my-assessments",
+                            "RESULT:ASSESSMENT:" + assessment.getId()
+                                    + ":REVISION:" + assessment.getResultsRevision()
+                    )
+            );
+        }
     }
 
     private void recalculateScore(AssessmentAttempt attempt) {
