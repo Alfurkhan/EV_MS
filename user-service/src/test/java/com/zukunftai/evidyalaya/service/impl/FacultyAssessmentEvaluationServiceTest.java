@@ -113,8 +113,8 @@ class FacultyAssessmentEvaluationServiceTest {
         when(attempts.findByAssessment(assessment)).thenReturn(List.of(attempt));
         when(questions.findByAssessmentIdOrderByPositionAsc(55L)).thenReturn(List.of());
         when(answers.findByAttemptIdOrderByQuestionPositionAsc(70L)).thenReturn(List.of());
-        when(attempts.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(assessments.save(any(Assessment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(attempts.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(assessments.save(any(Assessment.class))).thenAnswer(invocation -> invocation.getArgument(0));
         return new Fixture(assessment, attempt);
     }
 
