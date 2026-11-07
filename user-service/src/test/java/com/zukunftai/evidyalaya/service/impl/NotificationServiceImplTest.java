@@ -117,7 +117,7 @@ class NotificationServiceImplTest {
                 .updatedAt(createdAt.plusSeconds(60)).build();
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken("admin", "test"));
+                new UsernamePasswordAuthenticationToken("admin", "test", List.of()));
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(currentUser));
         when(notificationRepository.findByUserOrderByCreatedAtDesc(currentUser))
                 .thenReturn(List.of(unread, previouslyRead));
