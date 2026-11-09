@@ -47,7 +47,9 @@ class AnnouncementAttachmentStorageServiceTest {
 
         assertThrows(ResponseStatusException.class, () -> storage.store(
                 new MockMultipartFile("files", "not-a-pdf.pdf", "application/pdf", "plain text".getBytes())));
-        assertEquals(0, Files.list(temporaryDirectory).count());
+        try (var files = Files.list(temporaryDirectory)) {
+            assertEquals(0, files.count());
+        }
     }
 
     @Test
