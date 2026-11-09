@@ -14,7 +14,7 @@ interface ConfirmDialogProps {
 
 export default function ConfirmDialog({ open, title, message, confirmLabel = "Confirm", cancelLabel = "Cancel", destructive = false, busy = false, onConfirm, onCancel }: ConfirmDialogProps) {
     if (!open) return null;
-    return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4" role="presentation">
+    return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="presentation">
         <section role="alertdialog" aria-modal="true" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message" className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
             <div className="flex items-start gap-3">
                 <span className={`rounded-full p-2 ${destructive ? "bg-rose-50 text-rose-600" : "bg-amber-50 text-amber-600"}`}><AlertTriangle size={20}/></span>
