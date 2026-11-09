@@ -23,7 +23,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AnnouncementController {
     private final AnnouncementServiceImpl service;
-    private final com.zukunftai.evidyalaya.service.impl.AnnouncementAttachmentStorageService attachmentStorage;
     @GetMapping @PreAuthorize("hasAnyRole('ADMIN','FACULTY','STUDENT')")
     public List<AnnouncementResponse> list(){ return service.list(); }
     @PostMapping @ResponseStatus(HttpStatus.CREATED) @PreAuthorize("hasAnyRole('ADMIN','FACULTY')")
@@ -55,7 +54,7 @@ public class AnnouncementController {
         Resource resource = new UrlResource(service.resolveAttachmentPath(attachment.getStoredPath()).toUri());
         String contentType = attachment.getContentType();
         boolean previewable = "application/pdf".equals(contentType) || contentType.startsWith("image/");
-        String filename = attachment.getOriginalName().replace("\\r", "").replace("\\n", "");
+        String filename = attachment.getOriginalName().replace("\r", "").replace("\n", "");
         ContentDisposition disposition = (inline && previewable
                 ? ContentDisposition.inline() : ContentDisposition.attachment())
                 .filename(filename, StandardCharsets.UTF_8).build();
