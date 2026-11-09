@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MultipartFile;
 import java.time.*;
 import java.util.*;
 
@@ -24,14 +25,18 @@ public class AnnouncementServiceImpl {
     private final AcademicYearRepository years;
     private final GradeRepository grades;
     private final SectionRepository sections;
+    private final AnnouncementAttachmentRepository attachmentRepository;
+    private final AnnouncementAttachmentStorageService attachmentStorage;
 
     public AnnouncementServiceImpl(AnnouncementRepository announcements, AnnouncementRecipientRepository recipients,
             UserRepository users, StudentEnrollmentRepository enrollments,
             TimetableRepository timetables, AcademicYearRepository years, GradeRepository grades, SectionRepository sections,
-            NotificationService notificationService) {
+            NotificationService notificationService, AnnouncementAttachmentRepository attachmentRepository,
+            AnnouncementAttachmentStorageService attachmentStorage) {
         this.announcements=announcements; this.recipients=recipients; this.users=users;
         this.notificationService=notificationService;
         this.enrollments=enrollments; this.timetables=timetables; this.years=years; this.grades=grades; this.sections=sections;
+        this.attachmentRepository=attachmentRepository; this.attachmentStorage=attachmentStorage;
     }
 
     public List<AnnouncementResponse> list() {
@@ -89,6 +94,89 @@ public class AnnouncementServiceImpl {
         return response(announcements.save(a),actor);
     }
 
+    private static final int MAX_ANNOUNCEMENT_ATTACHMENTS = 5;
+
+    public AnnouncementResponse uploadAttachments(Long id, List<MultipartFile> files) {
+        User actor = currentUser();
+        Announcement announcement = announcements.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ensureCanManage(announcement, actor);
+        if (announcement.getStatus() == AnnouncementStatus.ARCHIVED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Archived announcements cannot be changed.");
+        }
+        if (files == null || files.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Choose at least one attachment.");
+        }
+        long existingCount = attachmentRepository.countByAnnouncement(announcement);
+        if (existingCount + files.size() > MAX_ANNOUNCEMENT_ATTACHMENTS) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "An announcement can have at most 5 attachments.");
+        }
+
+        for (MultipartFile file : files) {
+            AnnouncementAttachmentStorageService.StoredFile stored = attachmentStorage.store(file);
+            attachmentStorage.deleteOnRollback(stored.storedPath());
+            attachmentRepository.save(AnnouncementAttachment.builder()
+                    .announcement(announcement)
+                    .storedPath(stored.storedPath())
+                    .originalName(stored.originalName())
+                    .contentType(stored.contentType())
+                    .fileSize(stored.fileSize())
+                    .createdAt(Instant.now())
+                    .build());
+        }
+        announcement.setUpdatedAt(Instant.now());
+        return response(announcements.save(announcement), actor);
+    }
+
+    public void deleteAttachment(Long announcementId, Long attachmentId) {
+        User actor = currentUser();
+        Announcement announcement = announcements.findById(announcementId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        ensureCanManage(announcement, actor);
+        if (announcement.getStatus() == AnnouncementStatus.ARCHIVED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Archived announcements cannot be changed.");
+        }
+        AnnouncementAttachment attachment = attachmentRepository.findByIdAndAnnouncement(attachmentId, announcement)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        attachmentRepository.delete(attachment);
+        attachmentStorage.deleteAfterCommit(attachment.getStoredPath());
+        announcement.setUpdatedAt(Instant.now());
+        announcements.save(announcement);
+    }
+
+    public AnnouncementAttachment getAttachmentForDownload(Long announcementId, Long attachmentId) {
+        User viewer = currentUser();
+        Announcement announcement = announcements.findById(announcementId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        AnnouncementAttachment attachment = attachmentRepository.findByIdAndAnnouncement(attachmentId, announcement)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        boolean ownerOrAdmin = hasRole(viewer, RoleName.ROLE_ADMIN)
+                || announcement.getCreatedBy().getId().equals(viewer.getId());
+        if (!ownerOrAdmin) {
+            boolean published = announcement.getStatus() == AnnouncementStatus.PUBLISHED
+                    || announcement.getStatus() == AnnouncementStatus.ARCHIVED;
+            boolean recipient = recipients.findByAnnouncementAndUser(announcement, viewer).isPresent();
+            if (!published || !recipient) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "You are not allowed to access this announcement attachment.");
+            }
+        }
+        return attachment;
+    }
+
+    public java.nio.file.Path resolveAttachmentPath(String storedPath) {
+        return attachmentStorage.resolve(storedPath);
+    }
+
+    private void ensureCanManage(Announcement announcement, User actor) {
+        if (!hasRole(actor, RoleName.ROLE_ADMIN)
+                && !announcement.getCreatedBy().getId().equals(actor.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+    }
+
     public AnnouncementResponse publish(Long id) {
         User actor=currentUser();
         Announcement a=announcements.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -131,6 +219,9 @@ public class AnnouncementServiceImpl {
         if(!hasRole(actor,RoleName.ROLE_ADMIN) && !a.getCreatedBy().getId().equals(actor.getId()))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         notificationService.deleteForSource("ANNOUNCEMENT", id);
+        List<AnnouncementAttachment> storedAttachments = attachmentRepository.findByAnnouncementOrderByCreatedAtAsc(a);
+        attachmentRepository.deleteAll(storedAttachments);
+        storedAttachments.forEach(file -> attachmentStorage.deleteAfterCommit(file.getStoredPath()));
         recipients.deleteAll(recipients.findByAnnouncement(a));
         announcements.delete(a);
     }
@@ -274,7 +365,12 @@ public class AnnouncementServiceImpl {
                 a.getCreatedBy().getFullName(),a.getScheduledAt(),a.getExpiresAt(),a.getPublishedAt(),
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNotNull(a):0,
                 canViewReadStatus?recipients.countByAnnouncementAndReadAtIsNull(a):0,
-                own==null?null:own.getReadAt(),canManage,a.getCreatedAt(),a.getUpdatedAt());
+                own==null?null:own.getReadAt(),canManage,a.getCreatedAt(),a.getUpdatedAt(),
+                attachmentRepository.findByAnnouncementOrderByCreatedAtAsc(a).stream()
+                        .map(file -> new AnnouncementAttachmentResponse(file.getId(), file.getOriginalName(),
+                                file.getContentType(), file.getFileSize(), file.getCreatedAt(),
+                                "/announcements/" + a.getId() + "/attachments/" + file.getId()))
+                        .toList());
     }
     private User currentUser() {
         var auth=SecurityContextHolder.getContext().getAuthentication();
