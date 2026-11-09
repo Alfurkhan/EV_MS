@@ -63,7 +63,7 @@ public class AnnouncementAttachmentStorageService {
         try {
             Files.createDirectories(storageRoot);
             try (var input = file.getInputStream()) {
-                Files.copy(input, destination, StandardCopyOption.COPY_ATTRIBUTES);
+                Files.copy(input, destination);
             }
             validateContent(destination, extension);
             return new StoredFile(storedName, originalName, contentType, file.getSize());
