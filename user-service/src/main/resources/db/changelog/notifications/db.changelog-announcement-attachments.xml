@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="announcements-003-attachments" author="Furkhan">
+        <preConditions onFail="HALT">
+            <tableExists tableName="announcement"/>
+            <not>
+                <tableExists tableName="announcement_attachment"/>
+            </not>
+        </preConditions>
+        <createTable tableName="announcement_attachment">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_announcement_attachment" nullable="false"/>
+            </column>
+            <column name="announcement_id" type="BIGINT">
+                <constraints nullable="false"
+                             referencedTableName="announcement"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_announcement_attachment_announcement"
+                             deleteCascade="true"/>
+            </column>
+            <column name="stored_path" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="original_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content_type" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_size" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="announcement_attachment" indexName="idx_announcement_attachment_announcement">
+            <column name="announcement_id"/>
+            <column name="created_at"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="announcement_attachment"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
