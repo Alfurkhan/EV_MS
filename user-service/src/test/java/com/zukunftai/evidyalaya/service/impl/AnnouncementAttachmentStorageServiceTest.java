@@ -41,7 +41,7 @@ class AnnouncementAttachmentStorageServiceTest {
     }
 
     @Test
-    void rejectsFileWhoseContentDoesNotMatchItsExtension() {
+    void rejectsFileWhoseContentDoesNotMatchItsExtension() throws Exception {
         AnnouncementAttachmentStorageService storage =
                 new AnnouncementAttachmentStorageService(temporaryDirectory.toString());
 
