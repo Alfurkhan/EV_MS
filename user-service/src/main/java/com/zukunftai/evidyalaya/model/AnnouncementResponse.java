@@ -8,5 +8,6 @@ public record AnnouncementResponse(
     String subjectName, List<Long> timetableAssignmentIds, List<String> targetClassLabels,
     AnnouncementPriority priority, AnnouncementStatus status, String authorName, LocalDateTime scheduledAt,
     LocalDateTime expiresAt, LocalDateTime publishedAt, long readCount,
-    long unreadCount, LocalDateTime readAt, boolean canManage, Instant createdAt, Instant updatedAt
+    long unreadCount, LocalDateTime readAt, boolean canManage, Instant createdAt, Instant updatedAt,
+    List<AnnouncementAttachmentResponse> attachments
 ) {}
