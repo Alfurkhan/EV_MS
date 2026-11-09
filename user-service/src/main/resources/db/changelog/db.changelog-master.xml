@@ -876,5 +876,6 @@
     <include file="db/changelog/notifications/db.changelog-notification-assignment-source.xml"/>
     <include file="db/changelog/notifications/db.changelog-notification-activity-sources.xml"/>
     <include file="db/changelog/notifications/db.changelog-announcement-subject-targeting.xml"/>
+    <include file="db/changelog/notifications/db.changelog-announcement-attachments.xml"/>
 
 </databaseChangeLog>
