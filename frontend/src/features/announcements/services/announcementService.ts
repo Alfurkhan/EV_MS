@@ -40,7 +40,7 @@ export async function deleteAnnouncement(id:number){await api.delete(`/announcem
 export async function uploadAnnouncementAttachments(id:number, files:File[]):Promise<Announcement>{
   const form=new FormData();
   files.forEach(file=>form.append("files",file));
-  return (await api.post<Announcement>(`/announcements/${id}/attachments`,form)).data;
+  return (await api.post<Announcement>(`/announcements/${id}/attachments`,form,{headers:{"Content-Type":"multipart/form-data"}})).data;
 }
 
 export async function deleteAnnouncementAttachment(id:number,attachmentId:number):Promise<void>{
