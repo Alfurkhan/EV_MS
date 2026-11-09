@@ -78,6 +78,7 @@ logging:
     com.zukunftai.evidyalaya: DEBUG
 
 app:
+  announcement-storage-dir: ${ANNOUNCEMENT_STORAGE_DIR:uploads/announcements}
   assignment-storage-dir: ${ASSIGNMENT_STORAGE_DIR:uploads/assignments}
   assignment-time-zone: ${ASSIGNMENT_TIME_ZONE:Asia/Kolkata}
 
