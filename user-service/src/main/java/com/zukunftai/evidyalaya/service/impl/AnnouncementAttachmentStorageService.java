@@ -125,9 +125,9 @@ public class AnnouncementAttachmentStorageService {
         }
 
         boolean valid = switch (extension) {
-            case ".pdf" -> startsWith(header, new byte[]{'%', 'P', 'D', 'F', '-'});
+            case ".pdf" -> startsWith(header, new byte[]{(byte) '%', (byte) 'P', (byte) 'D', (byte) 'F', (byte) '-'});
             case ".png" -> startsWith(header, new byte[]{
-                    (byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A
+                    (byte) 0x89, (byte) 'P', (byte) 'N', (byte) 'G', 0x0D, 0x0A, 0x1A, 0x0A
             });
             case ".jpg", ".jpeg" -> startsWith(header, new byte[]{
                     (byte) 0xFF, (byte) 0xD8, (byte) 0xFF
@@ -135,7 +135,7 @@ public class AnnouncementAttachmentStorageService {
             case ".docx" -> isOpenXmlDocument(path, "word/document.xml");
             case ".xlsx" -> isOpenXmlDocument(path, "xl/workbook.xml");
             case ".pptx" -> isOpenXmlDocument(path, "ppt/presentation.xml");
-            case ".txt" -> isPlainText(header);
+            case ".txt" -> isPlainText(path);
             default -> false;
         };
 
@@ -152,9 +152,15 @@ public class AnnouncementAttachmentStorageService {
         }
     }
 
-    private boolean isPlainText(byte[] header) {
-        for (byte value : header) {
-            if (value == 0) return false;
+    private boolean isPlainText(Path path) throws IOException {
+        try (var input = Files.newInputStream(path)) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                for (int i = 0; i < read; i++) {
+                    if (buffer[i] == 0) return false;
+                }
+            }
         }
         return true;
     }
