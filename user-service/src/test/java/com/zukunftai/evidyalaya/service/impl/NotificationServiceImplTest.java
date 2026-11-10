@@ -1,11 +1,15 @@
 package com.zukunftai.evidyalaya.service.impl;
 
+import com.zukunftai.evidyalaya.config.EmailNotificationProperties;
+import com.zukunftai.evidyalaya.database.EmailNotificationOutbox;
+import com.zukunftai.evidyalaya.database.EmailNotificationOutboxStatus;
 import com.zukunftai.evidyalaya.database.Notification;
 import com.zukunftai.evidyalaya.database.Role;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.model.NotificationResponse;
+import com.zukunftai.evidyalaya.repository.EmailNotificationOutboxRepository;
 import com.zukunftai.evidyalaya.repository.NotificationRepository;
 import com.zukunftai.evidyalaya.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -38,6 +42,12 @@ class NotificationServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EmailNotificationOutboxRepository emailOutboxRepository;
+
+    @Mock
+    private EmailNotificationProperties emailNotificationProperties;
 
     @InjectMocks
     private NotificationServiceImpl notificationService;
@@ -133,6 +143,92 @@ class NotificationServiceImplTest {
         } finally {
             SecurityContextHolder.clearContext();
         }
+    }
+
+
+    @Test
+    void queuesAnEmailSnapshotForAnEligibleOptedInRecipient() {
+        User recipient = User.builder()
+                .id(601L)
+                .email("student@example.com")
+                .emailVerified(true)
+                .accountEnabled(true)
+                .accountDeleted(false)
+                .build();
+        NotificationCommand command = new NotificationCommand(
+                "ANNOUNCEMENT", 901L, "School update", "The school will reopen on Monday.",
+                "ANNOUNCEMENTS", "NORMAL", "/announcements", "ANNOUNCEMENT:901", true);
+
+        when(notificationRepository.existsByDeduplicationKey("ANNOUNCEMENT:901:601")).thenReturn(false);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification saved = invocation.getArgument(0);
+            saved.setId(7001L);
+            return saved;
+        });
+        when(emailNotificationProperties.isGloballyEnabled()).thenReturn(true);
+        when(emailNotificationProperties.isEventEnabled("ANNOUNCEMENT")).thenReturn(true);
+
+        int created = notificationService.createForUsers(List.of(recipient), command);
+
+        ArgumentCaptor<EmailNotificationOutbox> captor =
+                ArgumentCaptor.forClass(EmailNotificationOutbox.class);
+        verify(emailOutboxRepository).save(captor.capture());
+        EmailNotificationOutbox queued = captor.getValue();
+
+        assertEquals(1, created);
+        assertEquals(7001L, queued.getNotificationId());
+        assertEquals(601L, queued.getRecipientUserId());
+        assertEquals("student@example.com", queued.getRecipientEmail());
+        assertEquals("ANNOUNCEMENT", queued.getTemplateType());
+        assertEquals("School update", queued.getSubject());
+        assertEquals(EmailNotificationOutboxStatus.PENDING, queued.getStatus());
+        assertEquals("The school will reopen on Monday.", queued.getPayload().get("message"));
+        assertEquals("/announcements", queued.getPayload().get("targetUrl"));
+    }
+
+    @Test
+    void doesNotQueueEmailForRecipientsWhoHaveNotVerifiedTheirEmail() {
+        User recipient = User.builder()
+                .id(602L)
+                .email("student@example.com")
+                .emailVerified(false)
+                .accountEnabled(true)
+                .accountDeleted(false)
+                .build();
+        NotificationCommand command = new NotificationCommand(
+                "ASSIGNMENT", 902L, "New assignment", "A new assignment is available.",
+                "ASSIGNMENTS", "NORMAL", "/assignments", "ASSIGNMENT:902", true);
+
+        when(notificationRepository.existsByDeduplicationKey("ASSIGNMENT:902:602")).thenReturn(false);
+
+        int created = notificationService.createForUsers(List.of(recipient), command);
+
+        assertEquals(1, created);
+        verify(notificationRepository).save(any(Notification.class));
+        verify(emailOutboxRepository, never()).save(any(EmailNotificationOutbox.class));
+    }
+
+    @Test
+    void doesNotQueueWorkflowOnlyTimetableNotifications() {
+        User recipient = User.builder()
+                .id(603L)
+                .email("faculty@example.com")
+                .emailVerified(true)
+                .accountEnabled(true)
+                .accountDeleted(false)
+                .build();
+        NotificationCommand approvalRequest = new NotificationCommand(
+                "TIMETABLE", 903L, "Timetable awaiting approval", "A timetable needs review.",
+                "TIMETABLES", "NORMAL", "/timetable", "TIMETABLE:903:SUBMITTED");
+
+        when(notificationRepository.existsByDeduplicationKey("TIMETABLE:903:SUBMITTED:603"))
+                .thenReturn(false);
+
+        int created = notificationService.createForUsers(List.of(recipient), approvalRequest);
+
+        assertEquals(1, created);
+        verify(notificationRepository).save(any(Notification.class));
+        verify(emailOutboxRepository, never()).save(any(EmailNotificationOutbox.class));
     }
 
 }
