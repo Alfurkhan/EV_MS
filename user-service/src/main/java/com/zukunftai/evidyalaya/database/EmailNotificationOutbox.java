@@ -57,7 +57,7 @@ public class EmailNotificationOutbox {
     @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
     private Map<String, Object> payload;
 
-    @Column(name = "deduplication_key", nullable = false, length = 220, unique = true)
+    @Column(name = "deduplication_key", nullable = false, length = 220)
     private String deduplicationKey;
 
     @Enumerated(EnumType.STRING)
