@@ -1317,13 +1317,13 @@ public class TimetableServiceImpl implements TimetableService {
         if (timetable.getFaculty() != null) {
             notificationService.createForUsers(withoutCurrentActor(List.of(timetable.getFaculty())),
                     new NotificationCommand("TIMETABLE", timetable.getId(), facultyTitle, facultyMessage,
-                            "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY"));
+                            "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY", true));
         }
         List<User> students = activeStudentsForCohort(
                 timetable.getAcademicYear(), timetable.getGrade(), timetable.getSection());
         notificationService.createForUsers(withoutCurrentActor(students),
                 new NotificationCommand("TIMETABLE", timetable.getId(), studentTitle, studentMessage,
-                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS"));
+                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS", true));
     }
 
     private void notifyTimetableSnapshotChanges(TimetableSnapshot before, Timetable after, String eventKey) {
@@ -1333,7 +1333,7 @@ public class TimetableServiceImpl implements TimetableService {
         notificationService.createForUsers(withoutCurrentActor(facultyRecipients),
                 new NotificationCommand("TIMETABLE", after.getId(), "Timetable updated",
                         timetableMessage(after, "An approved timetable entry has changed. Please review your classes."),
-                        "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY"));
+                        "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY", true));
 
         List<User> studentRecipients = new ArrayList<>();
         studentRecipients.addAll(activeStudentsForCohort(before.academicYear(), before.grade(), before.section()));
@@ -1341,7 +1341,7 @@ public class TimetableServiceImpl implements TimetableService {
         notificationService.createForUsers(withoutCurrentActor(studentRecipients),
                 new NotificationCommand("TIMETABLE", after.getId(), "Timetable updated",
                         timetableMessage(after, "Your class timetable has changed. Please review your updated schedule."),
-                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS"));
+                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS", true));
     }
 
     private List<User> activeStudentsForCohort(AcademicYear year, Grade grade, Section section) {
