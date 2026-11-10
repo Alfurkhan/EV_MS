@@ -59,6 +59,38 @@ class NotificationLiquibaseMigrationTest {
                 assertTrue(definition.contains("'" + source + "'"),
                         "Expected notification source to be allowed: " + source);
             }
+
+            assertTrue(tableExists(connection, "email_notification_outbox"),
+                    "Email notification outbox table should be created by the master changelog.");
+            assertTrue(tableExists(connection, "email_notification_attempt"),
+                    "Email notification attempt history table should be created by the master changelog.");
+
+            String outboxStatusConstraint;
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+                            + "WHERE conrelid = 'email_notification_outbox'::regclass "
+                            + "AND conname = 'chk_email_outbox_status'");
+                 ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    throw new AssertionError("Email outbox status constraint was not created.");
+                }
+                outboxStatusConstraint = result.getString(1);
+            }
+
+            for (String status : new String[]{"PENDING", "PROCESSING", "SENT", "FAILED", "SKIPPED"}) {
+                assertTrue(outboxStatusConstraint.contains("'" + status + "'"),
+                        "Expected email outbox status to be allowed: " + status);
+            }
+        }
+    }
+
+    private boolean tableExists(Connection connection, String tableName) throws Exception {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT to_regclass(?) IS NOT NULL")) {
+            statement.setString(1, tableName);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() && result.getBoolean(1);
+            }
         }
     }
 }
