@@ -96,9 +96,17 @@ public class EmailTemplateRenderer {
     }
 
     private String paragraphs(String value) {
-        String safe = escape(safe(value));
-        return safe.replace("\r\n", "\n").replace("\n\n", "</p><p style=\"margin:0 0 14px;\">")
-                .replace("\n", "<br>");
+        String normalized = safe(value).replace("\\r\\n", "\\n").replace('\\r', '\\n');
+        String[] blocks = normalized.split("\\n\\s*\\n");
+        StringBuilder result = new StringBuilder();
+        for (String block : blocks) {
+            if (block.isBlank()) continue;
+            if (!result.isEmpty()) result.append(' ');
+            result.append("<p style=\\\"margin:0 0 14px;\\">")
+                    .append(escape(block).replace("\\n", "<br>"))
+                    .append("</p>");
+        }
+        return result.toString();
     }
 
     private String value(Map<String, Object> data, String key, String fallback) {
@@ -125,10 +133,6 @@ public class EmailTemplateRenderer {
         } catch (IllegalArgumentException exception) {
             return false;
         }
-    }
-
-    private String paragraphsSafe(String value) {
-        return paragraphs(value);
     }
 
     private String escape(String value) {
