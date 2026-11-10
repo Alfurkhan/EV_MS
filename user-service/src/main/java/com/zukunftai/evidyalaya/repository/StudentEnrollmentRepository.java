@@ -99,6 +99,11 @@ public interface StudentEnrollmentRepository
 
     List<StudentEnrollment> findByGradeAndActiveTrue(Grade grade);
 
+    List<StudentEnrollment> findByAcademicYearAndGradeInAndActiveTrue(
+            AcademicYear academicYear,
+            List<Grade> grades
+    );
+
     long countByAcademicYearAndGradeAndSectionAndActiveTrue(
             AcademicYear academicYear,
             Grade grade,
