@@ -1,6 +1,10 @@
 server:
   port: 9091
 
+email:
+  service:
+    api-key: ${EMAIL_SERVICE_API_KEY:}
+
 spring:
   application:
     name: email-service
