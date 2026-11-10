@@ -3,7 +3,9 @@ package com.zukunftai.evidyalaya.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -16,6 +18,7 @@ import java.util.Map;
 public class EmailNotificationProperties {
 
     private boolean enabled = true;
+    private List<String> testEmailDomains = new ArrayList<>(List.of("zsmail.com"));
     private Map<String, Boolean> events = new HashMap<>(Map.of(
             "announcement", true,
             "assignment", true,
@@ -37,6 +40,35 @@ public class EmailNotificationProperties {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    /**
+     * Returns true when the address belongs to a configured non-deliverable
+     * test domain. Matching is case-insensitive and uses the exact domain.
+     */
+    public boolean isTestEmailAddress(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+        int separator = email.lastIndexOf('@');
+        if (separator < 0 || separator == email.length() - 1) {
+            return false;
+        }
+        String domain = email.substring(separator + 1).trim().toLowerCase(Locale.ROOT);
+        return testEmailDomains.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .map(value -> value.trim().toLowerCase(Locale.ROOT))
+                .anyMatch(domain::equals);
+    }
+
+    public List<String> getTestEmailDomains() {
+        return testEmailDomains;
+    }
+
+    public void setTestEmailDomains(List<String> testEmailDomains) {
+        this.testEmailDomains = testEmailDomains == null
+                ? new ArrayList<>()
+                : new ArrayList<>(testEmailDomains);
     }
 
     public void setEnabled(boolean enabled) {
