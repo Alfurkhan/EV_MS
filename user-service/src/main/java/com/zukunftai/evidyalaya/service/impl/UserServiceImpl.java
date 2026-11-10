@@ -52,6 +52,9 @@ public class UserServiceImpl implements UserService {
     @Value("${service.api.emailService}")
     private String emailServiceUrl;
 
+    @Value("${email.service.api-key:}")
+    private String emailServiceApiKey;
+
 
     private final CustomUserDetailsService customUserDetailsService;
     private final RoleRepository roleRepository;
@@ -85,6 +88,17 @@ public class UserServiceImpl implements UserService {
         this.authenticationManager = authenticationManager;
         this.jwtTokenProvider = jwtTokenProvider;
         this.refreshTokenService = refreshTokenService;
+    }
+
+    private HttpHeaders createEmailServiceHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        if (emailServiceApiKey != null && !emailServiceApiKey.isBlank()) {
+            headers.set("X-Service-Email-Key", emailServiceApiKey);
+        }
+
+        return headers;
     }
 
     @Override
@@ -210,8 +224,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void invokeSignUpEmail(User user, EmailType emailType, String otp) {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createEmailServiceHeaders();
 
         EmailServiceRequest emailServiceRequest =
                 new EmailServiceRequest();
@@ -262,8 +275,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void invokeRegistrationOtpEmail(String email, String otp) {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createEmailServiceHeaders();
 
         EmailServiceRequest emailServiceRequest =
                 new EmailServiceRequest();
@@ -300,8 +312,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void invokeForgotPasswordEmail(User user, String otp) {
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createEmailServiceHeaders();
 
         EmailServiceRequest emailServiceRequest =
                 new EmailServiceRequest();
