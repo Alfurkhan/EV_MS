@@ -73,6 +73,28 @@ class EmailTemplateRendererTest {
     }
 
     @Test
+    void resolvesRelativeResultLinkAgainstConfiguredFrontendBaseUrl() {
+        EmailRequest request = new EmailRequest(
+                "Assessment results published", "Your result is available.",
+                "student@example.com", "RESULT", "A Student", null);
+        request.setTemplateData(Map.of(
+                "title", "Assessment results published",
+                "message", "Your result is available.",
+                "targetUrl", "/my-assessments",
+                "resultScore", "8.00",
+                "resultTotalMarks", "10.00",
+                "resultPercentage", "80.00"
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.plainText().contains(
+                "Open eVidyalaya: http://localhost:5173/my-assessments"));
+        assertTrue(rendered.html().contains(
+                "href=\"http://localhost:5173/my-assessments\""));
+    }
+
+    @Test
     void preservesVerificationOtpInPlainTextAndHtml() {
         EmailRequest request = new EmailRequest(
                 "Verify your email", null, "student@example.com", "VERIFY", "A Student", "482913");
