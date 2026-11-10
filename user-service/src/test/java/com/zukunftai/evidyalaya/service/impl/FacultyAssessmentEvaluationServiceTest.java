@@ -18,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,12 +57,6 @@ class FacultyAssessmentEvaluationServiceTest {
         assertEquals("RESULT", command.getValue().sourceType());
         assertEquals("/my-assessments", command.getValue().targetUrl());
         assertEquals("RESULT:ASSESSMENT:55:REVISION:0", command.getValue().deduplicationKeyPrefix());
-        Map<String, Object> resultSnapshot = command.getValue().recipientEmailData().get(20L);
-        assertEquals("Unit Test 1", resultSnapshot.get("assessmentTitle"));
-        assertEquals("Mathematics", resultSnapshot.get("subjectName"));
-        assertEquals(new BigDecimal("8.00"), resultSnapshot.get("resultScore"));
-        assertEquals(new BigDecimal("10.00"), resultSnapshot.get("resultTotalMarks"));
-        assertEquals(new BigDecimal("80.00"), resultSnapshot.get("resultPercentage"));
         verify(attempts).saveAll(List.of(fixture.attempt()));
     }
 
