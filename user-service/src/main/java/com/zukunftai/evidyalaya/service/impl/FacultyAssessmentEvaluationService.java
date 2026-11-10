@@ -150,6 +150,34 @@ public class FacultyAssessmentEvaluationService {
                     + assessment.getSubject().getName() + ") have been "
                     + (republishing ? "updated and republished" : "published")
                     + ". Open Quiz & Exams to view your result.";
+
+            // Snapshot each student's own published result for their email only.
+            // The outbox stores this data at publication time, so later edits cannot
+            // silently change the content of an already queued email.
+            Map<Long, Map<String, Object>> recipientEmailData = new LinkedHashMap<>();
+            for (AssessmentAttempt attempt : allAttempts) {
+                User student = attempt.getStudent();
+                if (student == null || student.getId() == null) continue;
+
+                Map<String, Object> resultData = new LinkedHashMap<>();
+                resultData.put("assessmentTitle", assessment.getTitle());
+                resultData.put("subjectName", assessment.getSubject().getName());
+                BigDecimal publishedScore = attempt.getPublishedScore();
+                BigDecimal totalMarks = assessment.getTotalMarks();
+                if (publishedScore != null) {
+                    resultData.put("resultScore", publishedScore);
+                }
+                if (totalMarks != null && totalMarks.signum() > 0) {
+                    resultData.put("resultTotalMarks", totalMarks);
+                    if (publishedScore != null) {
+                        BigDecimal percentage = publishedScore.multiply(BigDecimal.valueOf(100))
+                                .divide(totalMarks, 2, java.math.RoundingMode.HALF_UP);
+                        resultData.put("resultPercentage", percentage);
+                    }
+                }
+                recipientEmailData.put(student.getId(), resultData);
+            }
+
             notificationService.createForUsers(
                     recipients,
                     new NotificationCommand(
@@ -162,7 +190,8 @@ public class FacultyAssessmentEvaluationService {
                             "/my-assessments",
                             "RESULT:ASSESSMENT:" + assessment.getId()
                                     + ":REVISION:" + assessment.getResultsRevision(),
-                            true
+                            true,
+                            recipientEmailData
                     )
             );
         }
