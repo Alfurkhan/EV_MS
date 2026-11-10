@@ -1,6 +1,7 @@
 package com.zukunftai.evidyalaya.email.service;
 
 import com.zukunftai.evidyalaya.email.model.EmailRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
@@ -8,6 +9,9 @@ import java.util.Map;
 
 @Component
 public class EmailTemplateRenderer {
+
+    @Value("${email.app-base-url:http://localhost:5173}")
+    private String appBaseUrl = "http://localhost:5173";
 
     public RenderedEmail render(EmailRequest request) {
         String type = request.getEmailType() == null ? "" : request.getEmailType().trim().toUpperCase();
@@ -56,6 +60,8 @@ public class EmailTemplateRenderer {
                 actionUrl = value(data, "targetUrl", null);
             }
         }
+
+        actionUrl = resolveActionUrl(actionUrl);
 
         String plainText = "Hello " + name + ",\n\n" + heading + "\n\n" + safe(content)
                 + (isSafeHttpUrl(actionUrl) ? "\n\nOpen eVidyalaya: " + actionUrl : "")
@@ -159,11 +165,25 @@ public class EmailTemplateRenderer {
         };
     }
 
+    private String resolveActionUrl(String value) {
+        if (!hasText(value)) return null;
+        if (isSafeHttpUrl(value)) return value.trim();
+        if (!value.startsWith("/") || value.startsWith("//") || !hasText(appBaseUrl)) return null;
+        try {
+            URI resolved = URI.create(appBaseUrl.trim()).resolve(URI.create(value.trim()));
+            return isSafeHttpUrl(resolved.toString()) ? resolved.toString() : null;
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
     private boolean isSafeHttpUrl(String value) {
         if (!hasText(value)) return false;
         try {
-            String scheme = URI.create(value.trim()).getScheme();
-            return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
+            URI uri = URI.create(value.trim());
+            String scheme = uri.getScheme();
+            return uri.getHost() != null
+                    && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme));
         } catch (IllegalArgumentException exception) {
             return false;
         }
