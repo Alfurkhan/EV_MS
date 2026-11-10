@@ -10,6 +10,7 @@ public record AnnouncementRequest(
     Long academicYearId,
     Long gradeId,
     Long sectionId,
+    List<@NotNull Long> gradeIds,
     AnnouncementTargetScope targetScope,
     List<@NotNull Long> timetableAssignmentIds,
     @NotNull AnnouncementPriority priority,
