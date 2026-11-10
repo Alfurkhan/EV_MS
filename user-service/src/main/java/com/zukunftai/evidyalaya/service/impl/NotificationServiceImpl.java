@@ -1,11 +1,15 @@
 package com.zukunftai.evidyalaya.service.impl;
 
+import com.zukunftai.evidyalaya.config.EmailNotificationProperties;
+import com.zukunftai.evidyalaya.database.EmailNotificationOutbox;
+import com.zukunftai.evidyalaya.database.EmailNotificationOutboxStatus;
 import com.zukunftai.evidyalaya.database.Notification;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.model.ManualNotificationRequest;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.model.NotificationResponse;
+import com.zukunftai.evidyalaya.repository.EmailNotificationOutboxRepository;
 import com.zukunftai.evidyalaya.repository.NotificationRepository;
 import com.zukunftai.evidyalaya.repository.UserRepository;
 import com.zukunftai.evidyalaya.service.NotificationService;
@@ -23,18 +27,31 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 @Transactional
 public class NotificationServiceImpl implements NotificationService {
     private static final ZoneId APP_ZONE = ZoneId.of("Asia/Kolkata");
+    private static final Set<String> EMAIL_ELIGIBLE_SOURCE_TYPES = Set.of(
+            "ANNOUNCEMENT", "ASSIGNMENT", "ASSESSMENT", "TIMETABLE", "RESULT"
+    );
 
     private final NotificationRepository notifications;
     private final UserRepository users;
+    private final EmailNotificationOutboxRepository emailOutbox;
+    private final EmailNotificationProperties emailNotificationProperties;
 
-    public NotificationServiceImpl(NotificationRepository notifications, UserRepository users) {
+    public NotificationServiceImpl(
+            NotificationRepository notifications,
+            UserRepository users,
+            EmailNotificationOutboxRepository emailOutbox,
+            EmailNotificationProperties emailNotificationProperties
+    ) {
         this.notifications = notifications;
         this.users = users;
+        this.emailOutbox = emailOutbox;
+        this.emailNotificationProperties = emailNotificationProperties;
     }
 
     @Override
@@ -171,10 +188,70 @@ public class NotificationServiceImpl implements NotificationService {
                     .createdAt(now)
                     .updatedAt(now)
                     .build();
-            notifications.save(notification);
+            Notification savedNotification = notifications.save(notification);
+            queueEmailIfEligible(savedNotification, recipient, command);
             created++;
         }
         return created;
+    }
+
+
+    /**
+     * Creates an email outbox snapshot only for explicitly opted-in, allowlisted
+     * business events and recipients who are eligible for email delivery.
+     * This method runs in the same transaction as the in-app notification save.
+     */
+    private void queueEmailIfEligible(Notification notification, User recipient, NotificationCommand command) {
+        String sourceType = command.sourceType() == null
+                ? ""
+                : command.sourceType().trim().toUpperCase(java.util.Locale.ROOT);
+
+        if (!command.emailEligible()
+                || !EMAIL_ELIGIBLE_SOURCE_TYPES.contains(sourceType)
+                || !recipient.isAccountEnabled()
+                || recipient.isAccountDeleted()
+                || !recipient.isEmailVerified()
+                || recipient.getEmail() == null
+                || recipient.getEmail().isBlank()) {
+            return;
+        }
+
+        boolean globallyEnabled = emailNotificationProperties.isGloballyEnabled();
+        boolean eventEnabled = emailNotificationProperties.isEventEnabled(sourceType);
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("sourceType", sourceType);
+        payload.put("sourceId", notification.getSourceId());
+        payload.put("title", notification.getTitle());
+        payload.put("message", notification.getMessage());
+        payload.put("category", notification.getCategory());
+        payload.put("priority", notification.getPriority());
+        payload.put("targetUrl", notification.getTargetUrl());
+        payload.put("createdAt", notification.getCreatedAt() == null
+                ? Instant.now().toString()
+                : notification.getCreatedAt().toString());
+
+        String deduplicationKey = notification.getDeduplicationKey() == null
+                ? "NOTIFICATION:" + notification.getId()
+                : notification.getDeduplicationKey();
+
+        EmailNotificationOutbox outboxEntry = EmailNotificationOutbox.builder()
+                .notificationId(notification.getId())
+                .recipientUserId(recipient.getId())
+                .recipientEmail(recipient.getEmail().trim())
+                .templateType(sourceType)
+                .subject(notification.getTitle())
+                .payload(payload)
+                .deduplicationKey(deduplicationKey)
+                .status(globallyEnabled && eventEnabled
+                        ? EmailNotificationOutboxStatus.PENDING
+                        : EmailNotificationOutboxStatus.SKIPPED)
+                .lastError(!globallyEnabled
+                        ? "Email notifications are disabled by configuration."
+                        : (!eventEnabled ? "Email notifications for this event are disabled by configuration." : null))
+                .build();
+
+        emailOutbox.save(outboxEntry);
     }
 
     @Override
