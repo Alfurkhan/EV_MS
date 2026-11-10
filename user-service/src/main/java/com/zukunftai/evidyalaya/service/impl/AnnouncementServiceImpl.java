@@ -271,7 +271,7 @@ public class AnnouncementServiceImpl {
                 "ANNOUNCEMENT", announcement.getId(), announcement.getTitle(),
                 message.length() > 1000 ? message.substring(0, 997) + "..." : message,
                 "ANNOUNCEMENTS", announcement.getPriority().name(),
-                "/announcements", "ANNOUNCEMENT:" + announcement.getId());
+                "/announcements", "ANNOUNCEMENT:" + announcement.getId(), true);
         if (includeAdminOversight) {
             notificationService.createForUsersAndAdmins(targets, command);
         } else {
