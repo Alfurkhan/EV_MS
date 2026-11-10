@@ -27,8 +27,8 @@ public interface EmailNotificationOutboxRepository extends JpaRepository<EmailNo
                 WHERE (status = 'PENDING' AND next_attempt_at <= :now)
                    OR (status = 'PROCESSING' AND locked_until <= :now)
                 ORDER BY created_at ASC
-                FOR UPDATE SKIP LOCKED
                 LIMIT :batchSize
+                FOR UPDATE SKIP LOCKED
             )
             UPDATE email_notification_outbox AS outbox
                SET status = 'PROCESSING',
