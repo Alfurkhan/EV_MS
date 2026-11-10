@@ -96,14 +96,13 @@ public class EmailTemplateRenderer {
     }
 
     private String paragraphs(String value) {
-        String normalized = safe(value).replace("\\r\\n", "\\n").replace('\\r', '\\n');
+        String normalized = safe(value).replace("\r\n", "\n").replace('\r', '\n');
         String[] blocks = normalized.split("\\n\\s*\\n");
         StringBuilder result = new StringBuilder();
         for (String block : blocks) {
             if (block.isBlank()) continue;
-            if (!result.isEmpty()) result.append(' ');
-            result.append("<p style=\\\"margin:0 0 14px;\\">")
-                    .append(escape(block).replace("\\n", "<br>"))
+            result.append("<p style=\"margin:0 0 14px;\">")
+                    .append(escape(block).replace("\n", "<br>"))
                     .append("</p>");
         }
         return result.toString();
