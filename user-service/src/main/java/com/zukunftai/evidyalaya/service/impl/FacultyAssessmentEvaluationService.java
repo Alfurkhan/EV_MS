@@ -161,7 +161,8 @@ public class FacultyAssessmentEvaluationService {
                             "NORMAL",
                             "/my-assessments",
                             "RESULT:ASSESSMENT:" + assessment.getId()
-                                    + ":REVISION:" + assessment.getResultsRevision()
+                                    + ":REVISION:" + assessment.getResultsRevision(),
+                            true
                     )
             );
         }
