@@ -165,14 +165,14 @@ public class FacultyAssessmentEvaluationService {
                 BigDecimal publishedScore = attempt.getPublishedScore();
                 BigDecimal totalMarks = assessment.getTotalMarks();
                 if (publishedScore != null) {
-                    resultData.put("resultScore", publishedScore);
+                    resultData.put("resultScore", publishedScore.toPlainString());
                 }
                 if (totalMarks != null && totalMarks.signum() > 0) {
-                    resultData.put("resultTotalMarks", totalMarks);
+                    resultData.put("resultTotalMarks", totalMarks.toPlainString());
                     if (publishedScore != null) {
                         BigDecimal percentage = publishedScore.multiply(BigDecimal.valueOf(100))
                                 .divide(totalMarks, 2, java.math.RoundingMode.HALF_UP);
-                        resultData.put("resultPercentage", percentage);
+                        resultData.put("resultPercentage", percentage.toPlainString());
                     }
                 }
                 recipientEmailData.put(student.getId(), resultData);
