@@ -216,6 +216,7 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
+        boolean testEmailAddress = emailNotificationProperties.isTestEmailAddress(recipient.getEmail());
         boolean globallyEnabled = emailNotificationProperties.isGloballyEnabled();
         boolean eventEnabled = emailNotificationProperties.isEventEnabled(sourceType);
 
@@ -245,12 +246,16 @@ public class NotificationServiceImpl implements NotificationService {
                 .subject(notification.getTitle())
                 .payload(payload)
                 .deduplicationKey(deduplicationKey)
-                .status(globallyEnabled && eventEnabled
+                .status(!testEmailAddress && globallyEnabled && eventEnabled
                         ? EmailNotificationOutboxStatus.PENDING
                         : EmailNotificationOutboxStatus.SKIPPED)
-                .lastError(!globallyEnabled
-                        ? "Email notifications are disabled by configuration."
-                        : (!eventEnabled ? "Email notifications for this event are disabled by configuration." : null))
+                .lastError(testEmailAddress
+                        ? "TEST_EMAIL_DOMAIN"
+                        : (!globallyEnabled
+                                ? "Email notifications are disabled by configuration."
+                                : (!eventEnabled
+                                        ? "Email notifications for this event are disabled by configuration."
+                                        : null)))
                 .build();
 
         emailOutbox.save(outboxEntry);
