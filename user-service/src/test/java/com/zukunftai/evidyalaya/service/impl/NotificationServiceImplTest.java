@@ -221,10 +221,8 @@ class NotificationServiceImplTest {
                         EmailNotificationOutbox::getRecipientUserId, entry -> entry));
         assertEquals("8.00", byRecipient.get(611L).getPayload().get("resultScore"));
         assertEquals("5.00", byRecipient.get(612L).getPayload().get("resultScore"));
-        assertFalse(byRecipient.get(611L).getPayload().containsKey("resultTotalMarks")
-                && "5.00".equals(byRecipient.get(611L).getPayload().get("resultScore")));
-        assertFalse(byRecipient.get(612L).getPayload().containsKey("resultScore")
-                && "8.00".equals(byRecipient.get(612L).getPayload().get("resultScore")));
+        assertEquals("10.00", byRecipient.get(611L).getPayload().get("resultTotalMarks"));
+        assertEquals("10.00", byRecipient.get(612L).getPayload().get("resultTotalMarks"));
     }
 
     @Test
