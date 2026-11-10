@@ -1,73 +1,38 @@
 package com.zukunftai.evidyalaya.email.service;
 
 import com.zukunftai.evidyalaya.email.model.EmailRequest;
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.nio.charset.StandardCharsets;
 
 @Service
 public class EmailSenderService {
 
     private final JavaMailSender mailSender;
+    private final EmailTemplateRenderer templateRenderer;
 
-    public EmailSenderService(JavaMailSender mailSender) {
+    public EmailSenderService(JavaMailSender mailSender, EmailTemplateRenderer templateRenderer) {
         this.mailSender = mailSender;
+        this.templateRenderer = templateRenderer;
     }
 
     public void sendEmail(EmailRequest request) {
-
-        SimpleMailMessage message = new SimpleMailMessage();
-
-        message.setTo(request.getTo());
-        message.setSubject(request.getSubject());
-
-        String body = request.getBodyText();
-
-        if (body == null || body.isBlank()) {
-            body = buildEmailBody(request);
+        EmailTemplateRenderer.RenderedEmail rendered = templateRenderer.render(request);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    message, false, StandardCharsets.UTF_8.name());
+            helper.setTo(request.getTo());
+            helper.setSubject(request.getSubject() == null || request.getSubject().isBlank()
+                    ? "A message from eVidyalaya" : request.getSubject());
+            helper.setText(rendered.plainText(), rendered.html());
+            mailSender.send(message);
+        } catch (MessagingException exception) {
+            throw new IllegalStateException("Unable to create eVidyalaya email message.", exception);
         }
-
-        message.setText(body);
-
-        mailSender.send(message);
-    }
-
-    private String buildEmailBody(EmailRequest request) {
-
-        String userName = request.getUserName() == null
-                ? "User"
-                : request.getUserName();
-
-        return switch (request.getEmailType()) {
-
-            case "SIGNUP" ->
-                    "Hello " + userName + ",\n\n"
-                            + "Welcome to eVidyalaya!\n\n"
-                            + "Your account has been successfully created.\n\n"
-                            + "Regards,\n"
-                            + "eVidyalaya Team";
-
-            case "VERIFY" ->
-                    "Hello " + userName + ",\n\n"
-                            + "Please verify your email address to continue using eVidyalaya.\n\n"
-                            + "Your verification OTP is: " + request.getOtp() + "\n\n"
-                            + "This OTP will expire in 10 minutes.\n\n"
-                            + "Regards,\n"
-                            + "eVidyalaya Team";
-
-            case "FORGOT_PASSWORD" ->
-                    "Hello " + userName + ",\n\n"
-                            + "We received a request to reset your password.\n\n"
-                            + "Your password reset OTP is: " + request.getOtp() + "\n\n"
-                            + "This OTP is valid for 10 minutes.\n\n"
-                            + "If you did not request a password reset, please ignore this email.\n\n"
-                            + "Regards,\n"
-                            + "eVidyalaya Team";
-
-            default ->
-                    request.getBodyText() != null
-                            ? request.getBodyText()
-                            : "";
-        };
     }
 }
