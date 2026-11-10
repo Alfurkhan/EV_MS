@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="10112026-001-email-notification-outbox" author="Furkhan">
+        <comment>
+            Create a durable transactional email outbox and an immutable delivery-attempt history.
+            notification_id is a snapshot reference rather than a foreign key so that deleting an
+            in-app notification cannot erase an email already queued for delivery.
+        </comment>
+        <sql>
+            CREATE TABLE email_notification_outbox (
+                id UUID PRIMARY KEY,
+                notification_id BIGINT NOT NULL,
+                recipient_user_id BIGINT NOT NULL,
+                recipient_email VARCHAR(320) NOT NULL,
+                template_type VARCHAR(40) NOT NULL,
+                subject VARCHAR(200) NOT NULL,
+                payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+                deduplication_key VARCHAR(220) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                attempts INTEGER NOT NULL DEFAULT 0,
+                next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                locked_until TIMESTAMPTZ,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                sent_at TIMESTAMPTZ,
+                last_error VARCHAR(2000),
+
+                CONSTRAINT uk_email_outbox_notification UNIQUE (notification_id),
+                CONSTRAINT uk_email_outbox_deduplication UNIQUE (deduplication_key),
+                CONSTRAINT chk_email_outbox_status
+                    CHECK (status IN ('PENDING', 'PROCESSING', 'SENT', 'FAILED', 'SKIPPED')),
+                CONSTRAINT chk_email_outbox_attempts CHECK (attempts >= 0)
+            );
+
+            CREATE INDEX idx_email_outbox_due
+                ON email_notification_outbox (status, next_attempt_at, created_at);
+
+            CREATE INDEX idx_email_outbox_lease
+                ON email_notification_outbox (status, locked_until);
+
+            CREATE INDEX idx_email_outbox_recipient
+                ON email_notification_outbox (recipient_user_id, created_at DESC);
+
+            CREATE TABLE email_notification_attempt (
+                id UUID PRIMARY KEY,
+                outbox_id UUID NOT NULL,
+                attempt_number INTEGER NOT NULL,
+                status VARCHAR(30) NOT NULL,
+                started_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMPTZ,
+                error_message VARCHAR(2000),
+
+                CONSTRAINT fk_email_attempt_outbox
+                    FOREIGN KEY (outbox_id)
+                    REFERENCES email_notification_outbox (id)
+                    ON DELETE CASCADE,
+                CONSTRAINT uk_email_attempt_number
+                    UNIQUE (outbox_id, attempt_number),
+                CONSTRAINT chk_email_attempt_number CHECK (attempt_number > 0),
+                CONSTRAINT chk_email_attempt_status
+                    CHECK (status IN ('STARTED', 'SENT', 'RETRYABLE_FAILURE', 'PERMANENT_FAILURE'))
+            );
+
+            CREATE INDEX idx_email_attempt_outbox
+                ON email_notification_attempt (outbox_id, started_at);
+        </sql>
+    </changeSet>
+</databaseChangeLog>
