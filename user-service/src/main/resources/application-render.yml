@@ -115,6 +115,7 @@ email:
       assessment: ${EMAIL_NOTIFICATION_ASSESSMENT_ENABLED:true}
       timetable: ${EMAIL_NOTIFICATION_TIMETABLE_ENABLED:true}
       result: ${EMAIL_NOTIFICATION_RESULT_ENABLED:true}
+    test-email-domains: ${EMAIL_NOTIFICATION_TEST_EMAIL_DOMAINS:zsmail.com}
 
     dispatcher:
       enabled: ${EMAIL_NOTIFICATION_DISPATCHER_ENABLED:true}
