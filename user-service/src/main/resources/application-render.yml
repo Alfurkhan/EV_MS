@@ -105,3 +105,13 @@ rest:
   client:
     connect-timeout: 10
     read-timeout: 30
+
+email:
+  notifications:
+    enabled: ${EMAIL_NOTIFICATIONS_ENABLED:true}
+    events:
+      announcement: ${EMAIL_NOTIFICATION_ANNOUNCEMENT_ENABLED:true}
+      assignment: ${EMAIL_NOTIFICATION_ASSIGNMENT_ENABLED:true}
+      assessment: ${EMAIL_NOTIFICATION_ASSESSMENT_ENABLED:true}
+      timetable: ${EMAIL_NOTIFICATION_TIMETABLE_ENABLED:true}
+      result: ${EMAIL_NOTIFICATION_RESULT_ENABLED:true}
