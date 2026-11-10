@@ -231,4 +231,38 @@ class NotificationServiceImplTest {
         verify(emailOutboxRepository, never()).save(any(EmailNotificationOutbox.class));
     }
 
+
+    @Test
+    void recordsSkippedEmailWhenAnEventCategoryIsDisabled() {
+        User recipient = User.builder()
+                .id(604L)
+                .email("student@example.com")
+                .emailVerified(true)
+                .accountEnabled(true)
+                .accountDeleted(false)
+                .build();
+        NotificationCommand command = new NotificationCommand(
+                "RESULT", 904L, "Results published", "Your results are available.",
+                "RESULTS", "NORMAL", "/my-assessments", "RESULT:904", true);
+
+        when(notificationRepository.existsByDeduplicationKey("RESULT:904:604")).thenReturn(false);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification saved = invocation.getArgument(0);
+            saved.setId(7004L);
+            return saved;
+        });
+        when(emailNotificationProperties.isGloballyEnabled()).thenReturn(true);
+        when(emailNotificationProperties.isEventEnabled("RESULT")).thenReturn(false);
+
+        notificationService.createForUsers(List.of(recipient), command);
+
+        ArgumentCaptor<EmailNotificationOutbox> captor =
+                ArgumentCaptor.forClass(EmailNotificationOutbox.class);
+        verify(emailOutboxRepository).save(captor.capture());
+        assertEquals(EmailNotificationOutboxStatus.SKIPPED, captor.getValue().getStatus());
+        assertEquals(
+                "Email notifications for this event are disabled by configuration.",
+                captor.getValue().getLastError());
+    }
+
 }
