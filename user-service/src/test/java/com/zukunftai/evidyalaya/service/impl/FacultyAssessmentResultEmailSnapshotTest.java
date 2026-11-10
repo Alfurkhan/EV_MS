@@ -79,9 +79,9 @@ class FacultyAssessmentResultEmailSnapshotTest {
         Map<String, Object> snapshot = captor.getValue().recipientEmailData().get(20L);
         assertEquals("Unit Test 1", snapshot.get("assessmentTitle"));
         assertEquals("Mathematics", snapshot.get("subjectName"));
-        assertEquals(new BigDecimal("8.00"), snapshot.get("resultScore"));
-        assertEquals(new BigDecimal("10.00"), snapshot.get("resultTotalMarks"));
-        assertEquals(new BigDecimal("80.00"), snapshot.get("resultPercentage"));
+        assertEquals("8.00", snapshot.get("resultScore"));
+        assertEquals("10.00", snapshot.get("resultTotalMarks"));
+        assertEquals("80.00", snapshot.get("resultPercentage"));
         assertEquals(new BigDecimal("8.00"), attempt.getPublishedScore());
     }
 }
