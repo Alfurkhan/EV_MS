@@ -52,7 +52,7 @@ public class UserServiceImpl implements UserService {
     @Value("${service.api.emailService}")
     private String emailServiceUrl;
 
-    @Value("${email.service.api-key:}")
+    @Value("${EMAIL_SERVICE_API_KEY:}")
     private String emailServiceApiKey;
 
 
