@@ -233,6 +233,41 @@ class NotificationServiceImplTest {
 
 
     @Test
+    void skipsConfiguredTestEmailDomainsWithoutAffectingInAppNotifications() {
+        User recipient = User.builder()
+                .id(605L)
+                .email("student@zsmail.com")
+                .emailVerified(true)
+                .accountEnabled(true)
+                .accountDeleted(false)
+                .build();
+        NotificationCommand command = new NotificationCommand(
+                "ANNOUNCEMENT", 905L, "School update", "The school will reopen on Monday.",
+                "ANNOUNCEMENTS", "NORMAL", "/announcements", "ANNOUNCEMENT:905", true);
+
+        when(notificationRepository.existsByDeduplicationKey("ANNOUNCEMENT:905:605")).thenReturn(false);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification saved = invocation.getArgument(0);
+            saved.setId(7005L);
+            return saved;
+        });
+        when(emailNotificationProperties.isTestEmailAddress("student@zsmail.com")).thenReturn(true);
+        when(emailNotificationProperties.isGloballyEnabled()).thenReturn(true);
+        when(emailNotificationProperties.isEventEnabled("ANNOUNCEMENT")).thenReturn(true);
+
+        int created = notificationService.createForUsers(List.of(recipient), command);
+
+        ArgumentCaptor<EmailNotificationOutbox> captor =
+                ArgumentCaptor.forClass(EmailNotificationOutbox.class);
+        verify(notificationRepository).save(any(Notification.class));
+        verify(emailOutboxRepository).save(captor.capture());
+        assertEquals(1, created);
+        assertEquals(EmailNotificationOutboxStatus.SKIPPED, captor.getValue().getStatus());
+        assertEquals("TEST_EMAIL_DOMAIN", captor.getValue().getLastError());
+        assertEquals("student@zsmail.com", captor.getValue().getRecipientEmail());
+    }
+
+    @Test
     void recordsSkippedEmailWhenAnEventCategoryIsDisabled() {
         User recipient = User.builder()
                 .id(604L)
