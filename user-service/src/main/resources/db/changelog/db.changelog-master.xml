@@ -878,5 +878,6 @@
     <include file="db/changelog/notifications/db.changelog-announcement-subject-targeting.xml"/>
     <include file="db/changelog/notifications/db.changelog-announcement-grade-targeting.xml"/>
     <include file="db/changelog/notifications/db.changelog-announcement-attachments.xml"/>
+    <include file="db/changelog/notifications/db.changelog-email-notifications.xml"/>
 
 </databaseChangeLog>
