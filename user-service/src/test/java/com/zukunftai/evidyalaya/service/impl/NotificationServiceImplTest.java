@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -184,6 +185,46 @@ class NotificationServiceImplTest {
         assertEquals(EmailNotificationOutboxStatus.PENDING, queued.getStatus());
         assertEquals("The school will reopen on Monday.", queued.getPayload().get("message"));
         assertEquals("/announcements", queued.getPayload().get("targetUrl"));
+    }
+
+    @Test
+    void storesOnlyTheMatchingStudentsResultDataInEachEmailOutboxEntry() {
+        User first = User.builder().id(611L).email("first@example.com")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        User second = User.builder().id(612L).email("second@example.com")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        NotificationCommand command = new NotificationCommand(
+                "RESULT", 910L, "Assessment results published", "Your results are available.",
+                "RESULTS", "NORMAL", "/my-assessments", "RESULT:910", true,
+                Map.of(
+                        611L, Map.of("resultScore", "8.00", "resultTotalMarks", "10.00"),
+                        612L, Map.of("resultScore", "5.00", "resultTotalMarks", "10.00")
+                ));
+
+        when(notificationRepository.existsByDeduplicationKey(anyString())).thenReturn(false);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification saved = invocation.getArgument(0);
+            saved.setId(7100L + saved.getUser().getId());
+            return saved;
+        });
+        when(emailNotificationProperties.isTestEmailAddress(anyString())).thenReturn(false);
+        when(emailNotificationProperties.isGloballyEnabled()).thenReturn(true);
+        when(emailNotificationProperties.isEventEnabled("RESULT")).thenReturn(true);
+
+        notificationService.createForUsers(List.of(first, second), command);
+
+        ArgumentCaptor<EmailNotificationOutbox> captor =
+                ArgumentCaptor.forClass(EmailNotificationOutbox.class);
+        verify(emailOutboxRepository, times(2)).save(captor.capture());
+        Map<Long, EmailNotificationOutbox> byRecipient = captor.getAllValues().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        EmailNotificationOutbox::getRecipientUserId, entry -> entry));
+        assertEquals("8.00", byRecipient.get(611L).getPayload().get("resultScore"));
+        assertEquals("5.00", byRecipient.get(612L).getPayload().get("resultScore"));
+        assertFalse(byRecipient.get(611L).getPayload().containsKey("resultTotalMarks")
+                && "5.00".equals(byRecipient.get(611L).getPayload().get("resultScore")));
+        assertFalse(byRecipient.get(612L).getPayload().containsKey("resultScore")
+                && "8.00".equals(byRecipient.get(612L).getPayload().get("resultScore")));
     }
 
     @Test
