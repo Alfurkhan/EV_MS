@@ -1317,13 +1317,13 @@ public class TimetableServiceImpl implements TimetableService {
         if (timetable.getFaculty() != null) {
             notificationService.createForUsers(withoutCurrentActor(List.of(timetable.getFaculty())),
                     new NotificationCommand("TIMETABLE", timetable.getId(), facultyTitle, facultyMessage,
-                            "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY", true));
+                            "TIMETABLES", "NORMAL", "/my-classes", eventKey + ":FACULTY", timetable.getStatus() == TimetableStatus.APPROVED));
         }
         List<User> students = activeStudentsForCohort(
                 timetable.getAcademicYear(), timetable.getGrade(), timetable.getSection());
         notificationService.createForUsers(withoutCurrentActor(students),
                 new NotificationCommand("TIMETABLE", timetable.getId(), studentTitle, studentMessage,
-                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS", true));
+                        "TIMETABLES", "NORMAL", "/my-timetable", eventKey + ":STUDENTS", timetable.getStatus() == TimetableStatus.APPROVED));
     }
 
     private void notifyTimetableSnapshotChanges(TimetableSnapshot before, Timetable after, String eventKey) {
