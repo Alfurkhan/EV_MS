@@ -34,7 +34,17 @@ public class EmailTemplateRenderer {
                 content = "We received a request to reset your password.\n\nYour password reset OTP is: "
                         + safe(request.getOtp()) + "\nThis OTP is valid for 10 minutes. If you did not request this, please ignore this email.";
             }
-            case "ANNOUNCEMENT", "ASSIGNMENT", "ASSESSMENT", "TIMETABLE", "RESULT" -> {
+            case "RESULT" -> {
+                heading = value(data, "title", request.getSubject());
+                content = value(data, "message", request.getBodyText());
+                String resultSummary = resultSummary(data);
+                if (hasText(resultSummary)) {
+                    content = content + "\\n\\n" + resultSummary;
+                }
+                actionUrl = value(data, "targetUrl", null);
+                actionLabel = actionLabel(type);
+            }
+            case "ANNOUNCEMENT", "ASSIGNMENT", "ASSESSMENT", "TIMETABLE" -> {
                 heading = value(data, "title", request.getSubject());
                 content = value(data, "message", request.getBodyText());
                 actionUrl = value(data, "targetUrl", null);
@@ -111,6 +121,31 @@ public class EmailTemplateRenderer {
     private String value(Map<String, Object> data, String key, String fallback) {
         if (data == null || data.get(key) == null) return safe(fallback);
         return String.valueOf(data.get(key));
+    }
+
+    private String resultSummary(Map<String, Object> data) {
+        if (data == null) return "";
+        String score = value(data, "resultScore", null);
+        String total = value(data, "resultTotalMarks", null);
+        String percentage = value(data, "resultPercentage", null);
+        String grade = value(data, "resultGrade", null);
+        if (!hasText(score) && !hasText(total) && !hasText(percentage) && !hasText(grade)) {
+            return "";
+        }
+
+        String assessment = value(data, "assessmentTitle", null);
+        String subject = value(data, "subjectName", null);
+        StringBuilder summary = new StringBuilder("Your result");
+        if (hasText(assessment)) summary.append(" for ").append(assessment);
+        if (hasText(subject)) summary.append(" (").append(subject).append(")");
+        summary.append(":");
+        if (hasText(score) || hasText(total)) {
+            summary.append("\\nMarks: ").append(hasText(score) ? score : "—")
+                    .append(" / ").append(hasText(total) ? total : "—");
+        }
+        if (hasText(percentage)) summary.append("\\nPercentage: ").append(percentage).append("%");
+        if (hasText(grade)) summary.append("\\nGrade: ").append(grade);
+        return summary.toString();
     }
 
     private String actionLabel(String type) {
