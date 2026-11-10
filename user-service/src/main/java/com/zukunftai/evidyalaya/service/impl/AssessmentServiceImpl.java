@@ -414,7 +414,7 @@ public class AssessmentServiceImpl implements AssessmentService {
         NotificationCommand command = new NotificationCommand(
                 "ASSESSMENT", assessment.getId(), "New assessment: " + assessment.getTitle(),
                 message, "ASSESSMENTS", "NORMAL", "/assessments",
-                "ASSESSMENT:" + assessment.getId());
+                "ASSESSMENT:" + assessment.getId(), true);
 
         if (publishedByAdmin) {
             List<User> affectedUsers = new ArrayList<>(students);
