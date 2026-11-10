@@ -20,6 +20,7 @@ public class Announcement {
     @Enumerated(EnumType.STRING) @Column(name = "target_scope", nullable = false, length = 20)
     @Builder.Default private AnnouncementTargetScope targetScope = AnnouncementTargetScope.CLASS;
     @ManyToMany(fetch = FetchType.LAZY)
+    @OrderBy("name ASC")
     @JoinTable(name = "announcement_grade_target",
             joinColumns = @JoinColumn(name = "announcement_id"),
             inverseJoinColumns = @JoinColumn(name = "grade_id"))
