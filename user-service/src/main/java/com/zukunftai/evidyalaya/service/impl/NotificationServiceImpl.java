@@ -234,6 +234,15 @@ public class NotificationServiceImpl implements NotificationService {
                 ? Instant.now().toString()
                 : notification.getCreatedAt().toString());
 
+        // Only the matching recipient's private result snapshot is copied into
+        // their outbox payload; no other student's result enters this email.
+        Map<String, Object> recipientEmailData = command.recipientEmailData() == null
+                ? null
+                : command.recipientEmailData().get(recipient.getId());
+        if (recipientEmailData != null && !recipientEmailData.isEmpty()) {
+            payload.putAll(recipientEmailData);
+        }
+
         String deduplicationKey = notification.getDeduplicationKey() == null
                 ? "NOTIFICATION:" + notification.getId()
                 : notification.getDeduplicationKey();
