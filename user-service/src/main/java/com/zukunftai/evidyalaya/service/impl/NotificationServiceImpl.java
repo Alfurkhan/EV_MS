@@ -221,6 +221,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("sourceType", sourceType);
+        payload.put("userName", recipient.getFullName() == null || recipient.getFullName().isBlank()
+                ? "eVidyalaya user" : recipient.getFullName());
         payload.put("sourceId", notification.getSourceId());
         payload.put("title", notification.getTitle());
         payload.put("message", notification.getMessage());
