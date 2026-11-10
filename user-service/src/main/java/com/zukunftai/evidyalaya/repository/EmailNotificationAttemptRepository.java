@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface EmailNotificationAttemptRepository extends JpaRepository<EmailNotificationAttempt, UUID> {
 
-    List<EmailNotificationAttempt> findByOutboxIdOrderByAttemptNumberAsc(UUID outboxId);
+    List<EmailNotificationAttempt> findByOutbox_IdOrderByAttemptNumberAsc(UUID outboxId);
 }
