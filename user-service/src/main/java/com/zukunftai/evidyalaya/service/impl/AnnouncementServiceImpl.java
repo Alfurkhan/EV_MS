@@ -62,7 +62,7 @@ public class AnnouncementServiceImpl {
         if(request.scheduledAt()!=null && request.expiresAt()!=null && !request.expiresAt().isAfter(request.scheduledAt()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Expiry must be after scheduled publication.");
         Announcement a=Announcement.builder().title(request.title().trim()).message(request.message().trim())
-                .audienceType(request.audienceType()).targetScope(scope(request)).timetableAssignments(resolveAssignments(request,actor,admin)).academicYear(request.academicYearId()==null?null:years.findById(request.academicYearId()).orElseThrow())
+                .audienceType(request.audienceType()).targetScope(scope(request)).timetableAssignments(resolveAssignments(request,actor,admin)).targetGrades(resolveTargetGrades(request,admin)).academicYear(request.academicYearId()==null?null:years.findById(request.academicYearId()).orElseThrow())
                 .grade(request.gradeId()==null?null:grades.findById(request.gradeId()).orElseThrow())
                 .section(request.sectionId()==null?null:sections.findById(request.sectionId()).orElseThrow())
                 .priority(request.priority()).status(request.scheduledAt()!=null && request.scheduledAt().isAfter(now)?AnnouncementStatus.SCHEDULED:AnnouncementStatus.DRAFT)
@@ -85,7 +85,7 @@ public class AnnouncementServiceImpl {
         }
         validateTarget(request,actor,admin);
         a.setTitle(request.title().trim()); a.setMessage(request.message().trim()); a.setAudienceType(request.audienceType());
-        a.setTargetScope(scope(request)); a.setTimetableAssignments(resolveAssignments(request,actor,admin));
+        a.setTargetScope(scope(request)); a.setTimetableAssignments(resolveAssignments(request,actor,admin)); a.setTargetGrades(resolveTargetGrades(request,admin));
         a.setAcademicYear(request.academicYearId()==null?null:years.findById(request.academicYearId()).orElseThrow());
         a.setGrade(request.gradeId()==null?null:grades.findById(request.gradeId()).orElseThrow());
         a.setSection(request.sectionId()==null?null:sections.findById(request.sectionId()).orElseThrow());
@@ -260,6 +260,10 @@ public class AnnouncementServiceImpl {
                 audienceContext = " for " + announcement.getGrade().getName()
                         + " - " + announcement.getSection().getName();
             }
+        } else if (announcement.getAudienceType() == AnnouncementAudience.GRADE
+                && !announcement.getTargetGrades().isEmpty()) {
+            audienceContext = " for " + String.join(", ", announcement.getTargetGrades().stream()
+                    .map(Grade::getName).toList()) + " (" + announcement.getAcademicYear().getName() + ")";
         }
         String message = "Published by " + announcement.getCreatedBy().getFullName()
                 + audienceContext + ". " + announcement.getMessage();
@@ -276,6 +280,22 @@ public class AnnouncementServiceImpl {
     }
 
     private List<User> resolveRecipients(Announcement a) {
+        if (a.getAudienceType() == AnnouncementAudience.GRADE) {
+            if (a.getAcademicYear() == null || !a.getAcademicYear().isActive()
+                    || a.getTargetGrades().isEmpty()
+                    || a.getTargetGrades().stream().anyMatch(grade -> !grade.isActive()
+                    || !grade.getAcademicYear().getId().equals(a.getAcademicYear().getId()))) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "The selected academic year or one of its grades is no longer active.");
+            }
+            Set<User> targets = new LinkedHashSet<>();
+            enrollments.findByAcademicYearAndGradeInAndActiveTrue(a.getAcademicYear(), a.getTargetGrades())
+                    .stream().map(StudentEnrollment::getStudent)
+                    .filter(student -> student.isAccountEnabled() && !student.isAccountDeleted())
+                    .filter(student -> hasRole(student, RoleName.ROLE_STUDENT))
+                    .forEach(targets::add);
+            return new ArrayList<>(targets);
+        }
         if(a.getAudienceType()==AnnouncementAudience.CLASS) {
             if(a.getTargetScope()==AnnouncementTargetScope.SUBJECT) {
                 Set<User> targets=new LinkedHashSet<>();
@@ -309,6 +329,24 @@ public class AnnouncementServiceImpl {
         return request.targetScope()==null?AnnouncementTargetScope.CLASS:request.targetScope();
     }
 
+    private List<Grade> resolveTargetGrades(AnnouncementRequest request, boolean admin) {
+        if (request.audienceType() != AnnouncementAudience.GRADE) return new ArrayList<>();
+        if (!admin) throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                "Only administrators can publish announcements to selected grades.");
+        AcademicYear year = years.findById(request.academicYearId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Academic year not found."));
+        List<Long> ids = request.gradeIds().stream().distinct().toList();
+        List<Grade> selected = grades.findAllById(ids);
+        if (selected.size() != ids.size()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "One or more selected grades do not exist.");
+        if (!year.isActive() || selected.stream().anyMatch(grade -> !grade.isActive()
+                || !grade.getAcademicYear().getId().equals(year.getId()))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Select active grades belonging to the selected active academic year.");
+        }
+        return selected.stream().sorted(Comparator.comparing(Grade::getName, String.CASE_INSENSITIVE_ORDER)).toList();
+    }
+
     private List<Timetable> resolveAssignments(AnnouncementRequest request, User actor, boolean admin) {
         if(request.audienceType()!=AnnouncementAudience.CLASS || scope(request)!=AnnouncementTargetScope.SUBJECT)
             return new ArrayList<>();
@@ -330,6 +368,29 @@ public class AnnouncementServiceImpl {
     }
 
     private void validateTarget(AnnouncementRequest r, User actor, boolean admin) {
+        List<Long> requestedGradeIds = r.gradeIds() == null ? List.of() : r.gradeIds().stream().distinct().toList();
+        if (r.audienceType() == AnnouncementAudience.GRADE) {
+            if (!admin) throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Only administrators can target selected grades.");
+            if (scope(r) != AnnouncementTargetScope.CLASS || r.academicYearId() == null
+                    || requestedGradeIds.isEmpty() || r.gradeId() != null || r.sectionId() != null
+                    || (r.timetableAssignmentIds() != null && !r.timetableAssignmentIds().isEmpty())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Select an academic year and at least one grade; grade targeting cannot include a section or subject assignment.");
+            }
+            AcademicYear year = years.findById(r.academicYearId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Academic year not found."));
+            List<Grade> selected = grades.findAllById(requestedGradeIds);
+            if (!year.isActive() || selected.size() != requestedGradeIds.size()
+                    || selected.stream().anyMatch(grade -> !grade.isActive()
+                    || !grade.getAcademicYear().getId().equals(year.getId()))) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Select active grades belonging to the selected active academic year.");
+            }
+            return;
+        }
+        if (!requestedGradeIds.isEmpty()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "Grade IDs are only valid for selected-grade announcements.");
         if(r.audienceType()!=AnnouncementAudience.CLASS && scope(r)!=AnnouncementTargetScope.CLASS)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Subject targeting is available only for class announcements.");
         if(!admin && r.audienceType()!=AnnouncementAudience.CLASS) throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Faculty can only publish to assigned classes.");
@@ -358,7 +419,10 @@ public class AnnouncementServiceImpl {
                 ?a.getTimetableAssignments().get(0).getSubject().getName():null;
         return new AnnouncementResponse(a.getId(),a.getTitle(),a.getMessage(),a.getAudienceType(),
                 a.getAcademicYear()==null?null:a.getAcademicYear().getId(),a.getGrade()==null?null:a.getGrade().getId(),
-                a.getSection()==null?null:a.getSection().getId(),a.getTargetScope(),subjectName,
+                a.getSection()==null?null:a.getSection().getId(),
+                a.getTargetGrades().stream().map(Grade::getId).toList(),
+                a.getTargetGrades().stream().map(Grade::getName).toList(),
+                a.getTargetScope(),subjectName,
                 a.getTimetableAssignments().stream().map(Timetable::getId).toList(),
                 a.getTimetableAssignments().stream().map(t->t.getAcademicYear().getName()+" · "+t.getGrade().getName()+" · "+t.getSection().getName()).distinct().toList(),
                 a.getPriority(),a.getStatus(),
