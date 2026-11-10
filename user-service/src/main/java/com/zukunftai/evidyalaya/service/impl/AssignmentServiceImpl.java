@@ -143,7 +143,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                 "ASSIGNMENTS",
                 "NORMAL",
                 "/assignments",
-                "ASSIGNMENT:" + assignment.getId()));
+                "ASSIGNMENT:" + assignment.getId(), true));
         return published;
     }
 
