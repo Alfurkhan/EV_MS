@@ -1,7 +1,7 @@
 import api from "../../../api/axios";
 
 export type Priority = "NORMAL" | "IMPORTANT" | "URGENT";
-export type Audience = "ALL" | "STUDENTS" | "FACULTY" | "CLASS";
+export type Audience = "ALL" | "STUDENTS" | "FACULTY" | "CLASS" | "GRADE";
 export type AnnouncementTargetScope = "CLASS" | "SUBJECT";
 export type AnnouncementStatus = "DRAFT" | "SCHEDULED" | "PUBLISHED" | "ARCHIVED";
 export interface AnnouncementAttachment {
@@ -14,7 +14,7 @@ export interface AnnouncementAttachment {
 }
 export interface Announcement {
   id:number; title:string; message:string; audienceType:Audience;
-  academicYearId:number|null; gradeId:number|null; sectionId:number|null;
+  academicYearId:number|null; gradeId:number|null; sectionId:number|null; gradeIds:number[]; targetGradeLabels:string[];
   targetScope:AnnouncementTargetScope; subjectName:string|null; timetableAssignmentIds:number[]; targetClassLabels:string[];
   priority:Priority; status:AnnouncementStatus; authorName:string;
   scheduledAt:string|null; expiresAt:string|null; publishedAt:string|null;
@@ -23,7 +23,7 @@ export interface Announcement {
 }
 export interface AnnouncementRequest {
   title:string; message:string; audienceType:Audience; academicYearId:number|null;
-  gradeId:number|null; sectionId:number|null; targetScope:AnnouncementTargetScope; timetableAssignmentIds:number[]; priority:Priority;
+  gradeId:number|null; sectionId:number|null; gradeIds:number[]; targetScope:AnnouncementTargetScope; timetableAssignmentIds:number[]; priority:Priority;
   scheduledAt:string|null; expiresAt:string|null;
 }
 export async function getAnnouncements(){return (await api.get<Announcement[]>("/announcements")).data;}
