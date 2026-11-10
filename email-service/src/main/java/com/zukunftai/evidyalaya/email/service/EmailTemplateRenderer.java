@@ -39,7 +39,7 @@ public class EmailTemplateRenderer {
                 content = value(data, "message", request.getBodyText());
                 String resultSummary = resultSummary(data);
                 if (hasText(resultSummary)) {
-                    content = content + "\\n\\n" + resultSummary;
+                    content = content + "\n\n" + resultSummary;
                 }
                 actionUrl = value(data, "targetUrl", null);
                 actionLabel = actionLabel(type);
@@ -107,7 +107,7 @@ public class EmailTemplateRenderer {
 
     private String paragraphs(String value) {
         String normalized = safe(value).replace("\r\n", "\n").replace('\r', '\n');
-        String[] blocks = normalized.split("\\n\\s*\\n");
+        String[] blocks = normalized.split("\n\\s*\n");
         StringBuilder result = new StringBuilder();
         for (String block : blocks) {
             if (block.isBlank()) continue;
@@ -140,11 +140,11 @@ public class EmailTemplateRenderer {
         if (hasText(subject)) summary.append(" (").append(subject).append(")");
         summary.append(":");
         if (hasText(score) || hasText(total)) {
-            summary.append("\\nMarks: ").append(hasText(score) ? score : "—")
+            summary.append("\nMarks: ").append(hasText(score) ? score : "—")
                     .append(" / ").append(hasText(total) ? total : "—");
         }
-        if (hasText(percentage)) summary.append("\\nPercentage: ").append(percentage).append("%");
-        if (hasText(grade)) summary.append("\\nGrade: ").append(grade);
+        if (hasText(percentage)) summary.append("\nPercentage: ").append(percentage).append("%");
+        if (hasText(grade)) summary.append("\nGrade: ").append(grade);
         return summary.toString();
     }
 
