@@ -8,7 +8,6 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -84,7 +83,7 @@ public class EmailNotificationDispatcher {
             int status = exception.getStatusCode().value();
             boolean retryable = status == 408 || status == 429 || status >= 500;
             recordFailure(outbox, attemptNumber, retryable, exception.getMessage());
-        } catch (ResourceAccessException | RestClientException exception) {
+        } catch (RestClientException exception) {
             recordFailure(outbox, attemptNumber, true, exception.getMessage());
         } catch (RuntimeException exception) {
             recordFailure(outbox, attemptNumber, true, exception.getMessage());
