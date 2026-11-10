@@ -25,7 +25,7 @@ public class EmailSenderService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(
-                    message, false, StandardCharsets.UTF_8.name());
+                    message, true, StandardCharsets.UTF_8.name());
             helper.setTo(request.getTo());
             helper.setSubject(request.getSubject() == null || request.getSubject().isBlank()
                     ? "A message from eVidyalaya" : request.getSubject());
