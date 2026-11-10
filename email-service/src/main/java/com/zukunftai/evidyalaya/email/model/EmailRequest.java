@@ -1,12 +1,12 @@
 package com.zukunftai.evidyalaya.email.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class EmailRequest {
 
     private String subject;
@@ -15,4 +15,18 @@ public class EmailRequest {
     private String emailType;
     private String userName;
     private String otp;
+    private Map<String, Object> templateData;
+
+    /**
+     * Retains the original constructor signature used by existing OTP/signup callers and tests.
+     */
+    public EmailRequest(String subject, String bodyText, String to, String emailType,
+                        String userName, String otp) {
+        this.subject = subject;
+        this.bodyText = bodyText;
+        this.to = to;
+        this.emailType = emailType;
+        this.userName = userName;
+        this.otp = otp;
+    }
 }
