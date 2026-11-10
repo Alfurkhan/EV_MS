@@ -20,6 +20,11 @@ public class Announcement {
     @Enumerated(EnumType.STRING) @Column(name = "target_scope", nullable = false, length = 20)
     @Builder.Default private AnnouncementTargetScope targetScope = AnnouncementTargetScope.CLASS;
     @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "announcement_grade_target",
+            joinColumns = @JoinColumn(name = "announcement_id"),
+            inverseJoinColumns = @JoinColumn(name = "grade_id"))
+    @Builder.Default private List<Grade> targetGrades = new ArrayList<>();
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "announcement_timetable_assignment",
             joinColumns = @JoinColumn(name = "announcement_id"),
             inverseJoinColumns = @JoinColumn(name = "timetable_id"))
