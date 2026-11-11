@@ -77,10 +77,26 @@ public class AnnouncementServiceImpl {
         if(!admin && !a.getCreatedBy().getId().equals(actor.getId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         if(a.getStatus()==AnnouncementStatus.ARCHIVED) throw new ResponseStatusException(HttpStatus.CONFLICT,"Archived announcements cannot be edited.");
         if(a.getStatus()==AnnouncementStatus.PUBLISHED) {
-            a.setTitle(request.title().trim()); a.setMessage(request.message().trim()); a.setPriority(request.priority()); a.setUpdatedAt(Instant.now());
-            notificationService.updateForSource("ANNOUNCEMENT", id, a.getTitle(),
-                    a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
-                    a.getPriority().name());
+            String updatedTitle = request.title().trim();
+            String updatedMessage = request.message().trim();
+            boolean meaningfulChange = !Objects.equals(a.getTitle(), updatedTitle)
+                    || !Objects.equals(a.getMessage(), updatedMessage)
+                    || !Objects.equals(a.getPriority(), request.priority());
+            if (meaningfulChange) {
+                a.setTitle(updatedTitle);
+                a.setMessage(updatedMessage);
+                a.setPriority(request.priority());
+                a.setUpdatedAt(Instant.now());
+                List<EmailAttachmentSource> currentAttachments = attachmentRepository
+                        .findByAnnouncementOrderByCreatedAtAsc(a).stream()
+                        .map(file -> new EmailAttachmentSource(
+                                attachmentStorage.resolve(file.getStoredPath()).toString(),
+                                file.getOriginalName(), file.getContentType()))
+                        .toList();
+                notificationService.updateForSource("ANNOUNCEMENT", id, a.getTitle(),
+                        a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
+                        a.getPriority().name(), currentAttachments, a.getUpdatedAt().toString());
+            }
             return response(announcements.save(a),actor);
         }
         validateTarget(request,actor,admin);
