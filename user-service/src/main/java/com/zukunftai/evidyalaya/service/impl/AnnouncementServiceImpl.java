@@ -71,6 +71,10 @@ public class AnnouncementServiceImpl {
     }
 
     public AnnouncementResponse update(Long id, AnnouncementRequest request) {
+        return updateInternal(id, request, true);
+    }
+
+    private AnnouncementResponse updateInternal(Long id, AnnouncementRequest request, boolean sendRevisionEmail) {
         User actor=currentUser();
         Announcement a=announcements.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
         boolean admin=hasRole(actor,RoleName.ROLE_ADMIN);
@@ -87,15 +91,9 @@ public class AnnouncementServiceImpl {
                 a.setMessage(updatedMessage);
                 a.setPriority(request.priority());
                 a.setUpdatedAt(Instant.now());
-                List<EmailAttachmentSource> currentAttachments = attachmentRepository
-                        .findByAnnouncementOrderByCreatedAtAsc(a).stream()
-                        .map(file -> new EmailAttachmentSource(
-                                attachmentStorage.resolve(file.getStoredPath()).toString(),
-                                file.getOriginalName(), file.getContentType()))
-                        .toList();
-                notificationService.updateForSource("ANNOUNCEMENT", id, a.getTitle(),
-                        a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
-                        a.getPriority().name(), currentAttachments, a.getUpdatedAt().toString());
+                if (sendRevisionEmail) {
+                    queuePublishedRevisionEmail(a);
+                }
             }
             return response(announcements.save(a),actor);
         }
@@ -108,6 +106,52 @@ public class AnnouncementServiceImpl {
         a.setPriority(request.priority()); a.setScheduledAt(request.scheduledAt()); a.setExpiresAt(request.expiresAt()); a.setUpdatedAt(Instant.now());
         if(request.scheduledAt()!=null && request.scheduledAt().isAfter(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))) a.setStatus(AnnouncementStatus.SCHEDULED);
         return response(announcements.save(a),actor);
+    }
+
+    /**
+     * Updates a published announcement and its newly uploaded attachments as one
+     * coordinated edit, then queues exactly one revision email containing the
+     * final persisted attachment set.
+     */
+    public AnnouncementResponse updateWithAttachments(Long id, AnnouncementRequest request,
+            List<MultipartFile> files) {
+        Announcement original = announcements.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        boolean wasPublished = original.getStatus() == AnnouncementStatus.PUBLISHED;
+        boolean contentChanged = wasPublished
+                && (!Objects.equals(original.getTitle(), request.title().trim())
+                || !Objects.equals(original.getMessage(), request.message().trim())
+                || !Objects.equals(original.getPriority(), request.priority()));
+        boolean attachmentsAdded = files != null && !files.isEmpty();
+
+        updateInternal(id, request, false);
+        if (attachmentsAdded) {
+            uploadAttachments(id, files);
+        }
+
+        Announcement updated = announcements.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (wasPublished && (contentChanged || attachmentsAdded)) {
+            updated.setUpdatedAt(Instant.now());
+            queuePublishedRevisionEmail(updated);
+            announcements.save(updated);
+        }
+        return response(updated, currentUser());
+    }
+
+    private void queuePublishedRevisionEmail(Announcement announcement) {
+        List<EmailAttachmentSource> currentAttachments = attachmentRepository
+                .findByAnnouncementOrderByCreatedAtAsc(announcement).stream()
+                .map(file -> new EmailAttachmentSource(
+                        attachmentStorage.resolve(file.getStoredPath()).toString(),
+                        file.getOriginalName(), file.getContentType()))
+                .toList();
+        String message = announcement.getMessage().length() > 1000
+                ? announcement.getMessage().substring(0, 997) + "..."
+                : announcement.getMessage();
+        notificationService.updateForSource("ANNOUNCEMENT", announcement.getId(),
+                announcement.getTitle(), message, announcement.getPriority().name(),
+                currentAttachments, announcement.getUpdatedAt().toString());
     }
 
     private static final int MAX_ANNOUNCEMENT_ATTACHMENTS = 5;
