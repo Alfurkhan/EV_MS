@@ -7,6 +7,7 @@ import com.zukunftai.evidyalaya.database.Notification;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.model.ManualNotificationRequest;
+import com.zukunftai.evidyalaya.model.EmailAttachmentSource;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.model.NotificationResponse;
 import com.zukunftai.evidyalaya.repository.EmailNotificationOutboxRepository;
@@ -324,16 +325,102 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void updateForSource(String sourceType, Long sourceId, String title, String message, String priority) {
+        updateForSource(sourceType, sourceId, title, message, priority, List.of(), null);
+    }
+
+    @Override
+    public void updateForSource(String sourceType, Long sourceId, String title, String message, String priority,
+                                List<EmailAttachmentSource> attachmentSources, String revisionToken) {
         String safeTitle = limit(title, 200);
         String safeMessage = limit(message, 1000);
         String safePriority = limit(priority, 20);
         Instant now = Instant.now();
-        notifications.findBySourceTypeAndSourceId(sourceType, sourceId).forEach(notification -> {
+        List<Notification> sourceNotifications = notifications.findBySourceTypeAndSourceId(sourceType, sourceId);
+        sourceNotifications.forEach(notification -> {
             notification.setTitle(safeTitle);
             notification.setMessage(safeMessage);
             notification.setPriority(safePriority);
             notification.setUpdatedAt(now);
         });
+
+        if (!"ANNOUNCEMENT".equalsIgnoreCase(sourceType)
+                || revisionToken == null || revisionToken.isBlank() || sourceNotifications.isEmpty()) {
+            return;
+        }
+
+        boolean globallyEnabled = emailNotificationProperties.isGloballyEnabled();
+        boolean eventEnabled = emailNotificationProperties.isEventEnabled("ANNOUNCEMENT");
+        boolean hasDeliverableRecipient = globallyEnabled && eventEnabled && sourceNotifications.stream()
+                .map(Notification::getUser)
+                .anyMatch(this::isDeliverableEmailRecipient);
+
+        List<String> attachmentSnapshotIds = List.of();
+        if (hasDeliverableRecipient && attachmentSources != null && !attachmentSources.isEmpty()
+                && attachmentSnapshotService != null) {
+            attachmentSnapshotIds = attachmentSnapshotService.snapshot(attachmentSources);
+        }
+
+        for (Notification notification : sourceNotifications) {
+            User recipient = notification.getUser();
+            if (recipient == null || !recipient.isAccountEnabled() || recipient.isAccountDeleted()
+                    || !recipient.isEmailVerified() || recipient.getEmail() == null
+                    || recipient.getEmail().isBlank()) {
+                continue;
+            }
+
+            String deduplicationKey = "ANNOUNCEMENT:" + sourceId + ":REVISION:"
+                    + revisionToken + ":" + recipient.getId();
+            if (deduplicationKey.length() > 220) {
+                throw new IllegalArgumentException("Email outbox deduplication keys must be 220 characters or fewer.");
+            }
+            if (emailOutbox.existsByDeduplicationKey(deduplicationKey)) {
+                continue;
+            }
+
+            boolean testEmailAddress = emailNotificationProperties.isTestEmailAddress(recipient.getEmail());
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("sourceType", "ANNOUNCEMENT");
+            payload.put("userName", recipient.getFullName() == null || recipient.getFullName().isBlank()
+                    ? "eVidyalaya user" : recipient.getFullName());
+            payload.put("sourceId", sourceId);
+            payload.put("title", safeTitle);
+            payload.put("message", safeMessage);
+            payload.put("category", notification.getCategory());
+            payload.put("priority", safePriority);
+            payload.put("targetUrl", notification.getTargetUrl());
+            payload.put("createdAt", now.toString());
+            payload.put("isUpdate", true);
+            if (attachmentSnapshotIds != null && !attachmentSnapshotIds.isEmpty()) {
+                payload.put("attachmentSnapshotIds", attachmentSnapshotIds);
+            }
+
+            emailOutbox.save(EmailNotificationOutbox.builder()
+                    .notificationId(notification.getId())
+                    .recipientUserId(recipient.getId())
+                    .recipientEmail(recipient.getEmail().trim())
+                    .templateType("ANNOUNCEMENT")
+                    .subject(limit("Updated: " + safeTitle, 200))
+                    .payload(payload)
+                    .deduplicationKey(deduplicationKey)
+                    .status(!testEmailAddress && globallyEnabled && eventEnabled
+                            ? EmailNotificationOutboxStatus.PENDING
+                            : EmailNotificationOutboxStatus.SKIPPED)
+                    .lastError(testEmailAddress
+                            ? "TEST_EMAIL_DOMAIN"
+                            : (!globallyEnabled
+                                    ? "Email notifications are disabled by configuration."
+                                    : (!eventEnabled
+                                            ? "Email notifications for this event are disabled by configuration."
+                                            : null)))
+                    .build());
+        }
+    }
+
+    private boolean isDeliverableEmailRecipient(User recipient) {
+        return recipient != null && recipient.isAccountEnabled() && !recipient.isAccountDeleted()
+                && recipient.isEmailVerified() && recipient.getEmail() != null
+                && !recipient.getEmail().isBlank()
+                && !emailNotificationProperties.isTestEmailAddress(recipient.getEmail());
     }
 
     @Override
