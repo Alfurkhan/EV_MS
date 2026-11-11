@@ -31,7 +31,7 @@ public class EmailAttachmentSnapshotService {
             throw new IllegalArgumentException("An email event can contain at most five attachments.");
         }
 
-        List<String> ids = new ArrayList<>();
+        List<EmailNotificationAttachmentSnapshot> snapshots = new ArrayList<>();
         long totalBytes = 0;
         for (EmailAttachmentSource source : sources) {
             if (source == null || source.storedPath() == null || source.storedPath().isBlank()) {
@@ -58,19 +58,19 @@ public class EmailAttachmentSnapshotService {
                 String fileName = safeFileName(source.fileName());
                 String contentType = safeContentType(source.contentType());
                 UUID id = UUID.randomUUID();
-                repository.save(EmailNotificationAttachmentSnapshot.builder()
+                snapshots.add(EmailNotificationAttachmentSnapshot.builder()
                         .id(id)
                         .fileName(fileName)
                         .contentType(contentType)
                         .content(content)
                         .fileSize(content.length)
                         .build());
-                ids.add(id.toString());
             } catch (IOException exception) {
                 throw new IllegalStateException("Could not create a durable email attachment snapshot.", exception);
             }
         }
-        return List.copyOf(ids);
+        repository.saveAll(snapshots);
+        return snapshots.stream().map(snapshot -> snapshot.getId().toString()).toList();
     }
 
     private String safeFileName(String supplied) {
