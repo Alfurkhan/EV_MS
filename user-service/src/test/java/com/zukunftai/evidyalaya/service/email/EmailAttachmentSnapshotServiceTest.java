@@ -23,8 +23,7 @@ class EmailAttachmentSnapshotServiceTest {
     void snapshotsFileBytesAndSafeMetadata() throws Exception {
         EmailNotificationAttachmentSnapshotRepository repository =
                 mock(EmailNotificationAttachmentSnapshotRepository.class);
-        when(repository.save(any(EmailNotificationAttachmentSnapshot.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(repository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
         EmailAttachmentSnapshotService service = new EmailAttachmentSnapshotService(repository);
 
         Path source = temporaryDirectory.resolve("worksheet.txt");
@@ -36,8 +35,8 @@ class EmailAttachmentSnapshotServiceTest {
 
         assertEquals(1, ids.size());
         var captor = org.mockito.ArgumentCaptor.forClass(EmailNotificationAttachmentSnapshot.class);
-        verify(repository).save(captor.capture());
-        EmailNotificationAttachmentSnapshot snapshot = captor.getValue();
+        verify(repository).saveAll(captor.capture());
+        EmailNotificationAttachmentSnapshot snapshot = captor.getValue().get(0);
         assertEquals("worksheet.txt", snapshot.getFileName());
         assertEquals("text/plain", snapshot.getContentType());
         assertArrayEquals(expected, snapshot.getContent());
@@ -54,7 +53,7 @@ class EmailAttachmentSnapshotServiceTest {
                 new EmailAttachmentSource(
                         temporaryDirectory.resolve("missing.pdf").toString(),
                         "missing.pdf", "application/pdf"))));
-        verify(repository, never()).save(any());
+        verify(repository, never()).saveAll(any());
     }
 
     @Test
