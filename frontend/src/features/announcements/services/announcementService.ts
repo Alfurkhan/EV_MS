@@ -29,6 +29,13 @@ export interface AnnouncementRequest {
 export async function getAnnouncements(){return (await api.get<Announcement[]>("/announcements")).data;}
 export async function createAnnouncement(data:AnnouncementRequest){return (await api.post<Announcement>("/announcements",data)).data;}
 export async function updateAnnouncement(id:number,data:AnnouncementRequest){return (await api.put<Announcement>(`/announcements/${id}`,data)).data;}
+
+export async function updateAnnouncementWithAttachments(id:number,data:AnnouncementRequest,files:File[]):Promise<Announcement>{
+  const form=new FormData();
+  form.append("request",new Blob([JSON.stringify(data)],{type:"application/json"}));
+  files.forEach(file=>form.append("files",file));
+  return (await api.put<Announcement>(`/announcements/${id}/edit`,form,{headers:{"Content-Type":"multipart/form-data"}})).data;
+}
 export async function publishAnnouncement(id:number){return (await api.post<Announcement>(`/announcements/${id}/publish`)).data;}
 export async function archiveAnnouncement(id:number){await api.post(`/announcements/${id}/archive`);}
 export async function markAnnouncementRead(id:number){await api.post(`/announcements/${id}/read`);}
