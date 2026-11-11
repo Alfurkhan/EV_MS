@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="11112026-001-email-attachment-snapshots" author="Furkhan">
+        <comment>Store immutable attachment bytes separately from recipient-specific outbox JSON.</comment>
+        <sql>
+            CREATE TABLE email_notification_attachment_snapshot (
+                id UUID PRIMARY KEY,
+                file_name VARCHAR(255) NOT NULL,
+                content_type VARCHAR(150) NOT NULL,
+                content BYTEA NOT NULL,
+                file_size BIGINT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT chk_email_attachment_snapshot_size
+                    CHECK (file_size > 0 AND file_size <= 26214400)
+            );
+
+            CREATE INDEX idx_email_attachment_snapshot_created
+                ON email_notification_attachment_snapshot (created_at);
+        </sql>
+    </changeSet>
+</databaseChangeLog>
