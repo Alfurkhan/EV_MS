@@ -3,6 +3,7 @@ package com.zukunftai.evidyalaya.email.model;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -16,6 +17,7 @@ public class EmailRequest {
     private String userName;
     private String otp;
     private Map<String, Object> templateData;
+    private List<EmailAttachment> attachments;
 
     /**
      * Retains the original constructor signature used by existing OTP/signup callers and tests.
