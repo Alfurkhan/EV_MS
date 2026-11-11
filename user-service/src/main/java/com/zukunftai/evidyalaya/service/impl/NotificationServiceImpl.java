@@ -13,6 +13,8 @@ import com.zukunftai.evidyalaya.repository.EmailNotificationOutboxRepository;
 import com.zukunftai.evidyalaya.repository.NotificationRepository;
 import com.zukunftai.evidyalaya.repository.UserRepository;
 import com.zukunftai.evidyalaya.service.NotificationService;
+import com.zukunftai.evidyalaya.service.email.EmailAttachmentSnapshotService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -41,7 +43,24 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository users;
     private final EmailNotificationOutboxRepository emailOutbox;
     private final EmailNotificationProperties emailNotificationProperties;
+    private final EmailAttachmentSnapshotService attachmentSnapshotService;
 
+    @Autowired
+    public NotificationServiceImpl(
+            NotificationRepository notifications,
+            UserRepository users,
+            EmailNotificationOutboxRepository emailOutbox,
+            EmailNotificationProperties emailNotificationProperties,
+            EmailAttachmentSnapshotService attachmentSnapshotService
+    ) {
+        this.notifications = notifications;
+        this.users = users;
+        this.emailOutbox = emailOutbox;
+        this.emailNotificationProperties = emailNotificationProperties;
+        this.attachmentSnapshotService = attachmentSnapshotService;
+    }
+
+    /** Backward-compatible constructor for tests and in-app-only callers. */
     public NotificationServiceImpl(
             NotificationRepository notifications,
             UserRepository users,
@@ -52,6 +71,7 @@ public class NotificationServiceImpl implements NotificationService {
         this.users = users;
         this.emailOutbox = emailOutbox;
         this.emailNotificationProperties = emailNotificationProperties;
+        this.attachmentSnapshotService = null;
     }
 
     @Override
@@ -160,6 +180,14 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
 
+        List<String> attachmentSnapshotIds = List.of();
+        if (command.emailEligible() && command.attachmentSources() != null
+                && !command.attachmentSources().isEmpty()
+                && attachmentSnapshotService != null
+                && hasNewEligibleEmailRecipient(uniqueRecipients.values(), command)) {
+            attachmentSnapshotIds = attachmentSnapshotService.snapshot(command.attachmentSources());
+        }
+
         int created = 0;
         Instant now = Instant.now();
         for (User recipient : uniqueRecipients.values()) {
@@ -189,19 +217,39 @@ public class NotificationServiceImpl implements NotificationService {
                     .updatedAt(now)
                     .build();
             Notification savedNotification = notifications.save(notification);
-            queueEmailIfEligible(savedNotification, recipient, command);
+            queueEmailIfEligible(savedNotification, recipient, command, attachmentSnapshotIds);
             created++;
         }
         return created;
     }
 
 
+    private boolean hasNewEligibleEmailRecipient(Collection<User> recipients, NotificationCommand command) {
+        String sourceType = command.sourceType() == null ? ""
+                : command.sourceType().trim().toUpperCase(java.util.Locale.ROOT);
+        if (!EMAIL_ELIGIBLE_SOURCE_TYPES.contains(sourceType)
+                || !emailNotificationProperties.isGloballyEnabled()
+                || !emailNotificationProperties.isEventEnabled(sourceType)) return false;
+
+        for (User recipient : recipients) {
+            if (recipient == null || !recipient.isAccountEnabled() || recipient.isAccountDeleted()
+                    || !recipient.isEmailVerified() || recipient.getEmail() == null
+                    || recipient.getEmail().isBlank()
+                    || emailNotificationProperties.isTestEmailAddress(recipient.getEmail())) continue;
+            String key = command.deduplicationKeyPrefix() == null
+                    || command.deduplicationKeyPrefix().isBlank()
+                    ? null : command.deduplicationKeyPrefix() + ":" + recipient.getId();
+            if (key == null || !notifications.existsByDeduplicationKey(key)) return true;
+        }
+        return false;
+    }
+
     /**
      * Creates an email outbox snapshot only for explicitly opted-in, allowlisted
      * business events and recipients who are eligible for email delivery.
      * This method runs in the same transaction as the in-app notification save.
      */
-    private void queueEmailIfEligible(Notification notification, User recipient, NotificationCommand command) {
+    private void queueEmailIfEligible(Notification notification, User recipient, NotificationCommand command, List<String> attachmentSnapshotIds) {
         String sourceType = command.sourceType() == null
                 ? ""
                 : command.sourceType().trim().toUpperCase(java.util.Locale.ROOT);
@@ -233,6 +281,10 @@ public class NotificationServiceImpl implements NotificationService {
         payload.put("createdAt", notification.getCreatedAt() == null
                 ? Instant.now().toString()
                 : notification.getCreatedAt().toString());
+
+        if (attachmentSnapshotIds != null && !attachmentSnapshotIds.isEmpty()) {
+            payload.put("attachmentSnapshotIds", attachmentSnapshotIds);
+        }
 
         // Only the matching recipient's private result snapshot is copied into
         // their outbox payload; no other student's result enters this email.
