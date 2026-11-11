@@ -7,7 +7,7 @@ import { getGradesByAcademicYear, type Grade } from "../../academic/services/gra
 import { getSectionsByGrade, type Section } from "../../academic/services/sectionService";
 import { getMyAssignmentClasses } from "../../timetable/services/timetableService";
 import type { Timetable } from "../../timetable/types/timetable";
-import { archiveAnnouncement, createAnnouncement, deleteAnnouncement, deleteAnnouncementAttachment, getAnnouncements, markAllAnnouncementsRead, markAnnouncementRead, publishAnnouncement, updateAnnouncement, updateAnnouncementWithAttachments, uploadAnnouncementAttachments } from "../services/announcementService";
+import { archiveAnnouncement, createAnnouncement, deleteAnnouncement, deleteAnnouncementAttachment, getAnnouncements, markAllAnnouncementsRead, markAnnouncementRead, publishAnnouncement, updateAnnouncementWithAttachments, uploadAnnouncementAttachments } from "../services/announcementService";
 import type { Announcement, AnnouncementAttachment, AnnouncementRequest, Audience, Priority } from "../services/announcementService";
 import AnnouncementAttachments from "../components/AnnouncementAttachments";
 import ConfirmDialog from "../../../components/ConfirmDialog";
