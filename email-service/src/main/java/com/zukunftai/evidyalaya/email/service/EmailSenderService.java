@@ -69,7 +69,7 @@ public class EmailSenderService {
 
             String contentType = attachment.getContentType();
             if (contentType == null || contentType.isBlank()
-                    || contentType.indexOf('\\r') >= 0 || contentType.indexOf('\\n') >= 0) {
+                    || contentType.indexOf('\r') >= 0 || contentType.indexOf('\n') >= 0) {
                 contentType = "application/octet-stream";
             }
             helper.addAttachment(fileName, new ByteArrayDataSource(content, contentType));
@@ -80,11 +80,11 @@ public class EmailSenderService {
         if (suppliedName == null || suppliedName.isBlank()) {
             throw new IllegalArgumentException("Email attachment filename is required.");
         }
-        String normalized = suppliedName.replace('\\\\', '/');
+        String normalized = suppliedName.replace('\\', '/');
         String fileName = normalized.substring(normalized.lastIndexOf('/') + 1).trim();
         if (fileName.isBlank() || fileName.equals(".") || fileName.equals("..")
                 || fileName.contains("..") || fileName.length() > 255
-                || fileName.indexOf('\\r') >= 0 || fileName.indexOf('\\n') >= 0) {
+                || fileName.indexOf('\r') >= 0 || fileName.indexOf('\n') >= 0) {
             throw new IllegalArgumentException("Email attachment filename is invalid.");
         }
         return fileName;
