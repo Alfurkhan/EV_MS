@@ -109,6 +109,7 @@ public class EmailTemplateRenderer {
                   .email-header { padding:22px 22px !important; }
                   .email-content { padding:22px 20px 24px !important; }
                   .email-footer { padding-left:16px !important; padding-right:16px !important; }
+                  h1 { font-size:21px !important; line-height:28px !important; }
                 }
                 </style>
                 <title>eVidyalaya notification</title></head>
