@@ -77,7 +77,7 @@ class EmailTemplateRendererTest {
         EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
 
         assertTrue(rendered.html().contains("@media only screen and (max-width:620px)"));
-        assertTrue(rendered.html().contains("class=\\"email-content\\""));
+        assertTrue(rendered.html().contains(".email-content { padding:22px 20px 24px !important;"));
         assertTrue(rendered.html().contains("word-break:break-word"));
         assertTrue(rendered.html().contains(longFileName));
         assertTrue(rendered.plainText().contains(longFileName));
