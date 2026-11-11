@@ -1,6 +1,5 @@
 package com.zukunftai.evidyalaya.email.service;
 
-import com.zukunftai.evidyalaya.email.model.EmailAttachment;
 import com.zukunftai.evidyalaya.email.model.EmailRequest;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -8,9 +7,10 @@ import jakarta.mail.util.ByteArrayDataSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -28,6 +28,10 @@ public class EmailSenderService {
     }
 
     public void sendEmail(EmailRequest request) {
+        sendEmail(request, List.of());
+    }
+
+    public void sendEmail(EmailRequest request, List<MultipartFile> attachments) {
         EmailTemplateRenderer.RenderedEmail rendered = templateRenderer.render(request);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -37,37 +41,31 @@ public class EmailSenderService {
             helper.setSubject(request.getSubject() == null || request.getSubject().isBlank()
                     ? "A message from eVidyalaya" : request.getSubject());
             helper.setText(rendered.plainText(), rendered.html());
-            addAttachments(helper, request.getAttachments());
+            addAttachments(helper, attachments);
             mailSender.send(message);
-        } catch (MessagingException exception) {
+        } catch (MessagingException | IOException exception) {
             throw new IllegalStateException("Unable to create eVidyalaya email message.", exception);
         }
     }
 
-    private void addAttachments(MimeMessageHelper helper, List<EmailAttachment> attachments)
-            throws MessagingException {
+    private void addAttachments(MimeMessageHelper helper, List<MultipartFile> attachments)
+            throws MessagingException, IOException {
         if (attachments == null || attachments.isEmpty()) return;
         if (attachments.size() > MAX_ATTACHMENTS) {
             throw new IllegalArgumentException("An email can contain at most five attachments.");
         }
 
         long totalBytes = 0;
-        for (EmailAttachment attachment : attachments) {
-            if (attachment == null || attachment.getContentBase64() == null
-                    || attachment.getContentBase64().isBlank()) {
+        for (MultipartFile attachment : attachments) {
+            if (attachment == null || attachment.isEmpty()) {
                 throw new IllegalArgumentException("Email attachment content is missing.");
             }
-            String fileName = safeFileName(attachment.getFileName());
-            byte[] content;
-            try {
-                content = Base64.getDecoder().decode(attachment.getContentBase64());
-            } catch (IllegalArgumentException exception) {
-                throw new IllegalArgumentException("Email attachment content is not valid Base64.", exception);
-            }
-            if (content.length == 0 || content.length > MAX_ATTACHMENT_BYTES) {
+            String fileName = safeFileName(attachment.getOriginalFilename());
+            long size = attachment.getSize();
+            if (size <= 0 || size > MAX_ATTACHMENT_BYTES) {
                 throw new IllegalArgumentException("Each email attachment must be between 1 byte and 25 MB.");
             }
-            totalBytes += content.length;
+            totalBytes += size;
             if (totalBytes > MAX_ATTACHMENT_BYTES) {
                 throw new IllegalArgumentException("The combined email attachments cannot exceed 25 MB.");
             }
@@ -77,7 +75,7 @@ public class EmailSenderService {
                     || contentType.indexOf('\r') >= 0 || contentType.indexOf('\n') >= 0) {
                 contentType = "application/octet-stream";
             }
-            helper.addAttachment(fileName, new ByteArrayDataSource(content, contentType));
+            helper.addAttachment(fileName, new ByteArrayDataSource(attachment.getBytes(), contentType));
         }
     }
 
