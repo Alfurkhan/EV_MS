@@ -2,7 +2,6 @@ package com.zukunftai.evidyalaya.service.email;
 
 import com.zukunftai.evidyalaya.database.EmailNotificationOutbox;
 import com.zukunftai.evidyalaya.database.EmailNotificationAttachmentSnapshot;
-import com.zukunftai.evidyalaya.email.model.EmailAttachment;
 import com.zukunftai.evidyalaya.repository.EmailNotificationAttachmentSnapshotRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,7 +108,7 @@ public class EmailNotificationDispatcher {
             throw new IllegalStateException("Email attachment snapshot references are invalid.");
         }
 
-        List<EmailAttachment> attachments = new ArrayList<>();
+        List<Map<String, String>> attachments = new ArrayList<>();
         for (Object rawId : ids) {
             UUID id;
             try {
@@ -119,10 +118,11 @@ public class EmailNotificationDispatcher {
             }
             EmailNotificationAttachmentSnapshot snapshot = attachmentSnapshots.findById(id)
                     .orElseThrow(() -> new IllegalStateException("A queued email attachment snapshot is missing."));
-            attachments.add(new EmailAttachment(
-                    snapshot.getFileName(),
-                    snapshot.getContentType(),
-                    Base64.getEncoder().encodeToString(snapshot.getContent())));
+            Map<String, String> attachment = new LinkedHashMap<>();
+            attachment.put("fileName", snapshot.getFileName());
+            attachment.put("contentType", snapshot.getContentType());
+            attachment.put("contentBase64", Base64.getEncoder().encodeToString(snapshot.getContent()));
+            attachments.add(attachment);
         }
         return List.copyOf(attachments);
     }
