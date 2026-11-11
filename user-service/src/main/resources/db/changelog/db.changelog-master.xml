@@ -880,5 +880,6 @@
     <include file="db/changelog/notifications/db.changelog-announcement-attachments.xml"/>
     <include file="db/changelog/notifications/db.changelog-email-notifications.xml"/>
     <include file="db/changelog/notifications/db.changelog-email-attachment-snapshots.xml"/>
+    <include file="db/changelog/notifications/db.changelog-email-outbox-revisions.xml"/>
 
 </databaseChangeLog>
