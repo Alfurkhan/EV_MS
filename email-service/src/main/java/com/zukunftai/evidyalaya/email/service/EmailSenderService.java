@@ -51,6 +51,7 @@ public class EmailSenderService {
             throw new IllegalArgumentException("An email can contain at most five attachments.");
         }
 
+        long totalBytes = 0;
         for (EmailAttachment attachment : attachments) {
             if (attachment == null || attachment.getContentBase64() == null
                     || attachment.getContentBase64().isBlank()) {
@@ -65,6 +66,10 @@ public class EmailSenderService {
             }
             if (content.length == 0 || content.length > MAX_ATTACHMENT_BYTES) {
                 throw new IllegalArgumentException("Each email attachment must be between 1 byte and 25 MB.");
+            }
+            totalBytes += content.length;
+            if (totalBytes > MAX_ATTACHMENT_BYTES) {
+                throw new IllegalArgumentException("The combined email attachments cannot exceed 25 MB.");
             }
 
             String contentType = attachment.getContentType();
