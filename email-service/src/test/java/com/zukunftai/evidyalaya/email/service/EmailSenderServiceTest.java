@@ -1,6 +1,5 @@
 package com.zukunftai.evidyalaya.email.service;
 
-import com.zukunftai.evidyalaya.email.model.EmailAttachment;
 import com.zukunftai.evidyalaya.email.model.EmailRequest;
 import jakarta.mail.Multipart;
 import jakarta.mail.Session;
@@ -10,8 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mock.web.MockMultipartFile;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 
@@ -25,20 +24,19 @@ class EmailSenderServiceTest {
     private JavaMailSender mailSender;
 
     @Test
-    void sendsEmailWithDecodedAttachmentAsMimePart() throws Exception {
-        EmailTemplateRenderer renderer = new EmailTemplateRenderer();
-        EmailSenderService service = new EmailSenderService(mailSender, renderer);
+    void sendsEmailWithBinaryAttachmentAsMimePart() throws Exception {
+        EmailSenderService service = new EmailSenderService(mailSender, new EmailTemplateRenderer());
         MimeMessage message = new MimeMessage(Session.getInstance(new Properties()));
         when(mailSender.createMimeMessage()).thenReturn(message);
 
         EmailRequest request = new EmailRequest(
                 "Assignment published", "Please find the assignment attached.",
                 "student@example.com", "ASSIGNMENT", "Student", null);
-        request.setAttachments(List.of(new EmailAttachment(
-                "worksheet.txt", "text/plain",
-                Base64.getEncoder().encodeToString("Complete questions 1-5".getBytes()))));
+        MockMultipartFile attachment = new MockMultipartFile(
+                "attachments", "worksheet.txt", "text/plain",
+                "Complete questions 1-5".getBytes());
 
-        service.sendEmail(request);
+        service.sendEmail(request, List.of(attachment));
 
         verify(mailSender).send(message);
         Object content = message.getContent();
@@ -51,26 +49,29 @@ class EmailSenderServiceTest {
     }
 
     @Test
-    void rejectsInvalidBase64WithoutSendingEmail() {
+    void rejectsUnsafeAttachmentFileNamesWithoutSendingEmail() {
         EmailSenderService service = new EmailSenderService(mailSender, new EmailTemplateRenderer());
         EmailRequest request = new EmailRequest(
                 "Notice", "Message", "student@example.com", "ANNOUNCEMENT", "Student", null);
-        request.setAttachments(List.of(new EmailAttachment("notice.pdf", "application/pdf", "%%%")));
+        MockMultipartFile attachment = new MockMultipartFile(
+                "attachments", "../private.txt", "text/plain", "private".getBytes());
 
-        assertThrows(IllegalArgumentException.class, () -> service.sendEmail(request));
+        assertThrows(IllegalArgumentException.class, () -> service.sendEmail(request, List.of(attachment)));
         verify(mailSender, never()).send(any(MimeMessage.class));
     }
 
     @Test
-    void rejectsUnsafeAttachmentFileNames() {
+    void rejectsCombinedAttachmentsOver25MbWithoutSendingEmail() {
         EmailSenderService service = new EmailSenderService(mailSender, new EmailTemplateRenderer());
         EmailRequest request = new EmailRequest(
                 "Notice", "Message", "student@example.com", "ANNOUNCEMENT", "Student", null);
-        request.setAttachments(List.of(new EmailAttachment(
-                "../private.txt", "text/plain",
-                Base64.getEncoder().encodeToString("private".getBytes()))));
+        MockMultipartFile first = new MockMultipartFile(
+                "attachments", "first.bin", "application/octet-stream", new byte[13 * 1024 * 1024]);
+        MockMultipartFile second = new MockMultipartFile(
+                "attachments", "second.bin", "application/octet-stream", new byte[13 * 1024 * 1024]);
 
-        assertThrows(IllegalArgumentException.class, () -> service.sendEmail(request));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.sendEmail(request, List.of(first, second)));
         verify(mailSender, never()).send(any(MimeMessage.class));
     }
 
