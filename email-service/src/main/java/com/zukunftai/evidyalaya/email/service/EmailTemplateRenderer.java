@@ -109,7 +109,7 @@ public class EmailTemplateRenderer {
                 </div>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f3f6fb">
                 <tr><td align="center" style="padding:24px 12px;">
-                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e7edf5;border-radius:14px;overflow:hidden;">
                 <tr><td bgcolor="#173b70" style="padding:26px 32px;background-color:#173b70;color:#ffffff;">
                 <div style="font-size:22px;line-height:28px;font-weight:700;letter-spacing:.2px;color:#ffffff;">eVidyalaya</div>
                 <div style="padding-top:5px;font-size:12px;line-height:18px;color:#dce8f8;">Smarter school management</div>
@@ -136,13 +136,15 @@ public class EmailTemplateRenderer {
                     .append(paragraphs(publicationDetails)).append("</td></tr></table>");
         }
         if (!attachmentNames.isEmpty()) {
-            html.append("<p style=\"margin:24px 0 9px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:.7px;color:#64748b;\">ATTACHMENTS</p>")
-                    .append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\">");
+            html.append("<p style=\"margin:24px 0 9px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:.7px;color:#64748b;\">ATTACHMENTS</p>");
             for (String file : attachmentNames) {
-                html.append("<tr><td style=\"padding:9px 12px;border:1px solid #e8edf4;font-size:13px;line-height:19px;color:#40516a;\">&#128206;&nbsp; ")
-                        .append(escape(file)).append("</td></tr>");
+                html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr>")
+                        .append("<td width=\"48\" valign=\"middle\" bgcolor=\"#edf3fb\" style=\"width:48px;padding:10px 8px;background-color:#edf3fb;border:1px solid #e3eaf4;border-right:0;border-radius:9px 0 0 9px;text-align:center;font-size:10px;line-height:14px;font-weight:700;color:#315784;\">")
+                        .append(escape(fileTypeLabel(file))).append("</td>")
+                        .append("<td valign=\"middle\" bgcolor=\"#fbfcfe\" style=\"padding:10px 12px;background-color:#fbfcfe;border:1px solid #e3eaf4;border-left:0;border-radius:0 9px 9px 0;font-size:13px;line-height:19px;color:#40516a;word-break:break-word;\">")
+                        .append(escape(file)).append("</td></tr></table>")
+                        .append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td height=\"7\" style=\"height:7px;font-size:1px;line-height:1px;\">&nbsp;</td></tr></table>");
             }
-            html.append("</table>");
         }
         if (isSafeHttpUrl(actionUrl)) {
             html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:26px 0 4px;\"><tr><td bgcolor=\"#245da8\" style=\"background-color:#245da8;\"><a href=\"")
@@ -182,6 +184,14 @@ public class EmailTemplateRenderer {
             if (name != null && hasText(String.valueOf(name))) result.add(String.valueOf(name));
         }
         return List.copyOf(result);
+    }
+
+    private String fileTypeLabel(String fileName) {
+        if (!hasText(fileName)) return "FILE";
+        int dot = fileName.lastIndexOf('.');
+        if (dot < 0 || dot == fileName.length() - 1) return "FILE";
+        String extension = fileName.substring(dot + 1).trim().toUpperCase();
+        return extension.length() > 5 ? "FILE" : extension;
     }
 
     private String paragraphs(String value) {
