@@ -83,10 +83,10 @@ public class EmailSenderService {
         if (suppliedName == null || suppliedName.isBlank()) {
             throw new IllegalArgumentException("Email attachment filename is required.");
         }
-        String normalized = suppliedName.replace('\\', '/');
-        String fileName = normalized.substring(normalized.lastIndexOf('/') + 1).trim();
+        String fileName = suppliedName.trim();
         if (fileName.isBlank() || fileName.equals(".") || fileName.equals("..")
-                || fileName.contains("..") || fileName.length() > 255
+                || fileName.contains("..") || fileName.contains("/") || fileName.contains("\\")
+                || fileName.length() > 255
                 || fileName.indexOf('\r') >= 0 || fileName.indexOf('\n') >= 0) {
             throw new IllegalArgumentException("Email attachment filename is invalid.");
         }
