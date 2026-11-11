@@ -1,6 +1,9 @@
 package com.zukunftai.evidyalaya.service.email;
 
 import com.zukunftai.evidyalaya.database.EmailNotificationOutbox;
+import com.zukunftai.evidyalaya.database.EmailNotificationAttachmentSnapshot;
+import com.zukunftai.evidyalaya.email.model.EmailAttachment;
+import com.zukunftai.evidyalaya.repository.EmailNotificationAttachmentSnapshotRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +15,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.UUID;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -22,6 +29,7 @@ public class EmailNotificationDispatcher {
     private final EmailNotificationClaimService claimService;
     private final EmailNotificationStateService stateService;
     private final RestTemplate restTemplate;
+    private final EmailNotificationAttachmentSnapshotRepository attachmentSnapshots;
     private final String emailServiceUrl;
     private final String serviceApiKey;
     private final boolean enabled;
@@ -33,6 +41,7 @@ public class EmailNotificationDispatcher {
             EmailNotificationClaimService claimService,
             EmailNotificationStateService stateService,
             RestTemplate restTemplate,
+            EmailNotificationAttachmentSnapshotRepository attachmentSnapshots,
             @Value("${service.api.emailService}") String emailServiceUrl,
             @Value("${EMAIL_SERVICE_API_KEY:}") String serviceApiKey,
             @Value("${email.notifications.dispatcher.enabled:true}") boolean enabled,
@@ -42,6 +51,7 @@ public class EmailNotificationDispatcher {
         this.claimService = claimService;
         this.stateService = stateService;
         this.restTemplate = restTemplate;
+        this.attachmentSnapshots = attachmentSnapshots;
         this.emailServiceUrl = emailServiceUrl;
         this.serviceApiKey = serviceApiKey;
         this.enabled = enabled;
@@ -72,8 +82,8 @@ public class EmailNotificationDispatcher {
             request.put("emailType", outbox.getTemplateType());
             request.put("userName", outbox.getPayload().getOrDefault("userName", "eVidyalaya user"));
             request.put("templateData", outbox.getPayload());
-            Object attachments = outbox.getPayload().get("attachments");
-            if (attachments != null) request.put("attachments", attachments);
+            List<EmailAttachment> attachments = resolveAttachments(outbox);
+            if (!attachments.isEmpty()) request.put("attachments", attachments);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -90,6 +100,31 @@ public class EmailNotificationDispatcher {
         } catch (RuntimeException exception) {
             recordFailure(outbox, attemptNumber, true, exception.getMessage());
         }
+    }
+
+    private List<EmailAttachment> resolveAttachments(EmailNotificationOutbox outbox) {
+        Object rawIds = outbox.getPayload().get("attachmentSnapshotIds");
+        if (rawIds == null) return List.of();
+        if (!(rawIds instanceof List<?> ids) || ids.size() > 5) {
+            throw new IllegalStateException("Email attachment snapshot references are invalid.");
+        }
+
+        List<EmailAttachment> attachments = new ArrayList<>();
+        for (Object rawId : ids) {
+            UUID id;
+            try {
+                id = UUID.fromString(String.valueOf(rawId));
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalStateException("Email attachment snapshot reference is invalid.", exception);
+            }
+            EmailNotificationAttachmentSnapshot snapshot = attachmentSnapshots.findById(id)
+                    .orElseThrow(() -> new IllegalStateException("A queued email attachment snapshot is missing."));
+            attachments.add(new EmailAttachment(
+                    snapshot.getFileName(),
+                    snapshot.getContentType(),
+                    Base64.getEncoder().encodeToString(snapshot.getContent())));
+        }
+        return List.copyOf(attachments);
     }
 
     private void recordFailure(EmailNotificationOutbox outbox, int attemptNumber,
