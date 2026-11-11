@@ -80,7 +80,7 @@ public class EmailAttachmentSnapshotService {
         String normalized = supplied.replace('\\', '/');
         String name = normalized.substring(normalized.lastIndexOf('/') + 1).trim();
         if (name.isBlank() || name.equals(".") || name.equals("..") || name.contains("..")
-                || name.length() > 255 || name.indexOf('\\r') >= 0 || name.indexOf('\\n') >= 0) {
+                || name.length() > 255 || name.indexOf((char) 13) >= 0 || name.indexOf((char) 10) >= 0) {
             throw new IllegalArgumentException("Email attachment filename is invalid.");
         }
         return name;
@@ -88,7 +88,7 @@ public class EmailAttachmentSnapshotService {
 
     private String safeContentType(String supplied) {
         if (supplied == null || supplied.isBlank()
-                || supplied.indexOf('\\r') >= 0 || supplied.indexOf('\\n') >= 0) {
+                || supplied.indexOf((char) 13) >= 0 || supplied.indexOf((char) 10) >= 0) {
             return "application/octet-stream";
         }
         return supplied;
