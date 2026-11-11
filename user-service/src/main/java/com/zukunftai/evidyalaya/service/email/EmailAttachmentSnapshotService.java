@@ -77,9 +77,9 @@ public class EmailAttachmentSnapshotService {
         if (supplied == null || supplied.isBlank()) {
             throw new IllegalArgumentException("Email attachment filename is required.");
         }
-        String normalized = supplied.replace('\\', '/');
-        String name = normalized.substring(normalized.lastIndexOf('/') + 1).trim();
+        String name = supplied.trim();
         if (name.isBlank() || name.equals(".") || name.equals("..") || name.contains("..")
+                || name.contains("/") || name.contains("\\")
                 || name.length() > 255 || name.indexOf((char) 13) >= 0 || name.indexOf((char) 10) >= 0) {
             throw new IllegalArgumentException("Email attachment filename is invalid.");
         }
