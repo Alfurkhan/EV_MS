@@ -52,6 +52,9 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("school-notice.pdf"));
         assertTrue(rendered.html().contains("schedule.png"));
         assertTrue(rendered.html().contains("border-radius:10px"));
+        assertTrue(rendered.html().contains("border-radius:14px"));
+        assertTrue(rendered.html().contains("border-radius:999px"));
+        assertTrue(rendered.html().contains("border-radius:8px"));
         assertTrue(rendered.html().contains("border-radius:9px 0 0 9px"));
         assertTrue(rendered.html().contains(">PDF</td>"));
         assertTrue(rendered.html().contains(">PNG</td>"));
