@@ -13,7 +13,6 @@ import java.util.UUID;
 @Table(
         name = "email_notification_outbox",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_email_outbox_notification", columnNames = "notification_id"),
                 @UniqueConstraint(name = "uk_email_outbox_deduplication", columnNames = "deduplication_key")
         },
         indexes = {
