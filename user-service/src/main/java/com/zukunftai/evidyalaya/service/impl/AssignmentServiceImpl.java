@@ -6,6 +6,7 @@ import com.zukunftai.evidyalaya.model.AssignmentGradeRequest;
 import com.zukunftai.evidyalaya.model.AssignmentRequest;
 import com.zukunftai.evidyalaya.model.AssignmentSubmissionRequest;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
+import com.zukunftai.evidyalaya.model.EmailAttachmentSource;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.AssignmentService;
 import com.zukunftai.evidyalaya.service.NotificationService;
@@ -143,7 +144,14 @@ public class AssignmentServiceImpl implements AssignmentService {
                 "ASSIGNMENTS",
                 "NORMAL",
                 "/assignments",
-                "ASSIGNMENT:" + assignment.getId(), true));
+                "ASSIGNMENT:" + assignment.getId(), true,
+                Map.of(),
+                assignment.getAttachmentPath() == null || assignment.getAttachmentPath().isBlank()
+                        ? List.of()
+                        : List.of(new EmailAttachmentSource(
+                                resolveStoredAttachment(assignment.getAttachmentPath()).toString(),
+                                assignment.getAttachmentName(),
+                                assignment.getAttachmentContentType()))));
         return published;
     }
 
