@@ -62,6 +62,30 @@ class EmailTemplateRendererTest {
     }
 
     @Test
+    void keepsLongAnnouncementContentAndAttachmentNamesWithinResponsiveLayout() {
+        String longTitle = "Important announcement ".repeat(12);
+        String longMessage = "A".repeat(180) + "\n\nSecond paragraph with additional information.";
+        String longFileName = "very-long-school-document-name-".repeat(8) + ".pdf";
+        EmailRequest request = new EmailRequest(
+                longTitle, null, "student@example.com", "ANNOUNCEMENT", "A Student", null);
+        request.setTemplateData(Map.of(
+                "title", longTitle,
+                "message", longMessage,
+                "attachmentNames", java.util.List.of(longFileName)
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains("@media only screen and (max-width:620px)"));
+        assertTrue(rendered.html().contains("class=\\"email-content\\""));
+        assertTrue(rendered.html().contains("word-break:break-word"));
+        assertTrue(rendered.html().contains(longFileName));
+        assertTrue(rendered.plainText().contains(longFileName));
+        assertTrue(rendered.html().contains("Second paragraph with additional information."));
+        assertTrue(rendered.plainText().contains(longMessage));
+    }
+
+    @Test
     void doesNotRenderUnsafeActionUrl() {
         EmailRequest request = new EmailRequest(
                 "Notice", "Read this", "student@example.com", "ANNOUNCEMENT", "A Student", null);
