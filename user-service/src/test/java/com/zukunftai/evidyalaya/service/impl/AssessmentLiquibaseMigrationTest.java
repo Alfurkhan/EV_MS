@@ -66,7 +66,7 @@ class AssessmentLiquibaseMigrationTest {
             assertTrue(constraintExists(connection, "fk_attempt_student"));
             assertTrue(constraintExists(connection, "fk_answer_evaluated_by"));
 
-            assertEquals(8, assessmentChangeSetCount(connection));
+            assertEquals(9, assessmentChangeSetCount(connection));
         }
     }
 
