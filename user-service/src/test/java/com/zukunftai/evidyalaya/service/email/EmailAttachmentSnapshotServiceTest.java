@@ -9,6 +9,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,7 +24,12 @@ class EmailAttachmentSnapshotServiceTest {
     void snapshotsFileBytesAndSafeMetadata() throws Exception {
         EmailNotificationAttachmentSnapshotRepository repository =
                 mock(EmailNotificationAttachmentSnapshotRepository.class);
-        when(repository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        AtomicReference<List<EmailNotificationAttachmentSnapshot>> savedSnapshots = new AtomicReference<>();
+        when(repository.saveAll(any())).thenAnswer(invocation -> {
+            List<EmailNotificationAttachmentSnapshot> saved = invocation.getArgument(0);
+            savedSnapshots.set(saved);
+            return saved;
+        });
         EmailAttachmentSnapshotService service = new EmailAttachmentSnapshotService(repository);
 
         Path source = temporaryDirectory.resolve("worksheet.txt");
@@ -34,9 +40,8 @@ class EmailAttachmentSnapshotServiceTest {
                 new EmailAttachmentSource(source.toString(), "worksheet.txt", "text/plain")));
 
         assertEquals(1, ids.size());
-        var captor = org.mockito.ArgumentCaptor.forClass(EmailNotificationAttachmentSnapshot.class);
-        verify(repository).saveAll(captor.capture());
-        EmailNotificationAttachmentSnapshot snapshot = captor.getValue().get(0);
+        verify(repository).saveAll(any());
+        EmailNotificationAttachmentSnapshot snapshot = savedSnapshots.get().get(0);
         assertEquals("worksheet.txt", snapshot.getFileName());
         assertEquals("text/plain", snapshot.getContentType());
         assertArrayEquals(expected, snapshot.getContent());
@@ -69,6 +74,6 @@ class EmailAttachmentSnapshotServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.snapshot(List.of(
                 new EmailAttachmentSource(first.toString(), "first.bin", "application/octet-stream"),
                 new EmailAttachmentSource(second.toString(), "second.bin", "application/octet-stream"))));
-        verify(repository, never()).save(any());
+        verify(repository, never()).saveAll(any());
     }
 }
