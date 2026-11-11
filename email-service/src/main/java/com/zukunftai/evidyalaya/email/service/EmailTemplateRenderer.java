@@ -117,7 +117,7 @@ public class EmailTemplateRenderer {
                 <tr><td style="padding:28px 32px 30px;">
                 """);
         if (hasText(type)) {
-            html.append("<p style=\"margin:0 0 18px;\"><span style=\"display:inline-block;padding:6px 10px;background-color:#edf3fb;color:#315784;font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;\">")
+            html.append("<p style=\"margin:0 0 18px;\"><span style=\"display:inline-block;padding:6px 10px;background-color:#edf3fb;color:#315784;font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
                     .append(escape(type.replace('_', ' '))).append("</span></p>");
         }
         html.append("<p style=\"margin:0 0 16px;font-size:15px;line-height:23px;color:#243047;\">Hello ")
@@ -127,12 +127,12 @@ public class EmailTemplateRenderer {
         html.append("<p style=\"margin:0 0 10px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:.7px;color:#64748b;\">")
                 .append("ANNOUNCEMENT".equals(type) ? "MESSAGE" : "DETAILS")
                 .append("</p>");
-        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border-left:3px solid #2b63a8;font-size:15px;line-height:25px;color:#34445b;\">")
+        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border:1px solid #e8edf4;border-left:3px solid #2b63a8;border-radius:10px;font-size:15px;line-height:25px;color:#34445b;\">")
                 .append(paragraphs(content)).append("</td></tr></table>");
 
         if (hasText(publicationDetails)) {
             html.append("<p style=\"margin:24px 0 9px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:.7px;color:#64748b;\">PUBLICATION DETAILS</p>")
-                    .append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td bgcolor=\"#fbfcfe\" style=\"padding:13px 16px;background-color:#fbfcfe;border:1px solid #e8edf4;font-size:13px;line-height:21px;color:#5b687b;\">")
+                    .append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td bgcolor=\"#fbfcfe\" style=\"padding:13px 16px;background-color:#fbfcfe;border:1px solid #e8edf4;border-radius:10px;font-size:13px;line-height:21px;color:#5b687b;\">")
                     .append(paragraphs(publicationDetails)).append("</td></tr></table>");
         }
         if (!attachmentNames.isEmpty()) {
@@ -147,9 +147,9 @@ public class EmailTemplateRenderer {
             }
         }
         if (isSafeHttpUrl(actionUrl)) {
-            html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:26px 0 4px;\"><tr><td bgcolor=\"#245da8\" style=\"background-color:#245da8;\"><a href=\"")
+            html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:26px 0 4px;\"><tr><td bgcolor=\"#245da8\" style=\"background-color:#245da8;border-radius:8px;\"><a href=\"")
                     .append(escape(actionUrl))
-                    .append("\" style=\"display:inline-block;padding:13px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:18px;color:#ffffff;text-decoration:none;font-weight:700;\">")
+                    .append("\" style=\"display:inline-block;padding:13px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:18px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:8px;\">")
                     .append(escape(actionLabel)).append("</a></td></tr></table>");
         }
         html.append("""
