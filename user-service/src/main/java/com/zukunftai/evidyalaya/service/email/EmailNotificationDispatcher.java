@@ -82,8 +82,14 @@ public class EmailNotificationDispatcher {
             request.put("to", outbox.getRecipientEmail());
             request.put("emailType", outbox.getTemplateType());
             request.put("userName", outbox.getPayload().getOrDefault("userName", "eVidyalaya user"));
-            request.put("templateData", outbox.getPayload());
             List<EmailNotificationAttachmentSnapshot> attachments = resolveAttachments(outbox);
+            Map<String, Object> templateData = new LinkedHashMap<>(outbox.getPayload());
+            if (!attachments.isEmpty()) {
+                templateData.put("attachmentNames", attachments.stream()
+                        .map(EmailNotificationAttachmentSnapshot::getFileName)
+                        .toList());
+            }
+            request.put("templateData", templateData);
             HttpHeaders headers = new HttpHeaders();
             headers.set("X-Service-Email-Key", serviceApiKey);
 
