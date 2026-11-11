@@ -51,6 +51,10 @@ class EmailTemplateRendererTest {
                 < rendered.html().indexOf("PUBLICATION DETAILS"));
         assertTrue(rendered.html().contains("school-notice.pdf"));
         assertTrue(rendered.html().contains("schedule.png"));
+        assertTrue(rendered.html().contains("border-radius:10px"));
+        assertTrue(rendered.html().contains("border-radius:9px 0 0 9px"));
+        assertTrue(rendered.html().contains(">PDF</td>"));
+        assertTrue(rendered.html().contains(">PNG</td>"));
         assertTrue(rendered.plainText().contains("Attachments:\n- school-notice.pdf\n- schedule.png"));
     }
 
