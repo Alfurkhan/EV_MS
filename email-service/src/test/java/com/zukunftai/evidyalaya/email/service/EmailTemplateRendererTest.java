@@ -51,7 +51,7 @@ class EmailTemplateRendererTest {
                 < rendered.html().indexOf("PUBLICATION DETAILS"));
         assertTrue(rendered.html().contains("school-notice.pdf"));
         assertTrue(rendered.html().contains("schedule.png"));
-        assertTrue(rendered.plainText().contains("Attachments:\\n- school-notice.pdf\\n- schedule.png"));
+        assertTrue(rendered.plainText().contains("Attachments:\n- school-notice.pdf\n- schedule.png"));
     }
 
     @Test
@@ -91,7 +91,7 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.plainText().contains("Unit Test 1 (Mathematics)"));
         assertTrue(rendered.plainText().contains("Marks: 8.00 / 10.00"));
         assertTrue(rendered.plainText().contains("Percentage: 80.00%"));
-        assertTrue(rendered.plainText().contains("Open eVidyalaya: https://school.example.com/my-assessments"));
+        assertTrue(rendered.plainText().contains("View result: https://school.example.com/my-assessments"));
         assertTrue(rendered.html().contains("Marks: 8.00 / 10.00"));
         assertTrue(rendered.html().contains("Percentage: 80.00%"));
         assertTrue(rendered.html().contains("View result"));
@@ -114,7 +114,7 @@ class EmailTemplateRendererTest {
         EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
 
         assertTrue(rendered.plainText().contains(
-                "Open eVidyalaya: http://localhost:5173/my-assessments"));
+                "View result: http://localhost:5173/my-assessments"));
         assertTrue(rendered.html().contains(
                 "href=\"http://localhost:5173/my-assessments\""));
     }
