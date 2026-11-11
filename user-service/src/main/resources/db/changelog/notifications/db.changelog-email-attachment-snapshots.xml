@@ -16,7 +16,7 @@
                 file_size BIGINT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT chk_email_attachment_snapshot_size
-                    CHECK (file_size > 0 AND file_size <= 26214400)
+                    CHECK (file_size > 0 AND file_size &lt;= 26214400)
             );
 
             CREATE INDEX idx_email_attachment_snapshot_created
