@@ -29,6 +29,15 @@ public class AnnouncementController {
     public AnnouncementResponse create(@Valid @RequestBody AnnouncementRequest request){ return service.create(request); }
     @PutMapping("/{id}") @PreAuthorize("hasAnyRole('ADMIN','FACULTY')")
     public AnnouncementResponse update(@PathVariable Long id,@Valid @RequestBody AnnouncementRequest request){ return service.update(id,request); }
+    @PutMapping(path = "/{id}/edit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN','FACULTY')")
+    public AnnouncementResponse updateWithAttachments(
+            @PathVariable Long id,
+            @Valid @RequestPart("request") AnnouncementRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        return service.updateWithAttachments(id, request, files);
+    }
+
     @PostMapping(path = "/{id}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMIN','FACULTY')")
     public AnnouncementResponse uploadAttachments(
