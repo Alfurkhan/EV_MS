@@ -380,4 +380,52 @@ class NotificationServiceImplTest {
                 captor.getValue().getLastError());
     }
 
+    @Test
+    void queuesOneRevisionEmailPerExistingRecipientWithoutCreatingDuplicateInAppNotifications() {
+        User first = User.builder().id(631L).email("first@example.com").fullName("First Student")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        User second = User.builder().id(632L).email("second@example.com").fullName("Second Student")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        Notification firstNotification = Notification.builder().id(8301L).user(first)
+                .sourceType("ANNOUNCEMENT").sourceId(912L).title("Updated notice")
+                .message("The revised details are here.").category("ANNOUNCEMENTS")
+                .priority("IMPORTANT").targetUrl("/announcements").build();
+        Notification secondNotification = Notification.builder().id(8302L).user(second)
+                .sourceType("ANNOUNCEMENT").sourceId(912L).title("Updated notice")
+                .message("The revised details are here.").category("ANNOUNCEMENTS")
+                .priority("IMPORTANT").targetUrl("/announcements").build();
+        List<EmailAttachmentSource> sources = List.of(
+                new EmailAttachmentSource("C:/uploads/revised.pdf", "revised.pdf", "application/pdf"));
+
+        when(notificationRepository.findBySourceTypeAndSourceId("ANNOUNCEMENT", 912L))
+                .thenReturn(List.of(firstNotification, secondNotification));
+        when(emailNotificationProperties.isGloballyEnabled()).thenReturn(true);
+        when(emailNotificationProperties.isEventEnabled("ANNOUNCEMENT")).thenReturn(true);
+        when(emailNotificationProperties.isTestEmailAddress(anyString())).thenReturn(false);
+        when(emailOutboxRepository.existsByDeduplicationKey(anyString())).thenReturn(false);
+        when(attachmentSnapshotService.snapshot(sources)).thenReturn(List.of("snapshot-revision-1"));
+
+        notificationService.updateForSource("ANNOUNCEMENT", 912L, "Updated notice",
+                "The revised details are here.", "IMPORTANT", sources, "2026-11-11T10:00:00Z");
+
+        ArgumentCaptor<EmailNotificationOutbox> captor =
+                ArgumentCaptor.forClass(EmailNotificationOutbox.class);
+        verify(emailOutboxRepository, times(2)).save(captor.capture());
+        verify(attachmentSnapshotService, times(1)).snapshot(sources);
+        verify(notificationRepository, never()).save(any(Notification.class));
+        assertEquals(List.of("first@example.com", "second@example.com"),
+                captor.getAllValues().stream().map(EmailNotificationOutbox::getRecipientEmail).toList());
+        assertEquals(List.of(8301L, 8302L),
+                captor.getAllValues().stream().map(EmailNotificationOutbox::getNotificationId).toList());
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getDeduplicationKey().contains(":REVISION:")));
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getSubject().equals("Updated: Updated notice")));
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getPayload().get("isUpdate").equals(true)));
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getPayload().get("attachmentSnapshotIds")
+                        .equals(List.of("snapshot-revision-1"))));
+    }
+
 }
