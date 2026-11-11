@@ -36,7 +36,7 @@ class EmailTemplateRendererTest {
                 "ANNOUNCEMENT", "A Student", null);
         request.setTemplateData(Map.of(
                 "title", "Email Attachment Testing",
-                "message", "Published by Admin for Grade 10 (2026-2027).\n\nPlease review the attached documents carefully.",
+                "message", "Published by Admin for Grade 10 (2026-2027). Please review the attached documents carefully.",
                 "targetUrl", "/announcements",
                 "attachmentNames", java.util.List.of("school-notice.pdf", "schedule.png")
         ));
