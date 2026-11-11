@@ -31,7 +31,7 @@ public class EmailController {
         this.configuredServiceKey = configuredServiceKey;
     }
 
-    @PostMapping(value = "/send", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/send")
     public ResponseEntity<Void> sendEmail(
             @RequestHeader(value = SERVICE_KEY_HEADER, required = false) String suppliedServiceKey,
             @RequestBody EmailRequest request) {
