@@ -271,7 +271,13 @@ public class AnnouncementServiceImpl {
                 "ANNOUNCEMENT", announcement.getId(), announcement.getTitle(),
                 message.length() > 1000 ? message.substring(0, 997) + "..." : message,
                 "ANNOUNCEMENTS", announcement.getPriority().name(),
-                "/announcements", "ANNOUNCEMENT:" + announcement.getId(), true);
+                "/announcements", "ANNOUNCEMENT:" + announcement.getId(), true,
+                Map.of(),
+                attachmentRepository.findByAnnouncementOrderByCreatedAtAsc(announcement).stream()
+                        .map(file -> new EmailAttachmentSource(
+                                attachmentStorage.resolve(file.getStoredPath()).toString(),
+                                file.getOriginalName(), file.getContentType()))
+                        .toList());
         if (includeAdminOversight) {
             notificationService.createForUsersAndAdmins(targets, command);
         } else {
