@@ -30,6 +30,31 @@ class EmailTemplateRendererTest {
     }
 
     @Test
+    void givesAnnouncementMessageItsOwnSectionAndMovesPublicationDetailsBelowIt() {
+        EmailRequest request = new EmailRequest(
+                "Email Attachment Testing", null, "student@example.com",
+                "ANNOUNCEMENT", "A Student", null);
+        request.setTemplateData(Map.of(
+                "title", "Email Attachment Testing",
+                "message", "Published by Admin for Grade 10 (2026-2027).\n\nPlease review the attached documents carefully.",
+                "targetUrl", "/announcements",
+                "attachmentNames", java.util.List.of("school-notice.pdf", "schedule.png")
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains(">MESSAGE</p>"));
+        assertTrue(rendered.html().contains("Please review the attached documents carefully."));
+        assertTrue(rendered.html().contains("PUBLICATION DETAILS"));
+        assertTrue(rendered.html().contains("Published by Admin for Grade 10 (2026-2027)."));
+        assertTrue(rendered.html().indexOf("Please review the attached documents carefully.")
+                < rendered.html().indexOf("PUBLICATION DETAILS"));
+        assertTrue(rendered.html().contains("school-notice.pdf"));
+        assertTrue(rendered.html().contains("schedule.png"));
+        assertTrue(rendered.plainText().contains("Attachments:\\n- school-notice.pdf\\n- schedule.png"));
+    }
+
+    @Test
     void doesNotRenderUnsafeActionUrl() {
         EmailRequest request = new EmailRequest(
                 "Notice", "Read this", "student@example.com", "ANNOUNCEMENT", "A Student", null);
