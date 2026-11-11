@@ -72,6 +72,8 @@ public class EmailNotificationDispatcher {
             request.put("emailType", outbox.getTemplateType());
             request.put("userName", outbox.getPayload().getOrDefault("userName", "eVidyalaya user"));
             request.put("templateData", outbox.getPayload());
+            Object attachments = outbox.getPayload().get("attachments");
+            if (attachments != null) request.put("attachments", attachments);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
