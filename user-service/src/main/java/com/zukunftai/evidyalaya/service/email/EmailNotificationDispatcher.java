@@ -101,7 +101,7 @@ public class EmailNotificationDispatcher {
         }
     }
 
-    private List<EmailAttachment> resolveAttachments(EmailNotificationOutbox outbox) {
+    private List<Map<String, String>> resolveAttachments(EmailNotificationOutbox outbox) {
         Object rawIds = outbox.getPayload().get("attachmentSnapshotIds");
         if (rawIds == null) return List.of();
         if (!(rawIds instanceof List<?> ids) || ids.size() > 5) {
