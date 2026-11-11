@@ -32,6 +32,8 @@ public class EmailSenderService {
     }
 
     public void sendEmail(EmailRequest request, List<MultipartFile> attachments) {
+        // Fail fast before creating a MIME message or touching the mail sender.
+        validateAttachments(attachments);
         EmailTemplateRenderer.RenderedEmail rendered = templateRenderer.render(request);
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -45,6 +47,29 @@ public class EmailSenderService {
             mailSender.send(message);
         } catch (MessagingException | IOException exception) {
             throw new IllegalStateException("Unable to create eVidyalaya email message.", exception);
+        }
+    }
+
+    private void validateAttachments(List<MultipartFile> attachments) {
+        if (attachments == null || attachments.isEmpty()) return;
+        if (attachments.size() > MAX_ATTACHMENTS) {
+            throw new IllegalArgumentException("An email can contain at most five attachments.");
+        }
+
+        long totalBytes = 0;
+        for (MultipartFile attachment : attachments) {
+            if (attachment == null || attachment.isEmpty()) {
+                throw new IllegalArgumentException("Email attachment content is missing.");
+            }
+            safeFileName(attachment.getOriginalFilename());
+            long size = attachment.getSize();
+            if (size <= 0 || size > MAX_ATTACHMENT_BYTES) {
+                throw new IllegalArgumentException("Each email attachment must be between 1 byte and 25 MB.");
+            }
+            totalBytes += size;
+            if (totalBytes > MAX_ATTACHMENT_BYTES) {
+                throw new IllegalArgumentException("The combined email attachments cannot exceed 25 MB.");
+            }
         }
     }
 
