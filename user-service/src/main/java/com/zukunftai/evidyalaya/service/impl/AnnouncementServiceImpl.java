@@ -71,16 +71,30 @@ public class AnnouncementServiceImpl {
     }
 
     public AnnouncementResponse update(Long id, AnnouncementRequest request) {
+        return updateInternal(id, request, true);
+    }
+
+    private AnnouncementResponse updateInternal(Long id, AnnouncementRequest request, boolean sendRevisionEmail) {
         User actor=currentUser();
         Announcement a=announcements.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
         boolean admin=hasRole(actor,RoleName.ROLE_ADMIN);
         if(!admin && !a.getCreatedBy().getId().equals(actor.getId())) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         if(a.getStatus()==AnnouncementStatus.ARCHIVED) throw new ResponseStatusException(HttpStatus.CONFLICT,"Archived announcements cannot be edited.");
         if(a.getStatus()==AnnouncementStatus.PUBLISHED) {
-            a.setTitle(request.title().trim()); a.setMessage(request.message().trim()); a.setPriority(request.priority()); a.setUpdatedAt(Instant.now());
-            notificationService.updateForSource("ANNOUNCEMENT", id, a.getTitle(),
-                    a.getMessage().length()>1000?a.getMessage().substring(0,997)+"...":a.getMessage(),
-                    a.getPriority().name());
+            String updatedTitle = request.title().trim();
+            String updatedMessage = request.message().trim();
+            boolean meaningfulChange = !Objects.equals(a.getTitle(), updatedTitle)
+                    || !Objects.equals(a.getMessage(), updatedMessage)
+                    || !Objects.equals(a.getPriority(), request.priority());
+            if (meaningfulChange) {
+                a.setTitle(updatedTitle);
+                a.setMessage(updatedMessage);
+                a.setPriority(request.priority());
+                a.setUpdatedAt(Instant.now());
+                if (sendRevisionEmail) {
+                    queuePublishedRevisionEmail(a);
+                }
+            }
             return response(announcements.save(a),actor);
         }
         validateTarget(request,actor,admin);
@@ -92,6 +106,52 @@ public class AnnouncementServiceImpl {
         a.setPriority(request.priority()); a.setScheduledAt(request.scheduledAt()); a.setExpiresAt(request.expiresAt()); a.setUpdatedAt(Instant.now());
         if(request.scheduledAt()!=null && request.scheduledAt().isAfter(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))) a.setStatus(AnnouncementStatus.SCHEDULED);
         return response(announcements.save(a),actor);
+    }
+
+    /**
+     * Updates a published announcement and its newly uploaded attachments as one
+     * coordinated edit, then queues exactly one revision email containing the
+     * final persisted attachment set.
+     */
+    public AnnouncementResponse updateWithAttachments(Long id, AnnouncementRequest request,
+            List<MultipartFile> files) {
+        Announcement original = announcements.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        boolean wasPublished = original.getStatus() == AnnouncementStatus.PUBLISHED;
+        boolean contentChanged = wasPublished
+                && (!Objects.equals(original.getTitle(), request.title().trim())
+                || !Objects.equals(original.getMessage(), request.message().trim())
+                || !Objects.equals(original.getPriority(), request.priority()));
+        boolean attachmentsAdded = files != null && !files.isEmpty();
+
+        updateInternal(id, request, false);
+        if (attachmentsAdded) {
+            uploadAttachments(id, files);
+        }
+
+        Announcement updated = announcements.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (wasPublished && (contentChanged || attachmentsAdded)) {
+            updated.setUpdatedAt(Instant.now());
+            queuePublishedRevisionEmail(updated);
+            announcements.save(updated);
+        }
+        return response(updated, currentUser());
+    }
+
+    private void queuePublishedRevisionEmail(Announcement announcement) {
+        List<EmailAttachmentSource> currentAttachments = attachmentRepository
+                .findByAnnouncementOrderByCreatedAtAsc(announcement).stream()
+                .map(file -> new EmailAttachmentSource(
+                        attachmentStorage.resolve(file.getStoredPath()).toString(),
+                        file.getOriginalName(), file.getContentType()))
+                .toList();
+        String message = announcement.getMessage().length() > 1000
+                ? announcement.getMessage().substring(0, 997) + "..."
+                : announcement.getMessage();
+        notificationService.updateForSource("ANNOUNCEMENT", announcement.getId(),
+                announcement.getTitle(), message, announcement.getPriority().name(),
+                currentAttachments, announcement.getUpdatedAt().toString());
     }
 
     private static final int MAX_ANNOUNCEMENT_ATTACHMENTS = 5;
@@ -271,7 +331,13 @@ public class AnnouncementServiceImpl {
                 "ANNOUNCEMENT", announcement.getId(), announcement.getTitle(),
                 message.length() > 1000 ? message.substring(0, 997) + "..." : message,
                 "ANNOUNCEMENTS", announcement.getPriority().name(),
-                "/announcements", "ANNOUNCEMENT:" + announcement.getId(), true);
+                "/announcements", "ANNOUNCEMENT:" + announcement.getId(), true,
+                Map.of(),
+                attachmentRepository.findByAnnouncementOrderByCreatedAtAsc(announcement).stream()
+                        .map(file -> new EmailAttachmentSource(
+                                attachmentStorage.resolve(file.getStoredPath()).toString(),
+                                file.getOriginalName(), file.getContentType()))
+                        .toList());
         if (includeAdminOversight) {
             notificationService.createForUsersAndAdmins(targets, command);
         } else {

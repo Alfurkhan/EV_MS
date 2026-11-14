@@ -8,6 +8,8 @@ import com.zukunftai.evidyalaya.database.Role;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
+import com.zukunftai.evidyalaya.model.EmailAttachmentSource;
+import com.zukunftai.evidyalaya.service.email.EmailAttachmentSnapshotService;
 import com.zukunftai.evidyalaya.model.NotificationResponse;
 import com.zukunftai.evidyalaya.repository.EmailNotificationOutboxRepository;
 import com.zukunftai.evidyalaya.repository.NotificationRepository;
@@ -46,6 +48,9 @@ class NotificationServiceImplTest {
 
     @Mock
     private EmailNotificationOutboxRepository emailOutboxRepository;
+
+    @Mock
+    private EmailAttachmentSnapshotService attachmentSnapshotService;
 
     @Mock
     private EmailNotificationProperties emailNotificationProperties;
@@ -185,6 +190,42 @@ class NotificationServiceImplTest {
         assertEquals(EmailNotificationOutboxStatus.PENDING, queued.getStatus());
         assertEquals("The school will reopen on Monday.", queued.getPayload().get("message"));
         assertEquals("/announcements", queued.getPayload().get("targetUrl"));
+    }
+
+    @Test
+    void reusesOneImmutableAttachmentSnapshotReferenceAcrossRecipientOutboxEntries() {
+        User first = User.builder().id(621L).email("first@example.com")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        User second = User.builder().id(622L).email("second@example.com")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        NotificationCommand command = new NotificationCommand(
+                "ANNOUNCEMENT", 911L, "School notice", "Please read the attached notice.",
+                "ANNOUNCEMENTS", "NORMAL", "/announcements", "ANNOUNCEMENT:911", true,
+                Map.of(), List.of(new EmailAttachmentSource(
+                        "C:/evidyalaya/uploads/notice.pdf", "notice.pdf", "application/pdf")));
+
+        when(notificationRepository.existsByDeduplicationKey(anyString())).thenReturn(false);
+        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
+            Notification saved = invocation.getArgument(0);
+            saved.setId(7200L + saved.getUser().getId());
+            return saved;
+        });
+        when(emailNotificationProperties.isTestEmailAddress(anyString())).thenReturn(false);
+        when(emailNotificationProperties.isGloballyEnabled()).thenReturn(true);
+        when(emailNotificationProperties.isEventEnabled("ANNOUNCEMENT")).thenReturn(true);
+        when(attachmentSnapshotService.snapshot(command.attachmentSources()))
+                .thenReturn(List.of("d5e7bfa1-2b9a-4e89-9f40-2df3f25d91a1"));
+
+        notificationService.createForUsers(List.of(first, second), command);
+
+        ArgumentCaptor<EmailNotificationOutbox> captor =
+                ArgumentCaptor.forClass(EmailNotificationOutbox.class);
+        verify(attachmentSnapshotService, times(1)).snapshot(command.attachmentSources());
+        verify(emailOutboxRepository, times(2)).save(captor.capture());
+        assertEquals(List.of("d5e7bfa1-2b9a-4e89-9f40-2df3f25d91a1"),
+                captor.getAllValues().get(0).getPayload().get("attachmentSnapshotIds"));
+        assertEquals(List.of("d5e7bfa1-2b9a-4e89-9f40-2df3f25d91a1"),
+                captor.getAllValues().get(1).getPayload().get("attachmentSnapshotIds"));
     }
 
     @Test
@@ -337,6 +378,54 @@ class NotificationServiceImplTest {
         assertEquals(
                 "Email notifications for this event are disabled by configuration.",
                 captor.getValue().getLastError());
+    }
+
+    @Test
+    void queuesOneRevisionEmailPerExistingRecipientWithoutCreatingDuplicateInAppNotifications() {
+        User first = User.builder().id(631L).email("first@example.com").fullName("First Student")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        User second = User.builder().id(632L).email("second@example.com").fullName("Second Student")
+                .emailVerified(true).accountEnabled(true).accountDeleted(false).build();
+        Notification firstNotification = Notification.builder().id(8301L).user(first)
+                .sourceType("ANNOUNCEMENT").sourceId(912L).title("Updated notice")
+                .message("The revised details are here.").category("ANNOUNCEMENTS")
+                .priority("IMPORTANT").targetUrl("/announcements").build();
+        Notification secondNotification = Notification.builder().id(8302L).user(second)
+                .sourceType("ANNOUNCEMENT").sourceId(912L).title("Updated notice")
+                .message("The revised details are here.").category("ANNOUNCEMENTS")
+                .priority("IMPORTANT").targetUrl("/announcements").build();
+        List<EmailAttachmentSource> sources = List.of(
+                new EmailAttachmentSource("C:/uploads/revised.pdf", "revised.pdf", "application/pdf"));
+
+        when(notificationRepository.findBySourceTypeAndSourceId("ANNOUNCEMENT", 912L))
+                .thenReturn(List.of(firstNotification, secondNotification));
+        when(emailNotificationProperties.isGloballyEnabled()).thenReturn(true);
+        when(emailNotificationProperties.isEventEnabled("ANNOUNCEMENT")).thenReturn(true);
+        when(emailNotificationProperties.isTestEmailAddress(anyString())).thenReturn(false);
+        when(emailOutboxRepository.existsByDeduplicationKey(anyString())).thenReturn(false);
+        when(attachmentSnapshotService.snapshot(sources)).thenReturn(List.of("snapshot-revision-1"));
+
+        notificationService.updateForSource("ANNOUNCEMENT", 912L, "Updated notice",
+                "The revised details are here.", "IMPORTANT", sources, "2026-11-11T10:00:00Z");
+
+        ArgumentCaptor<EmailNotificationOutbox> captor =
+                ArgumentCaptor.forClass(EmailNotificationOutbox.class);
+        verify(emailOutboxRepository, times(2)).save(captor.capture());
+        verify(attachmentSnapshotService, times(1)).snapshot(sources);
+        verify(notificationRepository, never()).save(any(Notification.class));
+        assertEquals(List.of("first@example.com", "second@example.com"),
+                captor.getAllValues().stream().map(EmailNotificationOutbox::getRecipientEmail).toList());
+        assertEquals(List.of(8301L, 8302L),
+                captor.getAllValues().stream().map(EmailNotificationOutbox::getNotificationId).toList());
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getDeduplicationKey().contains(":REVISION:")));
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getSubject().equals("Updated: Updated notice")));
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getPayload().get("isUpdate").equals(true)));
+        assertTrue(captor.getAllValues().stream()
+                .allMatch(entry -> entry.getPayload().get("attachmentSnapshotIds")
+                        .equals(List.of("snapshot-revision-1"))));
     }
 
 }

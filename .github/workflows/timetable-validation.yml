@@ -9,6 +9,7 @@ on:
       - feature/evidyalaya-final-development
       - feature/notification-lifecycle-phase-2
       - feature/notification-producers
+      - feature/email-notifications
   push:
     branches:
       - feature/faculty-timetable-approval
@@ -19,6 +20,7 @@ on:
       - feature/notification-admin-oversight
       - feature/notification-lifecycle-phase-2
       - feature/notification-producers
+      - feature/email-attachment-delivery
 
 permissions:
   contents: read

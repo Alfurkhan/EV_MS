@@ -6,6 +6,7 @@ import com.zukunftai.evidyalaya.model.AssessmentQuestionRequest;
 import com.zukunftai.evidyalaya.model.AssessmentRequest;
 import com.zukunftai.evidyalaya.model.AssessmentParticipationReportResponse;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
+import com.zukunftai.evidyalaya.model.EmailAttachmentSource;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.AssessmentService;
 import com.zukunftai.evidyalaya.service.NotificationService;
@@ -414,7 +415,14 @@ public class AssessmentServiceImpl implements AssessmentService {
         NotificationCommand command = new NotificationCommand(
                 "ASSESSMENT", assessment.getId(), "New assessment: " + assessment.getTitle(),
                 message, "ASSESSMENTS", "NORMAL", "/assessments",
-                "ASSESSMENT:" + assessment.getId(), true);
+                "ASSESSMENT:" + assessment.getId(), true,
+                Map.of(),
+                assessment.getAttachmentPath() == null || assessment.getAttachmentPath().isBlank()
+                        ? List.of()
+                        : List.of(new EmailAttachmentSource(
+                                resolveStoredAttachment(assessment.getAttachmentPath()).toString(),
+                                assessment.getAttachmentName(),
+                                assessment.getAttachmentContentType())));
 
         if (publishedByAdmin) {
             List<User> affectedUsers = new ArrayList<>(students);

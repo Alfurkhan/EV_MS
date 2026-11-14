@@ -1,6 +1,7 @@
 package com.zukunftai.evidyalaya.service.impl;
 
 import com.zukunftai.evidyalaya.database.*;
+import com.zukunftai.evidyalaya.model.FacultyAnswerEvaluationRequest;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.NotificationService;

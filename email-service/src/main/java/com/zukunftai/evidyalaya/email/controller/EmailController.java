@@ -5,6 +5,11 @@ import com.zukunftai.evidyalaya.email.service.EmailSenderService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestPart;
+
+import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
@@ -37,6 +42,20 @@ public class EmailController {
 
         emailSenderService.sendEmail(request);
 
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> sendEmailWithAttachments(
+            @RequestHeader(value = SERVICE_KEY_HEADER, required = false) String suppliedServiceKey,
+            @RequestPart("request") EmailRequest request,
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+
+        if (!isAuthorized(suppliedServiceKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        emailSenderService.sendEmail(request, attachments);
         return ResponseEntity.ok().build();
     }
 
