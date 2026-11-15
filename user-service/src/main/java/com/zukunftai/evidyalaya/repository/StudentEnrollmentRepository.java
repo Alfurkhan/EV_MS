@@ -74,6 +74,8 @@ public interface StudentEnrollmentRepository
     );
 
 
+    List<StudentEnrollment> findByStudentAndActiveTrue(User student);
+
     /*
      * Get active enrollments for an
      * Academic Year.
@@ -90,6 +92,19 @@ public interface StudentEnrollmentRepository
      */
     List<StudentEnrollment>
     findByAcademicYearAndGradeAndSectionAndActiveTrue(
+            AcademicYear academicYear,
+            Grade grade,
+            Section section
+    );
+
+    List<StudentEnrollment> findByGradeAndActiveTrue(Grade grade);
+
+    List<StudentEnrollment> findByAcademicYearAndGradeInAndActiveTrue(
+            AcademicYear academicYear,
+            List<Grade> grades
+    );
+
+    long countByAcademicYearAndGradeAndSectionAndActiveTrue(
             AcademicYear academicYear,
             Grade grade,
             Section section

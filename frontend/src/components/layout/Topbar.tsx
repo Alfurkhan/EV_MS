@@ -1,7 +1,6 @@
 import {
     Menu,
     Search,
-    Bell,
     UserCircle,
 } from "lucide-react";
 
@@ -13,6 +12,7 @@ import {
 
 import { useState, useRef, useEffect } from "react";
 import UserMenu from "./UserMenu";
+import NotificationBell from "./NotificationBell";
 
 export default function Topbar() {
 
@@ -73,6 +73,11 @@ export default function Topbar() {
         "/notifications": {
             title: "Notifications",
             subtitle: "Stay updated with school activities",
+        },
+
+        "/announcements": {
+            title: "Announcements",
+            subtitle: "School updates and class communication",
         },
 
         "/settings": {
@@ -183,10 +188,7 @@ export default function Topbar() {
 
 
                 {/* Notifications */}
-                <Bell
-                    className="cursor-pointer"
-                    size={22}
-                />
+                <NotificationBell />
 
 
                 {/* User Menu */}

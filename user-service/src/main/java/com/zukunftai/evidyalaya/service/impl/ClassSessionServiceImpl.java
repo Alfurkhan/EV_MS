@@ -1,17 +1,23 @@
 package com.zukunftai.evidyalaya.service.impl;
 
 import com.zukunftai.evidyalaya.database.ClassSession;
+import com.zukunftai.evidyalaya.database.ClassType;
+import com.zukunftai.evidyalaya.database.StudentEnrollment;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.Timetable;
+import com.zukunftai.evidyalaya.database.TimetableStatus;
 import com.zukunftai.evidyalaya.database.User;
 import com.zukunftai.evidyalaya.exception.APIException;
 import com.zukunftai.evidyalaya.model.ClassSessionResponse;
 import com.zukunftai.evidyalaya.model.ClassSessionStatus;
 import com.zukunftai.evidyalaya.model.FacultyMyClassResponse;
+import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.repository.ClassSessionRepository;
 import com.zukunftai.evidyalaya.repository.TimetableRepository;
+import com.zukunftai.evidyalaya.repository.StudentEnrollmentRepository;
 import com.zukunftai.evidyalaya.repository.UserRepository;
 import com.zukunftai.evidyalaya.service.ClassSessionService;
+import com.zukunftai.evidyalaya.service.NotificationService;
 import org.springframework.http.HttpStatus;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import org.springframework.security.core.Authentication;
@@ -34,15 +40,21 @@ public class ClassSessionServiceImpl implements ClassSessionService {
     private final ClassSessionRepository classSessionRepository;
     private final TimetableRepository timetableRepository;
     private final UserRepository userRepository;
+    private final StudentEnrollmentRepository studentEnrollmentRepository;
+    private final NotificationService notificationService;
 
     public ClassSessionServiceImpl(
             ClassSessionRepository classSessionRepository,
             TimetableRepository timetableRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            StudentEnrollmentRepository studentEnrollmentRepository,
+            NotificationService notificationService
     ) {
         this.classSessionRepository = classSessionRepository;
         this.timetableRepository = timetableRepository;
         this.userRepository = userRepository;
+        this.studentEnrollmentRepository = studentEnrollmentRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -101,6 +113,39 @@ public class ClassSessionServiceImpl implements ClassSessionService {
 
         ClassSession savedSession =
                 classSessionRepository.save(session);
+
+        if (timetable.getClassType() == ClassType.ONLINE) {
+            List<User> students = studentEnrollmentRepository
+                    .findByAcademicYearAndGradeAndSectionAndActiveTrue(
+                            timetable.getAcademicYear(),
+                            timetable.getGrade(),
+                            timetable.getSection()
+                    )
+                    .stream()
+                    .map(StudentEnrollment::getStudent)
+                    .filter(student -> student != null && student.getId() != null)
+                    .toList();
+
+            if (!students.isEmpty()) {
+                String classLabel = timetable.getSubject().getName()
+                        + " (Grade " + timetable.getGrade().getName()
+                        + " - " + timetable.getSection().getName() + ")";
+                notificationService.createForUsers(
+                        students,
+                        new NotificationCommand(
+                                "CLASS_SESSION",
+                                savedSession.getId(),
+                                "Online class started",
+                                "Your online class " + classLabel
+                                        + " has started. Open your timetable to join.",
+                                "CLASSES",
+                                "IMPORTANT",
+                                "/my-timetable",
+                                "CLASS_SESSION:START:" + savedSession.getId()
+                        )
+                );
+            }
+        }
 
         return toResponse(savedSession);
     }
@@ -515,6 +560,74 @@ public class ClassSessionServiceImpl implements ClassSessionService {
         }
 
         return authentication.getName();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<FacultyMyClassResponse> getMyAssignedClasses() {
+
+        User faculty = getCurrentFaculty();
+        LocalDate today = LocalDate.now();
+
+        List<Timetable> timetables = timetableRepository
+                .findByFacultyAndStatusAndActiveTrue(faculty, TimetableStatus.APPROVED)
+                .stream()
+                .sorted(Comparator
+                        .comparing(Timetable::getDayOfWeek)
+                        .thenComparing(Timetable::getStartTime))
+                .toList();
+
+        List<FacultyMyClassResponse> responses = new ArrayList<>();
+
+        for (Timetable timetable : timetables) {
+            ClassSession session = classSessionRepository
+                    .findByTimetableAndSessionDate(timetable, today)
+                    .orElse(null);
+
+            FacultyMyClassResponse.FacultyMyClassResponseBuilder response =
+                    FacultyMyClassResponse.builder()
+                            .timetableId(timetable.getId())
+                            .sessionDate(today)
+                            .dayOfWeek(timetable.getDayOfWeek().name())
+                            .academicYearId(timetable.getAcademicYear().getId())
+                            .academicYearName(timetable.getAcademicYear().getName())
+                            .gradeId(timetable.getGrade().getId())
+                            .gradeName(timetable.getGrade().getName())
+                            .sectionId(timetable.getSection().getId())
+                            .sectionName(timetable.getSection().getName())
+                            .subjectId(timetable.getSubject().getId())
+                            .subjectName(timetable.getSubject().getName())
+                            .subjectCode(timetable.getSubject().getCode())
+                            .facultyId(timetable.getFaculty().getId())
+                            .facultyName(timetable.getFaculty().getFullName())
+                            .facultyEmail(timetable.getFaculty().getEmail())
+                            .scheduledStartTime(timetable.getStartTime())
+                            .scheduledEndTime(timetable.getEndTime())
+                            .startDate(timetable.getStartDate())
+                            .endDate(timetable.getEndDate())
+                            .classType(timetable.getClassType())
+                            .room(timetable.getRoom())
+                            .meetingLink(timetable.getMeetingLink())
+                            .notes(timetable.getNotes());
+
+            if (session == null) {
+                response.status("NOT_STARTED")
+                        .sessionId(null)
+                        .startedAt(null)
+                        .endedAt(null)
+                        .durationMinutes(null);
+            } else {
+                response.status(session.getStatus().name())
+                        .sessionId(session.getId())
+                        .startedAt(session.getStartedAt())
+                        .endedAt(session.getEndedAt())
+                        .durationMinutes(session.getDurationMinutes());
+            }
+
+            responses.add(response.build());
+        }
+
+        return responses;
     }
 
     @Override

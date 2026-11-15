@@ -1,0 +1,2 @@
+export interface AdminAssessmentItem {id:number;title:string;assessmentType:string;status:string;subjectName:string;facultyName:string;gradeName:string;sectionName:string;availableFrom:string;availableUntil:string;timingMode:string;totalMarks:number;resultsPublished:boolean;submittedCount:number;activeCount:number;pendingEvaluationCount:number;}
+export interface AdminAssessmentDetail {assessment:AdminAssessmentItem;totalAttempts:number;submittedCount:number;activeCount:number;evaluatedCount:number;pendingEvaluationCount:number;}

@@ -1,0 +1,70 @@
+name: Build and push staging images
+
+on:
+  push:
+    branches:
+      - feature/email-attachment-delivery
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: staging-image-build
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: 586714470455.dkr.ecr.ap-south-1.amazonaws.com
+  ECR_REPOSITORY: evidyalaya-staging
+
+jobs:
+  build-and-push:
+    name: Build and push ${{ matrix.service }} image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - service: gateway
+            dockerfile: gateway-service/Dockerfile
+            context: .
+          - service: user-service
+            dockerfile: user-service/Dockerfile
+            context: .
+          - service: email-service
+            dockerfile: email-service/Dockerfile
+            context: .
+          - service: frontend
+            dockerfile: frontend/Dockerfile
+            context: frontend
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials with GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::586714470455:role/evidyalaya-github-actions-ecr-push
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.service }}-${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ matrix.service }}-staging
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}

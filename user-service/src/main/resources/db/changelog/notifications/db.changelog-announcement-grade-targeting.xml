@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="announcements-003-grade-targeting" author="Furkhan">
+        <sql>
+            CREATE TABLE announcement_grade_target (
+                announcement_id BIGINT NOT NULL REFERENCES announcement(id) ON DELETE CASCADE,
+                grade_id BIGINT NOT NULL REFERENCES grade(id) ON DELETE RESTRICT,
+                CONSTRAINT pk_announcement_grade_target PRIMARY KEY (announcement_id, grade_id)
+            );
+            CREATE INDEX idx_announcement_grade_target_grade
+                ON announcement_grade_target(grade_id);
+
+            ALTER TABLE announcement DROP CONSTRAINT IF EXISTS chk_announcement_audience;
+            ALTER TABLE announcement
+                ADD CONSTRAINT chk_announcement_audience
+                CHECK (audience_type IN ('ALL','STUDENTS','FACULTY','CLASS','GRADE'));
+
+            ALTER TABLE announcement DROP CONSTRAINT IF EXISTS chk_announcement_class_target;
+            ALTER TABLE announcement
+                ADD CONSTRAINT chk_announcement_class_target CHECK (
+                    (
+                        audience_type = 'CLASS'
+                        AND (
+                            (target_scope = 'CLASS' AND academic_year_id IS NOT NULL AND grade_id IS NOT NULL AND section_id IS NOT NULL)
+                            OR (target_scope = 'SUBJECT' AND academic_year_id IS NULL AND grade_id IS NULL AND section_id IS NULL)
+                        )
+                    )
+                    OR (
+                        audience_type = 'GRADE'
+                        AND target_scope = 'CLASS'
+                        AND academic_year_id IS NOT NULL
+                        AND grade_id IS NULL
+                        AND section_id IS NULL
+                    )
+                    OR (
+                        audience_type IN ('ALL','STUDENTS','FACULTY')
+                        AND target_scope = 'CLASS'
+                        AND section_id IS NULL
+                    )
+                );
+        </sql>
+    </changeSet>
+</databaseChangeLog>

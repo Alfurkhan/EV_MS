@@ -45,8 +45,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 15GB
-      max-request-size: 15GB
+      max-file-size: 25MB
+      max-request-size: 130MB
 
   mvc:
     pathmatch:
@@ -88,7 +88,7 @@ cors:
 
 springdoc:
   packagesToScan: com.zukunftai.evidyalaya.controller
-  pathsToMatch: /auth/**,/user/**,/subject/**,/academic-year/**,/grade/**,/section/**,/student-enrollment/**
+  pathsToMatch: /auth/**,/user/**,/subject/**,/academic-year/**,/grade/**,/section/**,/student-enrollment/**,/timetable/**,/assignments/**,/class-session/**,/attendance/**
 
 service:
   api:
@@ -105,3 +105,21 @@ rest:
   client:
     connect-timeout: 10
     read-timeout: 30
+
+email:
+  notifications:
+    enabled: ${EMAIL_NOTIFICATIONS_ENABLED:true}
+    events:
+      announcement: ${EMAIL_NOTIFICATION_ANNOUNCEMENT_ENABLED:true}
+      assignment: ${EMAIL_NOTIFICATION_ASSIGNMENT_ENABLED:true}
+      assessment: ${EMAIL_NOTIFICATION_ASSESSMENT_ENABLED:true}
+      timetable: ${EMAIL_NOTIFICATION_TIMETABLE_ENABLED:true}
+      result: ${EMAIL_NOTIFICATION_RESULT_ENABLED:true}
+    test-email-domains: ${EMAIL_NOTIFICATION_TEST_EMAIL_DOMAINS:zsmail.com}
+
+    dispatcher:
+      enabled: ${EMAIL_NOTIFICATION_DISPATCHER_ENABLED:true}
+      fixed-delay-ms: ${EMAIL_NOTIFICATION_DISPATCHER_DELAY_MS:5000}
+      batch-size: ${EMAIL_NOTIFICATION_DISPATCHER_BATCH_SIZE:25}
+      lease-seconds: ${EMAIL_NOTIFICATION_DISPATCHER_LEASE_SECONDS:180}
+      max-attempts: ${EMAIL_NOTIFICATION_DISPATCHER_MAX_ATTEMPTS:5}

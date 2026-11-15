@@ -1,6 +1,11 @@
 server:
   port: ${PORT:9091}
 
+email:
+  app-base-url: ${EMAIL_APP_BASE_URL:}
+  service:
+    api-key: ${EMAIL_SERVICE_API_KEY:}
+
 spring:
   application:
     name: email-service
@@ -10,6 +15,11 @@ spring:
       enabled: false
       discovery:
         enabled: false
+
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 26MB
 
   mail:
     host: smtp.gmail.com

@@ -9,8 +9,10 @@ import {
     CalendarCheck,
     CalendarDays,
     BookOpen,
+    ClipboardList,
     School,
     Bell,
+    Megaphone,
     Settings,
     LogOut,
 } from "lucide-react";
@@ -81,6 +83,18 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_ADMIN"],
             },
             {
+                icon: ClipboardList,
+                label: "Assignments",
+                path: "/assignments",
+                allowedRoles: ["ROLE_ADMIN"],
+            },
+            {
+                icon: ClipboardList,
+                label: "Quiz & Exams",
+                path: "/admin-assessments",
+                allowedRoles: ["ROLE_ADMIN"],
+            },
+            {
                 icon: CalendarDays,
                 label: "My Timetable",
                 path: "/my-timetable",
@@ -93,9 +107,33 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_STUDENT"],
             },
             {
+                icon: ClipboardList,
+                label: "Assignments",
+                path: "/my-assignments",
+                allowedRoles: ["ROLE_STUDENT"],
+            },
+            {
+                icon: ClipboardList,
+                label: "Quiz & Exams",
+                path: "/my-assessments",
+                allowedRoles: ["ROLE_STUDENT"],
+            },
+            {
                 icon: GraduationCap,
                 label: "My Classes",
                 path: "/my-classes",
+                allowedRoles: ["ROLE_FACULTY"],
+            },
+            {
+                icon: ClipboardList,
+                label: "Assignments",
+                path: "/faculty-assignments",
+                allowedRoles: ["ROLE_FACULTY"],
+            },
+            {
+                icon: ClipboardList,
+                label: "Quiz & Exams",
+                path: "/faculty-assessments",
                 allowedRoles: ["ROLE_FACULTY"],
             },
             {
@@ -119,6 +157,16 @@ const menu: MenuSection[] = [
     {
         section: "SYSTEM",
         items: [
+            {
+                icon: Megaphone,
+                label: "Announcements",
+                path: "/announcements",
+                allowedRoles: [
+                    "ROLE_STUDENT",
+                    "ROLE_FACULTY",
+                    "ROLE_ADMIN",
+                ],
+            },
             {
                 icon: Bell,
                 label: "Notifications",

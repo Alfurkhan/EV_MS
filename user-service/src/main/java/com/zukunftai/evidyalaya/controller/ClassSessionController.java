@@ -81,6 +81,12 @@ public class ClassSessionController {
         );
     }
 
+    @GetMapping("/my/assigned")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<List<FacultyMyClassResponse>> getMyAssignedClasses() {
+        return ResponseEntity.ok(classSessionService.getMyAssignedClasses());
+    }
+
     @GetMapping("/my/today")
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<List<FacultyMyClassResponse>> getMyClassesToday() {

@@ -23,4 +23,6 @@ public interface ClassSessionService {
     List<ClassSessionResponse> getSessionsByTimetable(Long timetableId);
 
     List<FacultyMyClassResponse> getMyClassesToday();
+
+    List<FacultyMyClassResponse> getMyAssignedClasses();
 }

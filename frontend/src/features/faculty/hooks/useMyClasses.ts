@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getMyClassesToday } from "../services/facultyService";
+import { getMyAssignedClasses } from "../services/facultyService";
 import type { FacultyClass } from "../types/facultyClass";
 
 export function useMyClasses() {
@@ -13,7 +13,7 @@ export function useMyClasses() {
             setLoading(true);
             setError("");
 
-            const data = await getMyClassesToday();
+            const data = await getMyAssignedClasses();
 
             setClasses(data);
         } catch (error: any) {
