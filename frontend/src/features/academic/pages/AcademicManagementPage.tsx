@@ -965,21 +965,16 @@ export default function AcademicManagementPage() {
 
                             </div>
 
+                        ) : filteredAcademicYears.length === 0 && academicYears.length > 0 ? (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                                <p className="text-sm font-semibold text-slate-700">No academic years match your search or filters.</p>
+                                <p className="mt-1 text-xs text-slate-500">Try a different year name or status.</p>
+                            </div>
                         ) : (
-
                             <AcademicYearTable
-                                academicYears={
-                                    filteredAcademicYears
-                                }
-                                onManage={(
-                                    academicYear
-                                ) =>
-                                    setSelectedAcademicYear(
-                                        academicYear
-                                    )
-                                }
+                                academicYears={filteredAcademicYears}
+                                onManage={(academicYear) => setSelectedAcademicYear(academicYear)}
                             />
-
                         )}
 
 
