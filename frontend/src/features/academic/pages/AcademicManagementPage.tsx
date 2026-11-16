@@ -146,7 +146,6 @@ export default function AcademicManagementPage() {
     const [enrollmentGradeFilter, setEnrollmentGradeFilter] = useState("all");
     const [enrollmentSectionFilter, setEnrollmentSectionFilter] = useState("all");
     const [enrollmentStatus, setEnrollmentStatus] = useState<StatusFilter>("all");
-    const [subjectsFilterResetKey, setSubjectsFilterResetKey] = useState(0);
     const [sectionsPreloading, setSectionsPreloading] = useState(false);
 
     const activeGradeCount = grades.filter((grade) => grade.active).length;
@@ -502,7 +501,8 @@ export default function AcademicManagementPage() {
                 setSectionStatus("all");
                 break;
             case "subjects":
-                setSubjectsFilterResetKey((current) => current + 1);
+                // SubjectsSection unmounts when its parent accordion closes,
+                // so its local search and filter state resets automatically.
                 break;
             case "enrollments":
                 setEnrollmentSearch("");
@@ -1620,10 +1620,7 @@ export default function AcademicManagementPage() {
 
                 {openSection === "subjects" && (
                     <div className="border-t border-slate-200 p-4 sm:p-5">
-                        <SubjectsSection
-                            grades={grades}
-                            filterResetKey={subjectsFilterResetKey}
-                        />
+                        <SubjectsSection grades={grades} />
                     </div>
                 )}
             </section>
@@ -1712,9 +1709,10 @@ export default function AcademicManagementPage() {
                                     <select
                                         value={enrollmentSectionFilter}
                                         onChange={(event) => setEnrollmentSectionFilter(event.target.value)}
-                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                        disabled={sectionsPreloading}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500 disabled:cursor-wait disabled:bg-slate-100"
                                     >
-                                        <option value="all">All sections</option>
+                                        <option value="all">{sectionsPreloading ? "Loading sections..." : "All sections"}</option>
                                         {enrollmentSectionOptions.map((section) => (
                                             <option key={section.id} value={section.id}>{section.label}</option>
                                         ))}
