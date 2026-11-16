@@ -2,6 +2,9 @@ import {
     Menu,
     Search,
     UserCircle,
+    GraduationCap,
+    BadgeCheck,
+    UserRound,
 } from "lucide-react";
 
 import { useLayout } from "../../contexts/LayoutContext";
@@ -28,6 +31,18 @@ function formatRole(role: string | null | undefined) {
         .replace(/_/g, " ")
         .toLowerCase()
         .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getRoleIcon(role: string | null | undefined) {
+    if (role === "ROLE_STUDENT") {
+        return <GraduationCap size={12} aria-hidden="true" />;
+    }
+
+    if (role === "ROLE_FACULTY") {
+        return <UserRound size={12} aria-hidden="true" />;
+    }
+
+    return <BadgeCheck size={12} aria-hidden="true" />;
 }
 
 export default function Topbar() {
@@ -160,8 +175,9 @@ export default function Topbar() {
                                 {displayName}
                             </span>
                             <span
-                                className={`mt-0.5 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1 ring-inset ${roleBadgeStyle}`}
+                                className={`mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1 ring-inset ${roleBadgeStyle}`}
                             >
+                                {getRoleIcon(role)}
                                 {formatRole(role)}
                             </span>
                         </div>
