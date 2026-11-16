@@ -49,6 +49,7 @@ import {
 
 import AddStudentEnrollmentModal from "../components/AddStudentEnrollmentModal";
 import SubjectsSection from "../components/SubjectsSection";
+import AcademicFilterToolbar from "../components/AcademicFilterToolbar";
 
 export default function AcademicManagementPage() {
 
@@ -131,6 +132,94 @@ export default function AcademicManagementPage() {
 
     const [selectedEnrollment, setSelectedEnrollment] =
         useState<StudentEnrollment | null>(null);
+
+    type StatusFilter = "all" | "active" | "inactive";
+
+    const [academicYearSearch, setAcademicYearSearch] = useState("");
+    const [academicYearStatus, setAcademicYearStatus] = useState<StatusFilter>("all");
+    const [gradeSearch, setGradeSearch] = useState("");
+    const [gradeStatus, setGradeStatus] = useState<StatusFilter>("all");
+    const [sectionSearch, setSectionSearch] = useState("");
+    const [sectionGradeFilter, setSectionGradeFilter] = useState("all");
+    const [sectionStatus, setSectionStatus] = useState<StatusFilter>("all");
+    const [enrollmentSearch, setEnrollmentSearch] = useState("");
+    const [enrollmentGradeFilter, setEnrollmentGradeFilter] = useState("all");
+    const [enrollmentSectionFilter, setEnrollmentSectionFilter] = useState("all");
+    const [enrollmentStatus, setEnrollmentStatus] = useState<StatusFilter>("all");
+
+    const activeGradeCount = grades.filter((grade) => grade.active).length;
+
+    const filteredAcademicYears = academicYears.filter((academicYear) => {
+        const query = academicYearSearch.trim().toLowerCase();
+        const matchesSearch = !query || academicYear.name.toLowerCase().includes(query);
+        const matchesStatus = academicYearStatus === "all" ||
+            (academicYearStatus === "active" ? academicYear.active : !academicYear.active);
+        return matchesSearch && matchesStatus;
+    });
+
+    const filteredGrades = grades.filter((grade) => {
+        const query = gradeSearch.trim().toLowerCase();
+        const matchesSearch = !query || grade.name.toLowerCase().includes(query) ||
+            (grade.description ?? "").toLowerCase().includes(query);
+        const matchesStatus = gradeStatus === "all" ||
+            (gradeStatus === "active" ? grade.active : !grade.active);
+        return matchesSearch && matchesStatus;
+    });
+
+    const matchesSection = (section: Section) => {
+        const query = sectionSearch.trim().toLowerCase();
+        const matchesSearch = !query || section.name.toLowerCase().includes(query) ||
+            section.gradeName.toLowerCase().includes(query) ||
+            (section.description ?? "").toLowerCase().includes(query);
+        const matchesStatus = sectionStatus === "all" ||
+            (sectionStatus === "active" ? section.active : !section.active);
+        return matchesSearch && matchesStatus;
+    };
+
+    const filteredSectionGrades = grades.filter((grade) => {
+        if (sectionGradeFilter !== "all" && grade.id !== Number(sectionGradeFilter)) return false;
+        const query = sectionSearch.trim().toLowerCase();
+        const gradeMatchesSearch = !query || grade.name.toLowerCase().includes(query);
+        const gradeSections = sectionsByGrade[grade.id] ?? [];
+        const hasLoadedSections = Object.prototype.hasOwnProperty.call(sectionsByGrade, grade.id);
+        const hasMatchingSection = gradeSections.some(matchesSection);
+        const matchesStatus = sectionStatus === "all" || !hasLoadedSections || hasMatchingSection;
+        return (gradeMatchesSearch || hasMatchingSection || !hasLoadedSections) && matchesStatus;
+    });
+
+    const filteredEnrollments = enrollments.filter((enrollment) => {
+        const query = enrollmentSearch.trim().toLowerCase();
+        const matchesContext = selectedAcademicYearId === null ||
+            enrollment.academicYearId === selectedAcademicYearId;
+        const matchesSearch = !query ||
+            enrollment.studentName.toLowerCase().includes(query) ||
+            enrollment.studentEmail.toLowerCase().includes(query) ||
+            String(enrollment.studentId).includes(query) ||
+            enrollment.academicYearName.toLowerCase().includes(query) ||
+            enrollment.gradeName.toLowerCase().includes(query) ||
+            enrollment.sectionName.toLowerCase().includes(query);
+        const matchesGrade = enrollmentGradeFilter === "all" ||
+            enrollment.gradeId === Number(enrollmentGradeFilter);
+        const matchesSection = enrollmentSectionFilter === "all" ||
+            enrollment.sectionId === Number(enrollmentSectionFilter);
+        const matchesStatus = enrollmentStatus === "all" ||
+            (enrollmentStatus === "active" ? enrollment.active : !enrollment.active);
+        return matchesContext && matchesSearch && matchesGrade && matchesSection && matchesStatus;
+    });
+
+    const enrollmentSectionOptions = Array.from(
+        new Map(
+            enrollments
+                .filter((enrollment) => selectedAcademicYearId === null ||
+                    enrollment.academicYearId === selectedAcademicYearId)
+                .filter((enrollment) => enrollmentGradeFilter === "all" ||
+                    enrollment.gradeId === Number(enrollmentGradeFilter))
+                .map((enrollment) => [
+                    enrollment.sectionId,
+                    { id: enrollment.sectionId, name: enrollment.sectionName },
+                ])
+        ).values()
+    );
 
     /*
      * ============================================================
@@ -523,11 +612,13 @@ export default function AcademicManagementPage() {
                                        icon,
                                        title,
                                        description,
+                                       count,
                                    }: {
         section: AcademicSection;
         icon: ReactNode;
         title: string;
         description: string;
+        count?: string;
     }) => {
         const isOpen =
             openSection === section;
@@ -600,20 +691,26 @@ export default function AcademicManagementPage() {
                     </div>
                 </div>
 
-                <ChevronDown
-                    size={20}
-                    className={`
-                        shrink-0
-                        text-slate-400
-                        transition-transform
-                        duration-200
-                        ${
-                        isOpen
-                            ? "rotate-180"
-                            : ""
-                    }
-                    `}
-                />
+                <div className="flex shrink-0 items-center gap-3">
+                    {count && (
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            {count}
+                        </span>
+                    )}
+                    <ChevronDown
+                        size={20}
+                        className={`
+                            text-slate-400
+                            transition-transform
+                            duration-200
+                            ${
+                            isOpen
+                                ? "rotate-180"
+                                : ""
+                        }
+                        `}
+                    />
+                </div>
             </button>
         );
     };
@@ -710,6 +807,39 @@ export default function AcademicManagementPage() {
 
 
             {/* ===================================================== */}
+            {/* GLOBAL ACADEMIC YEAR CONTEXT */}
+            {/* ===================================================== */}
+
+            <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p className="text-sm font-semibold text-slate-800">Academic Year Context</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                        Scope Grades, Sections, Subjects and Student Enrollments to an academic year.
+                    </p>
+                </div>
+                <select
+                    value={selectedAcademicYearId ?? ""}
+                    onChange={(event) => {
+                        const value = event.target.value;
+                        setSelectedAcademicYearId(value ? Number(value) : null);
+                        setEnrollmentGradeFilter("all");
+                        setEnrollmentSectionFilter("all");
+                        setSectionGradeFilter("all");
+                        setSectionsByGrade({});
+                        setOpenSectionGradeId(null);
+                        setSelectedSectionGrade(null);
+                    }}
+                    disabled={academicYears.length === 0}
+                    aria-label="Academic year context"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 sm:w-64"
+                >
+                    {academicYears.map((academicYear) => (
+                        <option key={academicYear.id} value={academicYear.id}>
+                            {academicYear.name}{academicYear.active ? " (Active)" : ""}
+                        </option>
+                    ))}
+                </select>
+            </div>
 
             {/* ===================================================== */}
             {/* ACADEMIC YEARS */}
@@ -734,7 +864,41 @@ export default function AcademicManagementPage() {
 
                 {openSection === "academicYears" && (
                     <div className="border-t border-slate-200 p-4 sm:p-5">
-                        <div className="mb-4 flex justify-end">
+                        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <AcademicFilterToolbar
+                                searchValue={academicYearSearch}
+                                onSearchChange={setAcademicYearSearch}
+                                placeholder="Search academic years..."
+                                onReset={() => {
+                                    setAcademicYearSearch("");
+                                    setAcademicYearStatus("all");
+                                }}
+                                activeFilters={[
+                                    ...(academicYearSearch.trim() ? [{
+                                        key: "search",
+                                        label: `Search: ${academicYearSearch.trim()}`,
+                                        onRemove: () => setAcademicYearSearch(""),
+                                    }] : []),
+                                    ...(academicYearStatus !== "all" ? [{
+                                        key: "status",
+                                        label: academicYearStatus === "active" ? "Active" : "Inactive",
+                                        onRemove: () => setAcademicYearStatus("all"),
+                                    }] : []),
+                                ]}
+                            >
+                                <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                                    Status
+                                    <select
+                                        value={academicYearStatus}
+                                        onChange={(event) => setAcademicYearStatus(event.target.value as StatusFilter)}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="all">All statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </label>
+                            </AcademicFilterToolbar>
                             <button
                                 type="button"
                                 onClick={() =>
@@ -805,7 +969,7 @@ export default function AcademicManagementPage() {
 
                             <AcademicYearTable
                                 academicYears={
-                                    academicYears
+                                    filteredAcademicYears
                                 }
                                 onManage={(
                                     academicYear
@@ -842,10 +1006,47 @@ export default function AcademicManagementPage() {
                     icon: <GraduationCap size={20} />,
                     title: "Grades",
                     description: "Manage grades for the selected academic year.",
+                    count: gradesLoading ? "Loading..." : `${activeGradeCount} Active ${activeGradeCount === 1 ? "Grade" : "Grades"}`,
                 })}
 
                 {openSection === "grades" && (
                     <div className="border-t border-slate-200 p-4 sm:p-5">
+                        <div className="mb-4">
+                            <AcademicFilterToolbar
+                                searchValue={gradeSearch}
+                                onSearchChange={setGradeSearch}
+                                placeholder="Search grades..."
+                                onReset={() => {
+                                    setGradeSearch("");
+                                    setGradeStatus("all");
+                                }}
+                                activeFilters={[
+                                    ...(gradeSearch.trim() ? [{
+                                        key: "search",
+                                        label: `Search: ${gradeSearch.trim()}`,
+                                        onRemove: () => setGradeSearch(""),
+                                    }] : []),
+                                    ...(gradeStatus !== "all" ? [{
+                                        key: "status",
+                                        label: gradeStatus === "active" ? "Active" : "Inactive",
+                                        onRemove: () => setGradeStatus("all"),
+                                    }] : []),
+                                ]}
+                            >
+                                <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                                    Status
+                                    <select
+                                        value={gradeStatus}
+                                        onChange={(event) => setGradeStatus(event.target.value as StatusFilter)}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="all">All statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </label>
+                            </AcademicFilterToolbar>
+                        </div>
                         <div
                             className="
                                 flex
@@ -862,65 +1063,7 @@ export default function AcademicManagementPage() {
                         "
                             >
 
-                                <select
-                                    value={
-                                        selectedAcademicYearId ?? ""
-                                    }
-                                    onChange={(event) => {
 
-                                        const value =
-                                            Number(
-                                                event.target.value
-                                            );
-
-                                        setSelectedAcademicYearId(
-                                            value
-                                        );
-
-                                    }}
-                                    disabled={
-                                        academicYears.length === 0
-                                    }
-                                    className="
-                                rounded-xl
-                                border
-                                border-slate-300
-                                bg-white
-                                px-4
-                                py-2.5
-                                text-sm
-                                font-medium
-                                text-slate-700
-                                outline-none
-                                transition
-                                focus:border-blue-500
-                                focus:ring-2
-                                focus:ring-blue-100
-                            "
-                                >
-
-                                    {academicYears.map(
-                                        (academicYear) => (
-
-                                            <option
-                                                key={
-                                                    academicYear.id
-                                                }
-                                                value={
-                                                    academicYear.id
-                                                }
-                                            >
-                                                {academicYear.name}
-                                                {academicYear.active
-                                                    ? " (Active)"
-                                                    : ""
-                                                }
-                                            </option>
-
-                                        )
-                                    )}
-
-                                </select>
 
 
                                 <button
@@ -1003,8 +1146,14 @@ export default function AcademicManagementPage() {
 
                             ) : (
 
+                                {filteredGrades.length === 0 && grades.length > 0 ? (
+                                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                                        <p className="text-sm font-semibold text-slate-700">No grades match your search or filters.</p>
+                                        <p className="mt-1 text-xs text-slate-500">Try adjusting the search term or clearing the filters.</p>
+                                    </div>
+                                ) : (
                                 <GradeTable
-                                    grades={grades}
+                                    grades={filteredGrades}
                                     onManage={(grade) => {
                                         /*
                                          * IMPORTANT:
@@ -1013,6 +1162,7 @@ export default function AcademicManagementPage() {
                                         setSelectedGrade(grade);
                                     }}
                                 />
+                                )}
 
                             )}
 
@@ -1045,6 +1195,61 @@ export default function AcademicManagementPage() {
 
                 {openSection === "sections" && (
                     <div className="border-t border-slate-200 p-4 sm:p-5">
+                        <div className="mb-4">
+                            <AcademicFilterToolbar
+                                searchValue={sectionSearch}
+                                onSearchChange={setSectionSearch}
+                                placeholder="Search grades or sections..."
+                                onReset={() => {
+                                    setSectionSearch("");
+                                    setSectionGradeFilter("all");
+                                    setSectionStatus("all");
+                                }}
+                                activeFilters={[
+                                    ...(sectionSearch.trim() ? [{
+                                        key: "search",
+                                        label: `Search: ${sectionSearch.trim()}`,
+                                        onRemove: () => setSectionSearch(""),
+                                    }] : []),
+                                    ...(sectionGradeFilter !== "all" ? [{
+                                        key: "grade",
+                                        label: `Grade: ${grades.find((grade) => grade.id === Number(sectionGradeFilter))?.name ?? "Selected"}`,
+                                        onRemove: () => setSectionGradeFilter("all"),
+                                    }] : []),
+                                    ...(sectionStatus !== "all" ? [{
+                                        key: "status",
+                                        label: sectionStatus === "active" ? "Active sections" : "Inactive sections",
+                                        onRemove: () => setSectionStatus("all"),
+                                    }] : []),
+                                ]}
+                            >
+                                <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                                    Grade
+                                    <select
+                                        value={sectionGradeFilter}
+                                        onChange={(event) => setSectionGradeFilter(event.target.value)}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="all">All grades</option>
+                                        {grades.map((grade) => (
+                                            <option key={grade.id} value={grade.id}>{grade.name}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                                    Section status
+                                    <select
+                                        value={sectionStatus}
+                                        onChange={(event) => setSectionStatus(event.target.value as StatusFilter)}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="all">All statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </label>
+                            </AcademicFilterToolbar>
+                        </div>
 
                         <div className="space-y-3">
 
@@ -1071,15 +1276,23 @@ export default function AcademicManagementPage() {
                                     </p>
                                 </div>
 
+                            ) : filteredSectionGrades.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                                    <p className="text-sm font-semibold text-slate-700">No sections match your search or filters.</p>
+                                    <p className="mt-1 text-xs text-slate-500">Try another grade, section name or status.</p>
+                                </div>
                             ) : (
 
-                                grades.map((grade) => {
+                                filteredSectionGrades.map((grade) => {
 
                                     const isOpen =
                                         openSectionGradeId === grade.id;
 
                                     const gradeSections =
                                         sectionsByGrade[grade.id] ?? [];
+
+                                    const filteredGradeSections =
+                                        gradeSections.filter(matchesSection);
 
                                     const hasLoadedSections =
                                         Object.prototype.hasOwnProperty.call(
@@ -1299,7 +1512,7 @@ export default function AcademicManagementPage() {
 
                                                         <SectionTable
                                                             sections={
-                                                                gradeSections
+                                                                filteredGradeSections
                                                             }
                                                             onManage={(section) => {
                                                                 setSelectedSection(
@@ -1380,7 +1593,85 @@ export default function AcademicManagementPage() {
 
                 {openSection === "enrollments" && (
                     <div className="border-t border-slate-200 p-4 sm:p-5">
-                        <div className="mb-4 flex justify-end">
+                        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <AcademicFilterToolbar
+                                searchValue={enrollmentSearch}
+                                onSearchChange={setEnrollmentSearch}
+                                placeholder="Search by student name, ID or email..."
+                                onReset={() => {
+                                    setEnrollmentSearch("");
+                                    setEnrollmentGradeFilter("all");
+                                    setEnrollmentSectionFilter("all");
+                                    setEnrollmentStatus("all");
+                                }}
+                                activeFilters={[
+                                    ...(enrollmentSearch.trim() ? [{
+                                        key: "search",
+                                        label: `Search: ${enrollmentSearch.trim()}`,
+                                        onRemove: () => setEnrollmentSearch(""),
+                                    }] : []),
+                                    ...(enrollmentGradeFilter !== "all" ? [{
+                                        key: "grade",
+                                        label: `Grade: ${grades.find((grade) => grade.id === Number(enrollmentGradeFilter))?.name ?? "Selected"}`,
+                                        onRemove: () => {
+                                            setEnrollmentGradeFilter("all");
+                                            setEnrollmentSectionFilter("all");
+                                        },
+                                    }] : []),
+                                    ...(enrollmentSectionFilter !== "all" ? [{
+                                        key: "section",
+                                        label: `Section: ${enrollmentSectionOptions.find((section) => section.id === Number(enrollmentSectionFilter))?.name ?? "Selected"}`,
+                                        onRemove: () => setEnrollmentSectionFilter("all"),
+                                    }] : []),
+                                    ...(enrollmentStatus !== "all" ? [{
+                                        key: "status",
+                                        label: enrollmentStatus === "active" ? "Active enrollments" : "Inactive enrollments",
+                                        onRemove: () => setEnrollmentStatus("all"),
+                                    }] : []),
+                                ]}
+                            >
+                                <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                                    Grade
+                                    <select
+                                        value={enrollmentGradeFilter}
+                                        onChange={(event) => {
+                                            setEnrollmentGradeFilter(event.target.value);
+                                            setEnrollmentSectionFilter("all");
+                                        }}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="all">All grades</option>
+                                        {grades.map((grade) => (
+                                            <option key={grade.id} value={grade.id}>{grade.name}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                                    Section
+                                    <select
+                                        value={enrollmentSectionFilter}
+                                        onChange={(event) => setEnrollmentSectionFilter(event.target.value)}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="all">All sections</option>
+                                        {enrollmentSectionOptions.map((section) => (
+                                            <option key={section.id} value={section.id}>{section.name}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                                    Enrollment status
+                                    <select
+                                        value={enrollmentStatus}
+                                        onChange={(event) => setEnrollmentStatus(event.target.value as StatusFilter)}
+                                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                                    >
+                                        <option value="all">All statuses</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </label>
+                            </AcademicFilterToolbar>
                             <button
                                 type="button"
                                 onClick={() => setShowAddEnrollmentModal(true)}
@@ -1450,8 +1741,14 @@ export default function AcademicManagementPage() {
 
                         ) : (
 
+                            {filteredEnrollments.length === 0 && enrollments.length > 0 ? (
+                                <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                                    <p className="text-sm font-semibold text-slate-700">No student enrollments match your search or filters.</p>
+                                    <p className="mt-1 text-xs text-slate-500">Try changing the academic year, grade, section or status.</p>
+                                </div>
+                            ) : (
                             <StudentEnrollmentTable
-                                enrollments={enrollments}
+                                enrollments={filteredEnrollments}
                                 onManage={(enrollment) => {
 
                                     setSelectedEnrollment(
@@ -1460,6 +1757,7 @@ export default function AcademicManagementPage() {
 
                                 }}
                             />
+                            )}
 
                         )}
 
