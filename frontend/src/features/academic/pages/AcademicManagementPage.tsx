@@ -202,14 +202,14 @@ export default function AcademicManagementPage() {
         const matchesGrade = enrollmentGradeFilter === "all" ||
             enrollment.gradeId === Number(enrollmentGradeFilter);
         const matchesSection = enrollmentSectionFilter === "all" ||
-            enrollment.sectionId === Number(enrollmentSectionFilter);
+            enrollment.sectionName.trim().toLocaleLowerCase() === enrollmentSectionFilter.trim().toLocaleLowerCase();
         const matchesStatus = enrollmentStatus === "all" ||
             (enrollmentStatus === "active" ? enrollment.active : !enrollment.active);
         return matchesContext && matchesSearch && matchesGrade && matchesSection && matchesStatus;
     });
 
     const enrollmentSectionOptions = Array.from(
-        new Map(
+        new Set(
             grades
                 .filter((grade) => enrollmentGradeFilter === "all" ||
                     grade.id === Number(enrollmentGradeFilter))
@@ -217,19 +217,11 @@ export default function AcademicManagementPage() {
                     (sectionsByGrade[grade.id] ?? [])
                         .filter((section) => selectedAcademicYearId === null ||
                             section.academicYearId === selectedAcademicYearId)
-                        .map((section) => [
-                            section.id,
-                            {
-                                id: section.id,
-                                name: section.name,
-                                label: enrollmentGradeFilter === "all"
-                                    ? `${grade.name} · ${section.name}`
-                                    : section.name,
-                            },
-                        ] as const)
+                        .map((section) => section.name.trim())
                 )
-        ).values()
-    );
+                .filter(Boolean)
+        )
+    ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
 
     /*
      * ============================================================
@@ -1681,7 +1673,7 @@ export default function AcademicManagementPage() {
                                     }] : []),
                                     ...(enrollmentSectionFilter !== "all" ? [{
                                         key: "section",
-                                        label: `Section: ${enrollmentSectionOptions.find((section) => section.id === Number(enrollmentSectionFilter))?.label ?? "Selected"}`,
+                                        label: `Section: ${enrollmentSectionFilter}`,
                                         onRemove: () => setEnrollmentSectionFilter("all"),
                                     }] : []),
                                     ...(enrollmentStatus !== "all" ? [{
@@ -1716,8 +1708,8 @@ export default function AcademicManagementPage() {
                                         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500 disabled:cursor-wait disabled:bg-slate-100"
                                     >
                                         <option value="all">{sectionsPreloading ? "Loading sections..." : "All sections"}</option>
-                                        {enrollmentSectionOptions.map((section) => (
-                                            <option key={section.id} value={section.id}>{section.label}</option>
+                                        {enrollmentSectionOptions.map((sectionName) => (
+                                            <option key={sectionName} value={sectionName}>{sectionName}</option>
                                         ))}
                                     </select>
                                 </label>
