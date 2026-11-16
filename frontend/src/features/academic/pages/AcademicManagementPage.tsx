@@ -1396,8 +1396,8 @@ export default function AcademicManagementPage() {
                                                     >
                                                         {!hasLoadedSections && isLoading
                                                             ? "Loading..."
-                                                            : `${gradeSections.length} ${
-                                                                gradeSections.length === 1
+                                                            : `${filteredGradeSections.length} ${
+                                                                filteredGradeSections.length === 1
                                                                     ? "Section"
                                                                     : "Sections"
                                                             }`}
