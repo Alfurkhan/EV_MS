@@ -2,231 +2,196 @@ import {
     Menu,
     Search,
     UserCircle,
+    GraduationCap,
+    BadgeCheck,
+    UserRound,
 } from "lucide-react";
 
 import { useLayout } from "../../contexts/LayoutContext";
-
-import {
-    useLocation,
-} from "react-router-dom";
-
+import { useProfile } from "../../contexts/ProfileContext";
+import { useAuth } from "../../contexts/AuthContext";
+import { useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import UserMenu from "./UserMenu";
 import NotificationBell from "./NotificationBell";
 
+function getGreeting() {
+    const hour = new Date().getHours();
+
+    if (hour < 12) return "Good morning,";
+    if (hour < 17) return "Good afternoon,";
+    return "Good evening,";
+}
+
+function formatRole(role: string | null | undefined) {
+    if (!role) return "User";
+
+    return role
+        .replace(/^ROLE_/, "")
+        .replace(/_/g, " ")
+        .toLowerCase()
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getRoleIcon(role: string | null | undefined) {
+    if (role === "ROLE_STUDENT") {
+        return <GraduationCap size={12} aria-hidden="true" />;
+    }
+
+    if (role === "ROLE_FACULTY") {
+        return <UserRound size={12} aria-hidden="true" />;
+    }
+
+    return <BadgeCheck size={12} aria-hidden="true" />;
+}
+
 export default function Topbar() {
-
     const location = useLocation();
-
-    const {
-        sidebarOpen,
-        setSidebarOpen,
-    } = useLayout();
+    const { sidebarOpen, setSidebarOpen } = useLayout();
+    const { profile } = useProfile();
+    const { hasRole } = useAuth();
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const [greeting, setGreeting] = useState(getGreeting);
+    const menuRef = useRef<HTMLDivElement>(null);
 
-    const menuRef =
-        useRef<HTMLDivElement>(null);
-
-
-    /*
-     * Page titles
-     */
-    const pageInfo: Record<
-        string,
-        {
-            title: string;
-            subtitle: string;
-        }
-    > = {
-
-        "/dashboard": {
-            title: "Dashboard",
-            subtitle: "Welcome back",
-        },
-
-        "/students": {
-            title: "Students",
-            subtitle: "Manage student records",
-        },
-
-        "/faculty": {
-            title: "Faculty",
-            subtitle: "Manage faculty members",
-        },
-
-        "/attendance": {
-            title: "Attendance",
-            subtitle: "Track and manage attendance",
-        },
-
-        "/courses": {
-            title: "Courses",
-            subtitle: "Manage courses and subjects",
-        },
-
+    const pageInfo: Record<string, { title: string; subtitle: string }> = {
+        "/dashboard": { title: "Dashboard", subtitle: "Welcome back" },
+        "/students": { title: "Students", subtitle: "Manage student records" },
+        "/faculty": { title: "Faculty", subtitle: "Manage faculty members" },
+        "/attendance": { title: "Attendance", subtitle: "Track and manage attendance" },
+        "/courses": { title: "Courses", subtitle: "Manage courses and subjects" },
         "/academic-management": {
             title: "Academic Management",
             subtitle: "Manage academic years, grades, sections and enrollments",
         },
-
-        "/notifications": {
-            title: "Notifications",
-            subtitle: "Stay updated with school activities",
-        },
-
-        "/announcements": {
-            title: "Announcements",
-            subtitle: "School updates and class communication",
-        },
-
-        "/settings": {
-            title: "Settings",
-            subtitle: "Manage system settings",
-        },
-
-        "/profile": {
-            title: "My Profile",
-            subtitle: "Manage your personal information",
-        },
-
+        "/notifications": { title: "Notifications", subtitle: "Stay updated with school activities" },
+        "/announcements": { title: "Announcements", subtitle: "School updates and class communication" },
+        "/settings": { title: "Settings", subtitle: "Manage system settings" },
+        "/profile": { title: "My Profile", subtitle: "Manage your personal information" },
     };
 
+    const currentPage = pageInfo[location.pathname] ?? {
+        title: "E-Vidyalaya",
+        subtitle: "School ERP",
+    };
 
-    const currentPage =
-        pageInfo[location.pathname] ?? {
-            title: "E-Vidyalaya",
-            subtitle: "School ERP",
-        };
+    const fullName = profile?.fullName?.trim() || "";
+    const displayName = fullName ? fullName.split(/\s+/)[0] : "there";
+    const role =
+        profile?.role ||
+        (hasRole("ROLE_ADMIN")
+            ? "ROLE_ADMIN"
+            : hasRole("ROLE_FACULTY")
+                ? "ROLE_FACULTY"
+                : hasRole("ROLE_STUDENT")
+                    ? "ROLE_STUDENT"
+                    : null);
 
+    const roleBadgeStyle =
+        role === "ROLE_ADMIN"
+            ? "bg-indigo-50 text-indigo-700 ring-indigo-100"
+            : role === "ROLE_FACULTY"
+                ? "bg-emerald-50 text-emerald-700 ring-emerald-100"
+                : role === "ROLE_STUDENT"
+                    ? "bg-sky-50 text-sky-700 ring-sky-100"
+                    : "bg-slate-100 text-slate-600 ring-slate-200";
 
-    /*
-     * Close user menu when clicking outside
-     */
     useEffect(() => {
+        const updateGreeting = () => setGreeting(getGreeting());
+        const interval = window.setInterval(updateGreeting, 60_000);
 
-        function handleClickOutside(
-            event: MouseEvent
-        ) {
+        return () => window.clearInterval(interval);
+    }, []);
 
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
             if (
                 menuRef.current &&
-                !menuRef.current.contains(
-                    event.target as Node
-                )
+                !menuRef.current.contains(event.target as Node)
             ) {
                 setMenuOpen(false);
             }
-
         }
 
-        document.addEventListener(
-            "mousedown",
-            handleClickOutside
-        );
+        document.addEventListener("mousedown", handleClickOutside);
 
         return () => {
-
-            document.removeEventListener(
-                "mousedown",
-                handleClickOutside
-            );
-
+            document.removeEventListener("mousedown", handleClickOutside);
         };
-
     }, []);
 
-
     return (
-
-        <header className="bg-white h-20 px-8 flex items-center justify-between shadow-sm">
-
+        <header className="relative z-30 flex h-20 shrink-0 items-center justify-between bg-white px-4 shadow-sm sm:px-8">
             {/* LEFT SIDE */}
-            <div className="flex items-center">
-
-                {/* Sidebar Toggle */}
+            <div className="flex min-w-0 items-center">
                 <button
-                    onClick={() =>
-                        setSidebarOpen(!sidebarOpen)
-                    }
-                    className="mr-5 p-2 rounded-lg hover:bg-slate-100 transition"
+                    type="button"
+                    aria-label="Toggle sidebar"
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="mr-3 rounded-lg p-2 transition hover:bg-slate-100 sm:mr-5"
                 >
                     <Menu size={24} />
                 </button>
 
-
-                {/* Page Information */}
-                <div>
-
-                    <h2 className="text-2xl font-bold">
+                <div className="min-w-0">
+                    <h2 className="truncate text-xl font-bold sm:text-2xl">
                         {currentPage.title}
                     </h2>
-
-                    <p className="text-slate-500">
+                    <p className="hidden truncate text-sm text-slate-500 sm:block">
                         {currentPage.subtitle}
                     </p>
-
                 </div>
-
             </div>
-
 
             {/* RIGHT SIDE */}
-            <div className="flex items-center gap-6">
-
+            <div className="ml-3 flex shrink-0 items-center gap-2 sm:gap-4">
                 {/* Search */}
-                <div className="flex items-center bg-slate-100 rounded-xl px-4 h-11">
-
-                    <Search size={18} />
-
+                <div className="hidden h-11 items-center rounded-xl bg-slate-100 px-4 lg:flex">
+                    <Search size={18} className="text-slate-500" />
                     <input
                         placeholder="Search..."
-                        className="bg-transparent outline-none ml-3"
+                        aria-label="Search"
+                        className="ml-3 w-32 bg-transparent text-sm outline-none xl:w-44"
                     />
-
                 </div>
 
-
-                {/* Notifications */}
                 <NotificationBell />
 
-
-                {/* User Menu */}
-                <div
-                    className="relative"
-                    ref={menuRef}
-                >
-
+                {/* Persistent user identity and profile menu */}
+                <div className="relative" ref={menuRef}>
                     <button
-                        onClick={() =>
-                            setMenuOpen(!menuOpen)
-                        }
-                        className="rounded-full"
+                        type="button"
+                        aria-label="Open user menu"
+                        aria-expanded={menuOpen}
+                        onClick={() => setMenuOpen((open) => !open)}
+                        className="flex items-center gap-2 rounded-xl px-2 py-1.5 text-left transition hover:bg-slate-50 sm:gap-3"
                     >
+                        <div className="hidden min-w-0 flex-col items-end sm:flex">
+                            <span className="text-[11px] leading-4 text-slate-500">
+                                {greeting}
+                            </span>
+                            <span className="max-w-36 truncate text-sm font-semibold leading-5 text-slate-800">
+                                {displayName}
+                            </span>
+                            <span
+                                className={`mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1 ring-inset ${roleBadgeStyle}`}
+                            >
+                                {getRoleIcon(role)}
+                                {formatRole(role)}
+                            </span>
+                        </div>
 
-                        <UserCircle
-                            size={36}
-                            className="text-blue-600 cursor-pointer"
-                        />
-
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 ring-1 ring-blue-100">
+                            <UserCircle size={30} className="text-blue-600" />
+                        </span>
                     </button>
 
-
                     {menuOpen && (
-
-                        <UserMenu
-                            onClose={() =>
-                                setMenuOpen(false)
-                            }
-                        />
-
+                        <UserMenu onClose={() => setMenuOpen(false)} />
                     )}
-
                 </div>
-
             </div>
-
         </header>
-
     );
 }
