@@ -13,13 +13,13 @@ type Profile = {
     id: number;
     fullName: string;
     email: string;
+    role?: string | null;
     countryCode: string | null;
     phoneNumber: string | null;
     createdAt: string;
     updatedAt: string;
     lastLoginAt: string;
     accountEnabled: boolean;
-
     termPolicyViewed: boolean;
 };
 
@@ -32,19 +32,15 @@ type ProfileContextType = {
 const ProfileContext = createContext<ProfileContextType | null>(null);
 
 export function ProfileProvider({
-                                    children,
-                                }: {
+    children,
+}: {
     children: ReactNode;
 }) {
-
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
-
     const { isAuthenticated, loading: authLoading } = useAuth();
 
-
     const refreshProfile = async () => {
-
         if (!isAuthenticated) {
             setProfile(null);
             setLoading(false);
@@ -52,45 +48,27 @@ export function ProfileProvider({
         }
 
         try {
-
             setLoading(true);
-
             const data = await getProfile();
-
             setProfile(data);
-
         } catch (error) {
-
             console.error(error);
-
             setProfile(null);
-
         } finally {
-
             setLoading(false);
-
         }
     };
 
-
     useEffect(() => {
+        if (authLoading) return;
 
-        // Wait until AuthProvider finishes
-        // checking localStorage.
-        if (authLoading) {
-            return;
-        }
-
-        // Only request profile when authenticated.
         if (isAuthenticated) {
-            refreshProfile();
+            void refreshProfile();
         } else {
             setProfile(null);
             setLoading(false);
         }
-
     }, [isAuthenticated, authLoading]);
-
 
     return (
         <ProfileContext.Provider
@@ -105,15 +83,11 @@ export function ProfileProvider({
     );
 }
 
-
 export function useProfile() {
-
     const context = useContext(ProfileContext);
 
     if (!context) {
-        throw new Error(
-            "useProfile must be used inside ProfileProvider"
-        );
+        throw new Error("useProfile must be used inside ProfileProvider");
     }
 
     return context;
