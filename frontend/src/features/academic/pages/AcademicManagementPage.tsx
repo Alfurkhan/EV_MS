@@ -217,7 +217,7 @@ export default function AcademicManagementPage() {
                 .map((enrollment) => [
                     enrollment.sectionId,
                     { id: enrollment.sectionId, name: enrollment.sectionName },
-                ])
+                ] as const)
         ).values()
     );
 
