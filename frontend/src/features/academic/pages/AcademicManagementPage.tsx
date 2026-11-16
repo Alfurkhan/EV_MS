@@ -146,6 +146,8 @@ export default function AcademicManagementPage() {
     const [enrollmentGradeFilter, setEnrollmentGradeFilter] = useState("all");
     const [enrollmentSectionFilter, setEnrollmentSectionFilter] = useState("all");
     const [enrollmentStatus, setEnrollmentStatus] = useState<StatusFilter>("all");
+    const [subjectsFilterResetKey, setSubjectsFilterResetKey] = useState(0);
+    const [sectionsPreloading, setSectionsPreloading] = useState(false);
 
     const activeGradeCount = grades.filter((grade) => grade.active).length;
 
@@ -209,15 +211,24 @@ export default function AcademicManagementPage() {
 
     const enrollmentSectionOptions = Array.from(
         new Map(
-            enrollments
-                .filter((enrollment) => selectedAcademicYearId === null ||
-                    enrollment.academicYearId === selectedAcademicYearId)
-                .filter((enrollment) => enrollmentGradeFilter === "all" ||
-                    enrollment.gradeId === Number(enrollmentGradeFilter))
-                .map((enrollment) => [
-                    enrollment.sectionId,
-                    { id: enrollment.sectionId, name: enrollment.sectionName },
-                ] as const)
+            grades
+                .filter((grade) => enrollmentGradeFilter === "all" ||
+                    grade.id === Number(enrollmentGradeFilter))
+                .flatMap((grade) =>
+                    (sectionsByGrade[grade.id] ?? [])
+                        .filter((section) => selectedAcademicYearId === null ||
+                            section.academicYearId === selectedAcademicYearId)
+                        .map((section) => [
+                            section.id,
+                            {
+                                id: section.id,
+                                name: section.name,
+                                label: enrollmentGradeFilter === "all"
+                                    ? `${grade.name} · ${section.name}`
+                                    : section.name,
+                            },
+                        ] as const)
+                )
         ).values()
     );
 
@@ -475,20 +486,57 @@ export default function AcademicManagementPage() {
     const [openSection, setOpenSection] =
         useState<AcademicSection | null>(null);
 
-    const toggleSection = (
-        section: AcademicSection
-    ) => {
-        setOpenSection((current) =>
-            current === section
-                ? null
-                : section
-        );
+    const resetSectionFilters = (section: AcademicSection) => {
+        switch (section) {
+            case "academicYears":
+                setAcademicYearSearch("");
+                setAcademicYearStatus("all");
+                break;
+            case "grades":
+                setGradeSearch("");
+                setGradeStatus("all");
+                break;
+            case "sections":
+                setSectionSearch("");
+                setSectionGradeFilter("all");
+                setSectionStatus("all");
+                break;
+            case "subjects":
+                setSubjectsFilterResetKey((current) => current + 1);
+                break;
+            case "enrollments":
+                setEnrollmentSearch("");
+                setEnrollmentGradeFilter("all");
+                setEnrollmentSectionFilter("all");
+                setEnrollmentStatus("all");
+                break;
+        }
+    };
+
+    const toggleSection = (section: AcademicSection) => {
+        if (openSection === section) {
+            resetSectionFilters(section);
+            setOpenSection(null);
+            return;
+        }
+
+        if (openSection !== null) {
+            resetSectionFilters(openSection);
+        }
+
+        setOpenSection(section);
     };
 
     useEffect(() => {
-        if (openSection !== "sections" || grades.length === 0) return;
+        if (
+            (openSection !== "sections" && openSection !== "enrollments") ||
+            grades.length === 0
+        ) return;
+
+        let cancelled = false;
 
         const preloadSections = async () => {
+            setSectionsPreloading(true);
             try {
                 const results = await Promise.all(
                     grades.map(async (grade) => {
@@ -497,17 +545,32 @@ export default function AcademicManagementPage() {
                     })
                 );
 
-                setSectionsByGrade(Object.fromEntries(results));
+                if (!cancelled) {
+                    setSectionsByGrade((current) => ({
+                        ...current,
+                        ...Object.fromEntries(results),
+                    }));
+                }
             } catch (error: any) {
-                console.error(error);
-                toast.error(
-                    error?.response?.data?.message ||
-                    "Unable to load Sections."
-                );
+                if (!cancelled) {
+                    console.error(error);
+                    toast.error(
+                        error?.response?.data?.message ||
+                        "Unable to load Sections."
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setSectionsPreloading(false);
+                }
             }
         };
 
         preloadSections();
+
+        return () => {
+            cancelled = true;
+        };
     }, [openSection, grades]);
 
     const refreshAllData = async () => {
@@ -828,6 +891,7 @@ export default function AcademicManagementPage() {
                         setSectionsByGrade({});
                         setOpenSectionGradeId(null);
                         setSelectedSectionGrade(null);
+                        setEnrollmentSectionFilter("all");
                     }}
                     disabled={academicYears.length === 0}
                     aria-label="Academic year context"
@@ -1556,7 +1620,10 @@ export default function AcademicManagementPage() {
 
                 {openSection === "subjects" && (
                     <div className="border-t border-slate-200 p-4 sm:p-5">
-                        <SubjectsSection grades={grades} />
+                        <SubjectsSection
+                            grades={grades}
+                            filterResetKey={subjectsFilterResetKey}
+                        />
                     </div>
                 )}
             </section>
@@ -1580,6 +1647,9 @@ export default function AcademicManagementPage() {
                     icon: <Users size={20} />,
                     title: "Student Enrollments",
                     description: "Manage students enrolled in academic years, grades, and sections.",
+                    count: enrollmentsLoading
+                        ? "Loading..."
+                        : `${filteredEnrollments.length} ${filteredEnrollments.length === 1 ? "Student" : "Students"}`,
                 })}
 
                 {openSection === "enrollments" && (
@@ -1611,7 +1681,7 @@ export default function AcademicManagementPage() {
                                     }] : []),
                                     ...(enrollmentSectionFilter !== "all" ? [{
                                         key: "section",
-                                        label: `Section: ${enrollmentSectionOptions.find((section) => section.id === Number(enrollmentSectionFilter))?.name ?? "Selected"}`,
+                                        label: `Section: ${enrollmentSectionOptions.find((section) => section.id === Number(enrollmentSectionFilter))?.label ?? "Selected"}`,
                                         onRemove: () => setEnrollmentSectionFilter("all"),
                                     }] : []),
                                     ...(enrollmentStatus !== "all" ? [{
@@ -1646,7 +1716,7 @@ export default function AcademicManagementPage() {
                                     >
                                         <option value="all">All sections</option>
                                         {enrollmentSectionOptions.map((section) => (
-                                            <option key={section.id} value={section.id}>{section.name}</option>
+                                            <option key={section.id} value={section.id}>{section.label}</option>
                                         ))}
                                     </select>
                                 </label>
