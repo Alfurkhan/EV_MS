@@ -1144,14 +1144,12 @@ export default function AcademicManagementPage() {
 
                                 </div>
 
+                            ) : filteredGrades.length === 0 && grades.length > 0 ? (
+                                <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                                    <p className="text-sm font-semibold text-slate-700">No grades match your search or filters.</p>
+                                    <p className="mt-1 text-xs text-slate-500">Try adjusting the search term or clearing the filters.</p>
+                                </div>
                             ) : (
-
-                                {filteredGrades.length === 0 && grades.length > 0 ? (
-                                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
-                                        <p className="text-sm font-semibold text-slate-700">No grades match your search or filters.</p>
-                                        <p className="mt-1 text-xs text-slate-500">Try adjusting the search term or clearing the filters.</p>
-                                    </div>
-                                ) : (
                                 <GradeTable
                                     grades={filteredGrades}
                                     onManage={(grade) => {
@@ -1162,8 +1160,6 @@ export default function AcademicManagementPage() {
                                         setSelectedGrade(grade);
                                     }}
                                 />
-                                )}
-
                             )}
 
                         </div>
@@ -1739,26 +1735,18 @@ export default function AcademicManagementPage() {
 
                             </div>
 
+                        ) : filteredEnrollments.length === 0 && enrollments.length > 0 ? (
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+                                <p className="text-sm font-semibold text-slate-700">No student enrollments match your search or filters.</p>
+                                <p className="mt-1 text-xs text-slate-500">Try changing the academic year, grade, section or status.</p>
+                            </div>
                         ) : (
-
-                            {filteredEnrollments.length === 0 && enrollments.length > 0 ? (
-                                <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
-                                    <p className="text-sm font-semibold text-slate-700">No student enrollments match your search or filters.</p>
-                                    <p className="mt-1 text-xs text-slate-500">Try changing the academic year, grade, section or status.</p>
-                                </div>
-                            ) : (
                             <StudentEnrollmentTable
                                 enrollments={filteredEnrollments}
                                 onManage={(enrollment) => {
-
-                                    setSelectedEnrollment(
-                                        enrollment
-                                    );
-
+                                    setSelectedEnrollment(enrollment);
                                 }}
                             />
-                            )}
-
                         )}
 
 
