@@ -19,6 +19,7 @@ import {
 } from "../services/subjectService";
 
 import AssignSubjectModal from "./AssignSubjectModal";
+import AcademicFilterToolbar from "./AcademicFilterToolbar";
 
 interface Grade {
     id: number;
@@ -71,6 +72,28 @@ export default function SubjectsSection({
 
     const [removing, setRemoving] =
         useState(false);
+
+    const [subjectSearch, setSubjectSearch] = useState("");
+    const [subjectGradeFilter, setSubjectGradeFilter] = useState("all");
+    const [subjectStatus, setSubjectStatus] = useState<"all" | "active" | "inactive">("all");
+
+    const filteredGrades = grades.filter((grade) => {
+        if (subjectGradeFilter !== "all" && grade.id !== Number(subjectGradeFilter)) {
+            return false;
+        }
+        const query = subjectSearch.trim().toLowerCase();
+        const gradeMatches = !query || grade.name.toLowerCase().includes(query);
+        const matchingSubjects = (subjectsByGrade[grade.id] ?? []).filter((subject) => {
+            const matchesQuery = !query || gradeMatches ||
+                subject.name.toLowerCase().includes(query) ||
+                subject.code.toLowerCase().includes(query) ||
+                (subject.description ?? "").toLowerCase().includes(query);
+            const matchesStatus = subjectStatus === "all" ||
+                (subjectStatus === "active" ? subject.active : !subject.active);
+            return matchesQuery && matchesStatus;
+        });
+        return loadingGradeSubjects || gradeMatches || matchingSubjects.length > 0;
+    });
 
     /*
      * Load subjects for all Grades.
@@ -391,17 +414,93 @@ export default function SubjectsSection({
 
     return (
         <>
+            <div className="mb-4">
+                <AcademicFilterToolbar
+                    searchValue={subjectSearch}
+                    onSearchChange={setSubjectSearch}
+                    placeholder="Search grades or assigned subjects..."
+                    onReset={() => {
+                        setSubjectSearch("");
+                        setSubjectGradeFilter("all");
+                        setSubjectStatus("all");
+                    }}
+                    activeFilters={[
+                        ...(subjectSearch.trim() ? [{
+                            key: "search",
+                            label: `Search: ${subjectSearch.trim()}`,
+                            onRemove: () => setSubjectSearch(""),
+                        }] : []),
+                        ...(subjectGradeFilter !== "all" ? [{
+                            key: "grade",
+                            label: `Grade: ${grades.find((grade) => grade.id === Number(subjectGradeFilter))?.name ?? "Selected"}`,
+                            onRemove: () => setSubjectGradeFilter("all"),
+                        }] : []),
+                        ...(subjectStatus !== "all" ? [{
+                            key: "status",
+                            label: subjectStatus === "active" ? "Active subjects" : "Inactive subjects",
+                            onRemove: () => setSubjectStatus("all"),
+                        }] : []),
+                    ]}
+                >
+                    <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                        Grade
+                        <select
+                            value={subjectGradeFilter}
+                            onChange={(event) => setSubjectGradeFilter(event.target.value)}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                        >
+                            <option value="all">All grades</option>
+                            {grades.map((grade) => (
+                                <option key={grade.id} value={grade.id}>{grade.name}</option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                        Subject status
+                        <select
+                            value={subjectStatus}
+                            onChange={(event) => setSubjectStatus(event.target.value as "all" | "active" | "inactive")}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                        >
+                            <option value="all">All statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </label>
+                </AcademicFilterToolbar>
+            </div>
+
             {/* Subjects / Grade Accordion */}
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                {grades.map((grade, index) => {
+                {filteredGrades.length === 0 ? (
+                    <div className="px-6 py-10 text-center">
+                        <p className="text-sm font-semibold text-slate-700">No grades or subjects match your search.</p>
+                        <p className="mt-1 text-xs text-slate-500">Try a different subject name, code or status.</p>
+                    </div>
+                ) : filteredGrades.map((grade, index) => {
                     const isExpanded =
                         expandedGradeId === grade.id;
 
                     const hasLoadedSubjects =
                         grade.id in subjectsByGrade;
 
-                    const subjects =
+                    const allGradeSubjects =
                         subjectsByGrade[grade.id] ?? [];
+
+                    const gradeMatchesSearch =
+                        !subjectSearch.trim() ||
+                        grade.name.toLowerCase().includes(subjectSearch.trim().toLowerCase());
+
+                    const subjects = allGradeSubjects.filter((subject) => {
+                        const query = subjectSearch.trim().toLowerCase();
+                        const matchesQuery = !query || gradeMatchesSearch ||
+                            subject.name.toLowerCase().includes(query) ||
+                            subject.code.toLowerCase().includes(query) ||
+                            (subject.description ?? "").toLowerCase().includes(query);
+                        const matchesStatus = subjectStatus === "all" ||
+                            (subjectStatus === "active" ? subject.active : !subject.active);
+                        return matchesQuery && matchesStatus;
+                    });
 
                     const isLoading =
                         loadingGradeId === grade.id;
@@ -413,7 +512,7 @@ export default function SubjectsSection({
                         <div
                             key={grade.id}
                             className={
-                                index !== grades.length - 1
+                                index !== filteredGrades.length - 1
                                     ? "border-b border-slate-200"
                                     : ""
                             }
