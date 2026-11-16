@@ -74,9 +74,13 @@ export default function SubjectsSection({
         useState(false);
 
     const [subjectSearch, setSubjectSearch] = useState("");
+    const [subjectGradeFilter, setSubjectGradeFilter] = useState("all");
     const [subjectStatus, setSubjectStatus] = useState<"all" | "active" | "inactive">("all");
 
     const filteredGrades = grades.filter((grade) => {
+        if (subjectGradeFilter !== "all" && grade.id !== Number(subjectGradeFilter)) {
+            return false;
+        }
         const query = subjectSearch.trim().toLowerCase();
         const gradeMatches = !query || grade.name.toLowerCase().includes(query);
         const matchingSubjects = (subjectsByGrade[grade.id] ?? []).filter((subject) => {
@@ -417,6 +421,7 @@ export default function SubjectsSection({
                     placeholder="Search grades or assigned subjects..."
                     onReset={() => {
                         setSubjectSearch("");
+                        setSubjectGradeFilter("all");
                         setSubjectStatus("all");
                     }}
                     activeFilters={[
@@ -425,6 +430,11 @@ export default function SubjectsSection({
                             label: `Search: ${subjectSearch.trim()}`,
                             onRemove: () => setSubjectSearch(""),
                         }] : []),
+                        ...(subjectGradeFilter !== "all" ? [{
+                            key: "grade",
+                            label: `Grade: ${grades.find((grade) => grade.id === Number(subjectGradeFilter))?.name ?? "Selected"}`,
+                            onRemove: () => setSubjectGradeFilter("all"),
+                        }] : []),
                         ...(subjectStatus !== "all" ? [{
                             key: "status",
                             label: subjectStatus === "active" ? "Active subjects" : "Inactive subjects",
@@ -432,6 +442,19 @@ export default function SubjectsSection({
                         }] : []),
                     ]}
                 >
+                    <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
+                        Grade
+                        <select
+                            value={subjectGradeFilter}
+                            onChange={(event) => setSubjectGradeFilter(event.target.value)}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-700 outline-none focus:border-blue-500"
+                        >
+                            <option value="all">All grades</option>
+                            {grades.map((grade) => (
+                                <option key={grade.id} value={grade.id}>{grade.name}</option>
+                            ))}
+                        </select>
+                    </label>
                     <label className="flex min-w-40 flex-col gap-1 text-xs font-medium text-slate-600">
                         Subject status
                         <select
