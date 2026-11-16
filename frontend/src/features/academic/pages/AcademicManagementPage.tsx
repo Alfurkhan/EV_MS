@@ -531,7 +531,10 @@ export default function AcademicManagementPage() {
         if (
             (openSection !== "sections" && openSection !== "enrollments") ||
             grades.length === 0
-        ) return;
+        ) {
+            setSectionsPreloading(false);
+            return;
+        }
 
         let cancelled = false;
 
