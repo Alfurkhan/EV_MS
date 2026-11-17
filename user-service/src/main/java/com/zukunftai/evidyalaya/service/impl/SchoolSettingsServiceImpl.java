@@ -94,11 +94,7 @@ public class SchoolSettingsServiceImpl implements SchoolSettingsService {
                 throw new APIException("Setting must be true or false: " + key,
                         HttpStatus.BAD_REQUEST, "INVALID_BOOLEAN_SETTING");
             }
-            if (key.equals("school.email") && !value.isBlank()
-                    && !value.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
-                throw new APIException("Enter a valid school email address.",
-                        HttpStatus.BAD_REQUEST, "INVALID_SCHOOL_EMAIL");
-            }
+            validateSettingValue(key, value);
         }
 
         settings.forEach((key, value) -> {
@@ -125,6 +121,40 @@ public class SchoolSettingsServiceImpl implements SchoolSettingsService {
         });
 
         return getSettings();
+    }
+
+    private void validateSettingValue(String key, String value) {
+        if (key.equals("school.email") && !value.isBlank()
+                && !value.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new APIException("Enter a valid school email address.",
+                    HttpStatus.BAD_REQUEST, "INVALID_SCHOOL_EMAIL");
+        }
+
+        if ((key.equals("school.website") || key.equals("school.logoUrl"))
+                && !value.isBlank() && !value.matches("^https?://.+$")) {
+            throw new APIException("Enter a valid URL beginning with http:// or https://.",
+                    HttpStatus.BAD_REQUEST, "INVALID_SETTING_URL");
+        }
+
+        if (Set.of("attendance.minimumPercentage", "timetable.defaultPeriodMinutes",
+                "assignments.maxUploadSizeMb", "security.sessionTimeoutMinutes",
+                "academic.defaultAcademicYearId").contains(key)) {
+            try {
+                long number = Long.parseLong(value);
+                boolean valid = switch (key) {
+                    case "attendance.minimumPercentage" -> number >= 0 && number <= 100;
+                    case "timetable.defaultPeriodMinutes" -> number >= 1 && number <= 240;
+                    case "assignments.maxUploadSizeMb" -> number >= 1 && number <= 100;
+                    case "security.sessionTimeoutMinutes" -> number >= 5 && number <= 1440;
+                    case "academic.defaultAcademicYearId" -> number > 0;
+                    default -> false;
+                };
+                if (!valid) throw new NumberFormatException();
+            } catch (NumberFormatException exception) {
+                throw new APIException("Invalid numeric value for setting: " + key,
+                        HttpStatus.BAD_REQUEST, "INVALID_NUMERIC_SETTING");
+            }
+        }
     }
 
     @Override
