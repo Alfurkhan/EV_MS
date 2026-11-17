@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="17112026-001-school-settings" author="Furkhan">
+        <createTable tableName="school_setting">
+            <column name="setting_key" type="VARCHAR(100)">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_school_setting"/>
+            </column>
+            <column name="setting_value" type="TEXT"/>
+            <column name="updated_by" type="BIGINT"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="school_setting"
+                baseColumnNames="updated_by"
+                referencedTableName="user"
+                referencedColumnNames="id"
+                constraintName="fk_school_setting_updated_by"
+                onDelete="SET NULL"/>
+    </changeSet>
+
+    <changeSet id="17112026-002-school-setting-audit" author="Furkhan">
+        <createTable tableName="school_setting_audit">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_school_setting_audit"/>
+            </column>
+            <column name="setting_key" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="old_value" type="TEXT"/>
+            <column name="new_value" type="TEXT"/>
+            <column name="changed_by" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="changed_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint
+                baseTableName="school_setting_audit"
+                baseColumnNames="changed_by"
+                referencedTableName="user"
+                referencedColumnNames="id"
+                constraintName="fk_school_setting_audit_changed_by"/>
+        <createIndex tableName="school_setting_audit" indexName="idx_school_setting_audit_changed_at">
+            <column name="changed_at"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
