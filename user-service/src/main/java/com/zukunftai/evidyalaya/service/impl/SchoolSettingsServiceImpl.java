@@ -110,7 +110,7 @@ public class SchoolSettingsServiceImpl implements SchoolSettingsService {
 
             setting.setSettingValue(value);
             setting.setUpdatedBy(actor);
-            SchoolSetting saved = settingsRepository.save(setting);
+            settingsRepository.save(setting);
 
             auditRepository.save(SchoolSettingAudit.builder()
                     .settingKey(key)
