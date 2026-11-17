@@ -6,8 +6,6 @@ import {
     CalendarDays,
     ClipboardCheck,
     GraduationCap,
-    Info,
-    LockKeyhole,
     School,
     Settings2,
     ShieldCheck,
@@ -101,7 +99,6 @@ const categories: SettingsCategory[] = [
 
 export default function Settings() {
     const [activeCategory, setActiveCategory] = useState("school");
-    const [showProtectionInfo, setShowProtectionInfo] = useState(false);
 
     const selectedCategory =
         categories.find((category) => category.id === activeCategory) ?? categories[0];
@@ -116,51 +113,12 @@ export default function Settings() {
                         <Settings2 size={16} />
                         Administration
                     </div>
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                            Settings
-                        </h1>
-                        <div
-                            className="relative"
-                            onMouseEnter={() => setShowProtectionInfo(true)}
-                            onMouseLeave={() => setShowProtectionInfo(false)}
-                            onFocus={() => setShowProtectionInfo(true)}
-                            onBlur={(event) => {
-                                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-                                    setShowProtectionInfo(false);
-                                }
-                            }}
-                        >
-                            <button
-                                type="button"
-                                aria-label="About settings protection"
-                                aria-expanded={showProtectionInfo}
-                                aria-describedby="settings-protection-tooltip"
-                                onClick={() => setShowProtectionInfo((visible) => !visible)}
-                                className="inline-flex size-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                            >
-                                <Info size={17} />
-                            </button>
-                            <div
-                                id="settings-protection-tooltip"
-                                role="tooltip"
-                                className={`absolute left-0 top-full z-30 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 text-left text-xs leading-5 text-slate-600 shadow-lg transition-all duration-200 ease-out sm:left-auto sm:right-0 ${
-                                    showProtectionInfo
-                                        ? "translate-y-0 opacity-100"
-                                        : "pointer-events-none -translate-y-1 opacity-0"
-                                }`}
-                            >
-                                Only administrators can access school-wide settings. Configuration changes are recorded with the administrator and timestamp. eVidyalaya's product identity and branding will remain part of the application.
-                            </div>
-                        </div>
-                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                        Settings
+                    </h1>
                     <p className="mt-1 max-w-2xl text-sm text-slate-500">
                         Manage school-wide preferences and control how eVidyalaya works for your school.
                     </p>
-                </div>
-                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-                    <LockKeyhole size={14} />
-                    Admin access only
                 </div>
             </div>
 
