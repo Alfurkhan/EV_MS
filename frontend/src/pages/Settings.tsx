@@ -184,7 +184,7 @@ export default function Settings() {
                         {loading ? "—" : Object.keys(savedSettings).length}
                     </p>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        Stored securely in the application database
+                        Stored in the application database
                     </p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
