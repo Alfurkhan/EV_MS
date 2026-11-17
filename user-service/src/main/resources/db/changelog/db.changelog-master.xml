@@ -7,9 +7,7 @@
 
     <changeSet id="29072026-001" author="shishir">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="user"/>
-            </not>
+            <not><tableExists tableName="user"/></not>
         </preConditions>
         <comment>Create user table</comment>
         <sql>
@@ -39,9 +37,7 @@
 
     <changeSet id="29072026-002" author="shishir">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="role"/>
-            </not>
+            <not><tableExists tableName="role"/></not>
         </preConditions>
         <comment>Create role table</comment>
         <sql>
@@ -57,9 +53,7 @@
 
     <changeSet id="30072026-001" author="shishir">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="user_role"/>
-            </not>
+            <not><tableExists tableName="user_role"/></not>
         </preConditions>
         <comment>[OEE-637] Create user_role table</comment>
         <sql>
@@ -76,9 +70,7 @@
 
     <changeSet id="30072026-002" author="shishir">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="refresh_tokens"/>
-            </not>
+            <not><tableExists tableName="refresh_tokens"/></not>
         </preConditions>
         <comment>Create refresh_tokens table</comment>
         <sql>
@@ -94,11 +86,8 @@
 
     <changeSet id="30072026-003" author="shishir">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="forgot_password"/>
-            </not>
+            <not><tableExists tableName="forgot_password"/></not>
         </preConditions>
-
         <comment>Create forgot_password table</comment>
         <sql>
             CREATE TABLE "forgot_password" (
@@ -115,13 +104,9 @@
 
     <changeSet id="13082026-001" author="Furkhan">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="email_verification_otp"/>
-            </not>
+            <not><tableExists tableName="email_verification_otp"/></not>
         </preConditions>
-
         <comment>Create email_verification_otp table</comment>
-
         <sql>
             CREATE TABLE "email_verification_otp"
             (
@@ -131,25 +116,18 @@
                 created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 expires_at TIMESTAMP    NOT NULL,
                 verified   BOOL         NOT NULL DEFAULT FALSE,
-
                 CONSTRAINT email_verification_otp_pkey PRIMARY KEY (id),
                 CONSTRAINT fk_email_verification_otp_user
-                    FOREIGN KEY (user_id)
-                        REFERENCES "user"(id)
-                        ON DELETE CASCADE
+                    FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
             );
         </sql>
     </changeSet>
 
     <changeSet id="15082026-001" author="Furkhan">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="email_registration_otp"/>
-            </not>
+            <not><tableExists tableName="email_registration_otp"/></not>
         </preConditions>
-
         <comment>Create email_registration_otp table</comment>
-
         <sql>
             CREATE TABLE "email_registration_otp"
             (
@@ -159,7 +137,6 @@
                 created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 expires_at TIMESTAMP    NOT NULL,
                 verified   BOOL         NOT NULL DEFAULT FALSE,
-
                 CONSTRAINT email_registration_otp_pkey PRIMARY KEY (id)
             );
         </sql>
@@ -168,30 +145,20 @@
     <changeSet id="16082026-001" author="Furkhan">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
-                SELECT COUNT(*)
-                FROM pg_constraint
-                WHERE conname = 'uk_refresh_tokens_user';
+                SELECT COUNT(*) FROM pg_constraint WHERE conname = 'uk_refresh_tokens_user';
             </sqlCheck>
         </preConditions>
-
         <comment>Ensure one refresh token per user</comment>
-
         <sql>
-            ALTER TABLE "refresh_tokens"
-            ADD CONSTRAINT uk_refresh_tokens_user
-            UNIQUE (user_id);
+            ALTER TABLE "refresh_tokens" ADD CONSTRAINT uk_refresh_tokens_user UNIQUE (user_id);
         </sql>
     </changeSet>
 
     <changeSet id="29082026-001" author="Furkhan">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="subject"/>
-            </not>
+            <not><tableExists tableName="subject"/></not>
         </preConditions>
-
         <comment>Create subject table</comment>
-
         <sql>
             CREATE TABLE "subject"
             (
@@ -202,7 +169,6 @@
                 active      BOOL         NOT NULL DEFAULT TRUE,
                 created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
                 CONSTRAINT subject_pkey PRIMARY KEY (id),
                 CONSTRAINT uk_subject_name UNIQUE (name),
                 CONSTRAINT uk_subject_code UNIQUE (code)
@@ -210,47 +176,30 @@
         </sql>
     </changeSet>
 
-
     <changeSet id="29082026-002" author="Furkhan">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="subject_faculty"/>
-            </not>
+            <not><tableExists tableName="subject_faculty"/></not>
         </preConditions>
-
         <comment>Create subject_faculty assignment table</comment>
-
         <sql>
             CREATE TABLE "subject_faculty"
             (
                 subject_id INT8 NOT NULL,
                 faculty_id INT8 NOT NULL,
-
-                CONSTRAINT subject_faculty_pkey
-                    PRIMARY KEY (subject_id, faculty_id),
-
-                CONSTRAINT fk_subject_faculty_subject
-                    FOREIGN KEY (subject_id)
-                        REFERENCES "subject" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_subject_faculty_user
-                    FOREIGN KEY (faculty_id)
-                        REFERENCES "user" (id)
-                        ON DELETE CASCADE
+                CONSTRAINT subject_faculty_pkey PRIMARY KEY (subject_id, faculty_id),
+                CONSTRAINT fk_subject_faculty_subject FOREIGN KEY (subject_id)
+                    REFERENCES "subject" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_subject_faculty_user FOREIGN KEY (faculty_id)
+                    REFERENCES "user" (id) ON DELETE CASCADE
             );
         </sql>
     </changeSet>
 
     <changeSet id="31082026-001" author="Furkhan">
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="academic_year"/>
-            </not>
+            <not><tableExists tableName="academic_year"/></not>
         </preConditions>
-
         <comment>Create academic_year table</comment>
-
         <sql>
             CREATE TABLE "academic_year"
             (
@@ -261,28 +210,18 @@
                 active     BOOL         NOT NULL DEFAULT FALSE,
                 created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
                 CONSTRAINT academic_year_pkey PRIMARY KEY (id),
-
-                CONSTRAINT uk_academic_year_name
-                    UNIQUE (name),
-
-                CONSTRAINT chk_academic_year_dates
-                    CHECK (end_date > start_date)
+                CONSTRAINT uk_academic_year_name UNIQUE (name),
+                CONSTRAINT chk_academic_year_dates CHECK (end_date > start_date)
             );
         </sql>
     </changeSet>
 
     <changeSet id="31082026-002" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="grade"/>
-            </not>
+            <not><tableExists tableName="grade"/></not>
         </preConditions>
-
         <comment>Create grade table</comment>
-
         <sql>
             CREATE TABLE "grade"
             (
@@ -293,32 +232,19 @@
                 active           BOOL         NOT NULL DEFAULT TRUE,
                 created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                CONSTRAINT grade_pkey
-                    PRIMARY KEY (id),
-
-                CONSTRAINT uk_grade_academic_year_name
-                    UNIQUE (academic_year_id, name),
-
-                CONSTRAINT fk_grade_academic_year
-                    FOREIGN KEY (academic_year_id)
-                        REFERENCES "academic_year" (id)
-                        ON DELETE CASCADE
+                CONSTRAINT grade_pkey PRIMARY KEY (id),
+                CONSTRAINT uk_grade_academic_year_name UNIQUE (academic_year_id, name),
+                CONSTRAINT fk_grade_academic_year FOREIGN KEY (academic_year_id)
+                    REFERENCES "academic_year" (id) ON DELETE CASCADE
             );
         </sql>
-
     </changeSet>
 
     <changeSet id="31082026-003" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="section"/>
-            </not>
+            <not><tableExists tableName="section"/></not>
         </preConditions>
-
         <comment>Create section table</comment>
-
         <sql>
             CREATE TABLE "section"
             (
@@ -329,32 +255,19 @@
                 active      BOOL         NOT NULL DEFAULT TRUE,
                 created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                CONSTRAINT section_pkey
-                    PRIMARY KEY (id),
-
-                CONSTRAINT uk_section_grade_name
-                    UNIQUE (grade_id, name),
-
-                CONSTRAINT fk_section_grade
-                    FOREIGN KEY (grade_id)
-                        REFERENCES "grade" (id)
-                        ON DELETE CASCADE
+                CONSTRAINT section_pkey PRIMARY KEY (id),
+                CONSTRAINT uk_section_grade_name UNIQUE (grade_id, name),
+                CONSTRAINT fk_section_grade FOREIGN KEY (grade_id)
+                    REFERENCES "grade" (id) ON DELETE CASCADE
             );
         </sql>
-
     </changeSet>
 
     <changeSet id="31082026-004" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="student_enrollment"/>
-            </not>
+            <not><tableExists tableName="student_enrollment"/></not>
         </preConditions>
-
         <comment>Create student_enrollment table</comment>
-
         <sql>
             CREATE TABLE "student_enrollment"
             (
@@ -366,361 +279,183 @@
                 active           BOOL      NOT NULL DEFAULT TRUE,
                 created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                CONSTRAINT student_enrollment_pkey
-                    PRIMARY KEY (id),
-
-                CONSTRAINT fk_student_enrollment_student
-                    FOREIGN KEY (student_id)
-                        REFERENCES "user" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_student_enrollment_academic_year
-                    FOREIGN KEY (academic_year_id)
-                        REFERENCES "academic_year" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_student_enrollment_grade
-                    FOREIGN KEY (grade_id)
-                        REFERENCES "grade" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_student_enrollment_section
-                    FOREIGN KEY (section_id)
-                        REFERENCES "section" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT uk_student_enrollment_year
-                    UNIQUE (student_id, academic_year_id)
+                CONSTRAINT student_enrollment_pkey PRIMARY KEY (id),
+                CONSTRAINT fk_student_enrollment_student FOREIGN KEY (student_id)
+                    REFERENCES "user" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_student_enrollment_academic_year FOREIGN KEY (academic_year_id)
+                    REFERENCES "academic_year" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_student_enrollment_grade FOREIGN KEY (grade_id)
+                    REFERENCES "grade" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_student_enrollment_section FOREIGN KEY (section_id)
+                    REFERENCES "section" (id) ON DELETE CASCADE,
+                CONSTRAINT uk_student_enrollment_year UNIQUE (student_id, academic_year_id)
             );
         </sql>
-
     </changeSet>
 
     <changeSet id="31082026-005" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="grade_subject"/>
-            </not>
+            <not><tableExists tableName="grade_subject"/></not>
         </preConditions>
-
         <comment>Create grade_subject relationship table</comment>
-
         <sql>
             CREATE TABLE "grade_subject"
             (
                 grade_id   INT8 NOT NULL,
                 subject_id INT8 NOT NULL,
-
-                CONSTRAINT grade_subject_pkey
-                    PRIMARY KEY (grade_id, subject_id),
-
-                CONSTRAINT fk_grade_subject_grade
-                    FOREIGN KEY (grade_id)
-                        REFERENCES "grade" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_grade_subject_subject
-                    FOREIGN KEY (subject_id)
-                        REFERENCES "subject" (id)
-                        ON DELETE CASCADE
+                CONSTRAINT grade_subject_pkey PRIMARY KEY (grade_id, subject_id),
+                CONSTRAINT fk_grade_subject_grade FOREIGN KEY (grade_id)
+                    REFERENCES "grade" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_grade_subject_subject FOREIGN KEY (subject_id)
+                    REFERENCES "subject" (id) ON DELETE CASCADE
             );
         </sql>
-
     </changeSet>
 
     <changeSet id="31082026-006" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists
-                        tableName="user"
-                        columnName="account_deleted"/>
-            </not>
+            <not><columnExists tableName="user" columnName="account_deleted"/></not>
         </preConditions>
-
         <comment>Add soft-delete flag to user accounts</comment>
-
         <sql>
-            ALTER TABLE "user"
-                ADD COLUMN account_deleted BOOL NOT NULL DEFAULT FALSE;
+            ALTER TABLE "user" ADD COLUMN account_deleted BOOL NOT NULL DEFAULT FALSE;
         </sql>
-
     </changeSet>
 
     <changeSet id="03092026-001" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="timetable"/>
-            </not>
+            <not><tableExists tableName="timetable"/></not>
         </preConditions>
-
         <comment>Create timetable table</comment>
-
         <sql>
             CREATE TABLE "timetable"
             (
                 id               INT8         NOT NULL GENERATED BY DEFAULT AS IDENTITY,
                 academic_year_id INT8         NOT NULL,
-                grade_id         INT8         NOT NULL,
-                section_id       INT8         NOT NULL,
-                subject_id       INT8         NOT NULL,
-                faculty_id       INT8         NOT NULL,
-                day_of_week      VARCHAR(10)  NOT NULL,
-                start_time       TIME         NOT NULL,
-                end_time         TIME         NOT NULL,
-                room             VARCHAR(100) NULL,
-                notes            VARCHAR(500) NULL,
-                active           BOOL         NOT NULL DEFAULT TRUE,
-                created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                CONSTRAINT timetable_pkey
-                    PRIMARY KEY (id),
-
-                CONSTRAINT fk_timetable_academic_year
-                    FOREIGN KEY (academic_year_id)
-                        REFERENCES "academic_year" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_timetable_grade
-                    FOREIGN KEY (grade_id)
-                        REFERENCES "grade" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_timetable_section
-                    FOREIGN KEY (section_id)
-                        REFERENCES "section" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_timetable_subject
-                    FOREIGN KEY (subject_id)
-                        REFERENCES "subject" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_timetable_faculty
-                    FOREIGN KEY (faculty_id)
-                        REFERENCES "user" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT chk_timetable_time
-                    CHECK (end_time > start_time)
+                grade_id          INT8         NOT NULL,
+                section_id        INT8         NOT NULL,
+                subject_id        INT8         NOT NULL,
+                faculty_id        INT8         NOT NULL,
+                day_of_week       VARCHAR(10)  NOT NULL,
+                start_time        TIME         NOT NULL,
+                end_time          TIME         NOT NULL,
+                room              VARCHAR(100) NULL,
+                notes             VARCHAR(500) NULL,
+                active            BOOL         NOT NULL DEFAULT TRUE,
+                created_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT timetable_pkey PRIMARY KEY (id),
+                CONSTRAINT fk_timetable_academic_year FOREIGN KEY (academic_year_id)
+                    REFERENCES "academic_year" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_timetable_grade FOREIGN KEY (grade_id)
+                    REFERENCES "grade" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_timetable_section FOREIGN KEY (section_id)
+                    REFERENCES "section" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_timetable_subject FOREIGN KEY (subject_id)
+                    REFERENCES "subject" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_timetable_faculty FOREIGN KEY (faculty_id)
+                    REFERENCES "user" (id) ON DELETE CASCADE,
+                CONSTRAINT chk_timetable_time CHECK (end_time > start_time)
             );
         </sql>
-
     </changeSet>
 
     <changeSet id="03092026-002" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <indexExists
-                        indexName="idx_timetable_academic_year"/>
-            </not>
+            <not><indexExists indexName="idx_timetable_academic_year"/></not>
         </preConditions>
-
         <comment>Create timetable indexes</comment>
-
         <sql>
-            CREATE INDEX idx_timetable_academic_year
-                ON "timetable" (academic_year_id);
-
-            CREATE INDEX idx_timetable_grade
-                ON "timetable" (grade_id);
-
-            CREATE INDEX idx_timetable_section
-                ON "timetable" (section_id);
-
-            CREATE INDEX idx_timetable_subject
-                ON "timetable" (subject_id);
-
-            CREATE INDEX idx_timetable_faculty
-                ON "timetable" (faculty_id);
-
-            CREATE INDEX idx_timetable_day
-                ON "timetable" (day_of_week);
+            CREATE INDEX idx_timetable_academic_year ON "timetable" (academic_year_id);
+            CREATE INDEX idx_timetable_grade ON "timetable" (grade_id);
+            CREATE INDEX idx_timetable_section ON "timetable" (section_id);
+            CREATE INDEX idx_timetable_subject ON "timetable" (subject_id);
+            CREATE INDEX idx_timetable_faculty ON "timetable" (faculty_id);
+            CREATE INDEX idx_timetable_day ON "timetable" (day_of_week);
         </sql>
-
     </changeSet>
 
     <changeSet id="04092026-001" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="class_session"/>
-            </not>
+            <not><tableExists tableName="class_session"/></not>
         </preConditions>
-
         <comment>Create class_session table</comment>
-
         <sql>
             CREATE TABLE "class_session"
             (
                 id               INT8         NOT NULL GENERATED BY DEFAULT AS IDENTITY,
                 timetable_id     INT8         NOT NULL,
                 session_date     DATE         NOT NULL,
-                status           VARCHAR(20)  NOT NULL,
-                started_at       TIMESTAMP    NULL,
-                ended_at         TIMESTAMP    NULL,
-                duration_minutes INT4         NULL,
-                created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                CONSTRAINT class_session_pkey
-                    PRIMARY KEY (id),
-
-                CONSTRAINT fk_class_session_timetable
-                    FOREIGN KEY (timetable_id)
-                        REFERENCES "timetable" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT uk_class_session_timetable_date
-                    UNIQUE (timetable_id, session_date),
-
-                CONSTRAINT chk_class_session_duration
-                    CHECK (
-                        duration_minutes IS NULL
-                            OR duration_minutes >= 0
-                        )
+                status            VARCHAR(20)  NOT NULL,
+                started_at        TIMESTAMP    NULL,
+                ended_at          TIMESTAMP    NULL,
+                duration_minutes  INT4         NULL,
+                created_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT class_session_pkey PRIMARY KEY (id),
+                CONSTRAINT fk_class_session_timetable FOREIGN KEY (timetable_id)
+                    REFERENCES "timetable" (id) ON DELETE CASCADE,
+                CONSTRAINT uk_class_session_timetable_date UNIQUE (timetable_id, session_date),
+                CONSTRAINT chk_class_session_duration CHECK (duration_minutes IS NULL OR duration_minutes >= 0)
             );
         </sql>
-
     </changeSet>
 
     <changeSet id="04092026-002" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <indexExists
-                        indexName="idx_class_session_timetable"/>
-            </not>
+            <not><indexExists indexName="idx_class_session_timetable"/></not>
         </preConditions>
-
         <comment>Create class_session indexes</comment>
-
         <sql>
-            CREATE INDEX idx_class_session_timetable
-                ON "class_session" (timetable_id);
-
-            CREATE INDEX idx_class_session_date
-                ON "class_session" (session_date);
-
-            CREATE INDEX idx_class_session_status
-                ON "class_session" (status);
+            CREATE INDEX idx_class_session_timetable ON "class_session" (timetable_id);
+            CREATE INDEX idx_class_session_date ON "class_session" (session_date);
+            CREATE INDEX idx_class_session_status ON "class_session" (status);
         </sql>
-
     </changeSet>
 
     <changeSet id="06092026-001" author="Furkhan">
-
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="timetable"/>
-        </preConditions>
-
-        <comment>
-            Add recurring timetable dates, class type and online meeting link
-        </comment>
-
+        <preConditions onFail="MARK_RAN"><tableExists tableName="timetable"/></preConditions>
+        <comment>Add recurring timetable dates, class type and online meeting link</comment>
         <addColumn tableName="timetable">
-
-            <column
-                    name="class_type"
-                    type="VARCHAR(20)"
-                    defaultValue="OFFLINE">
+            <column name="class_type" type="VARCHAR(20)" defaultValue="OFFLINE">
                 <constraints nullable="false"/>
             </column>
-
-            <column
-                    name="start_date"
-                    type="DATE"/>
-
-            <column
-                    name="end_date"
-                    type="DATE"/>
-
-            <column
-                    name="meeting_link"
-                    type="VARCHAR(500)"/>
-
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="meeting_link" type="VARCHAR(500)"/>
         </addColumn>
-
         <sql>
             UPDATE "timetable" t
-            SET
-                start_date = ay.start_date,
-                end_date = ay.end_date
-                FROM "academic_year" ay
-            WHERE t.academic_year_id = ay.id
-              AND (
-                t.start_date IS NULL
-               OR t.end_date IS NULL
-                );
+            SET start_date = ay.start_date, end_date = ay.end_date
+            FROM "academic_year" ay
+            WHERE t.academic_year_id = ay.id AND (t.start_date IS NULL OR t.end_date IS NULL);
         </sql>
-
-        <addNotNullConstraint
-                tableName="timetable"
-                columnName="start_date"
-                columnDataType="DATE"/>
-
-        <addNotNullConstraint
-                tableName="timetable"
-                columnName="end_date"
-                columnDataType="DATE"/>
-
+        <addNotNullConstraint tableName="timetable" columnName="start_date" columnDataType="DATE"/>
+        <addNotNullConstraint tableName="timetable" columnName="end_date" columnDataType="DATE"/>
     </changeSet>
-
 
     <changeSet id="06092026-002" author="Furkhan">
-
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="timetable"/>
-        </preConditions>
-
-        <comment>
-            Add indexes for recurring timetable date filtering
-        </comment>
-
+        <preConditions onFail="MARK_RAN"><tableExists tableName="timetable"/></preConditions>
+        <comment>Add indexes for recurring timetable date filtering</comment>
         <sql>
-            CREATE INDEX IF NOT EXISTS idx_timetable_start_date
-                ON "timetable" (start_date);
-
-            CREATE INDEX IF NOT EXISTS idx_timetable_end_date
-                ON "timetable" (end_date);
+            CREATE INDEX IF NOT EXISTS idx_timetable_start_date ON "timetable" (start_date);
+            CREATE INDEX IF NOT EXISTS idx_timetable_end_date ON "timetable" (end_date);
         </sql>
-
     </changeSet>
 
-
     <changeSet id="06092026-003" author="Furkhan">
-
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="timetable"/>
-        </preConditions>
-
-        <comment>
-            Ensure timetable validity period is valid
-        </comment>
-
+        <preConditions onFail="MARK_RAN"><tableExists tableName="timetable"/></preConditions>
+        <comment>Ensure timetable validity period is valid</comment>
         <sql>
-            ALTER TABLE "timetable"
-                ADD CONSTRAINT chk_timetable_date_range
-                    CHECK (end_date >= start_date);
+            ALTER TABLE "timetable" ADD CONSTRAINT chk_timetable_date_range CHECK (end_date >= start_date);
         </sql>
-
     </changeSet>
 
     <changeSet id="17092026-001" author="Furkhan">
-
         <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="attendance"/>
-            </not>
+            <not><tableExists tableName="attendance"/></not>
         </preConditions>
-
         <comment>Create attendance table</comment>
-
         <sql>
             CREATE TABLE "attendance"
             (
@@ -731,81 +466,43 @@
                 remarks          VARCHAR(500) NULL,
                 created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-                CONSTRAINT attendance_pkey
-                    PRIMARY KEY (id),
-
-                CONSTRAINT fk_attendance_class_session
-                    FOREIGN KEY (class_session_id)
-                        REFERENCES "class_session" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT fk_attendance_student
-                    FOREIGN KEY (student_id)
-                        REFERENCES "user" (id)
-                        ON DELETE CASCADE,
-
-                CONSTRAINT uk_attendance_session_student
-                    UNIQUE (class_session_id, student_id)
+                CONSTRAINT attendance_pkey PRIMARY KEY (id),
+                CONSTRAINT fk_attendance_class_session FOREIGN KEY (class_session_id)
+                    REFERENCES "class_session" (id) ON DELETE CASCADE,
+                CONSTRAINT fk_attendance_student FOREIGN KEY (student_id)
+                    REFERENCES "user" (id) ON DELETE CASCADE,
+                CONSTRAINT uk_attendance_session_student UNIQUE (class_session_id, student_id)
             );
         </sql>
-
     </changeSet>
 
-
     <changeSet id="17092026-002" author="Furkhan">
-
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="attendance"/>
-        </preConditions>
-
+        <preConditions onFail="MARK_RAN"><tableExists tableName="attendance"/></preConditions>
         <comment>Create attendance indexes</comment>
-
         <sql>
-            CREATE INDEX IF NOT EXISTS idx_attendance_session
-                ON "attendance" (class_session_id);
-
-            CREATE INDEX IF NOT EXISTS idx_attendance_student
-                ON "attendance" (student_id);
-
-            CREATE INDEX IF NOT EXISTS idx_attendance_status
-                ON "attendance" (status);
+            CREATE INDEX IF NOT EXISTS idx_attendance_session ON "attendance" (class_session_id);
+            CREATE INDEX IF NOT EXISTS idx_attendance_student ON "attendance" (student_id);
+            CREATE INDEX IF NOT EXISTS idx_attendance_status ON "attendance" (status);
         </sql>
-
     </changeSet>
 
     <changeSet id="21092026-001" author="Furkhan">
-
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="timetable"/>
-        </preConditions>
-
-        <comment>
-            Add meeting platform to timetable for online class integration
-        </comment>
-
+        <preConditions onFail="MARK_RAN"><tableExists tableName="timetable"/></preConditions>
+        <comment>Add meeting platform to timetable for online class integration</comment>
         <sql>
-            ALTER TABLE "timetable"
-                ADD COLUMN IF NOT EXISTS meeting_platform VARCHAR(30);
+            ALTER TABLE "timetable" ADD COLUMN IF NOT EXISTS meeting_platform VARCHAR(30);
         </sql>
-
     </changeSet>
-
 
     <changeSet id="10102026-001" author="Furkhan">
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="timetable"/>
-        </preConditions>
+        <preConditions onFail="MARK_RAN"><tableExists tableName="timetable"/></preConditions>
         <comment>Add approval workflow status to existing timetable entries</comment>
         <sql>
-            ALTER TABLE "timetable"
-                ADD COLUMN IF NOT EXISTS status VARCHAR(30) NOT NULL DEFAULT 'APPROVED';
+            ALTER TABLE "timetable" ADD COLUMN IF NOT EXISTS status VARCHAR(30) NOT NULL DEFAULT 'APPROVED';
             UPDATE "timetable" SET status = 'APPROVED' WHERE status IS NULL;
-            ALTER TABLE "timetable"
-                ALTER COLUMN status SET DEFAULT 'APPROVED';
+            ALTER TABLE "timetable" ALTER COLUMN status SET DEFAULT 'APPROVED';
         </sql>
     </changeSet>
-
 
     <changeSet id="29102026-001" author="Furkhan">
         <comment>Create assignment records for faculty-created coursework</comment>
@@ -829,12 +526,9 @@
                 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT chk_assignment_status CHECK (status IN ('DRAFT', 'PUBLISHED'))
             );
-            CREATE INDEX IF NOT EXISTS idx_assignment_target
-                ON assignment (academic_year_id, grade_id, section_id, status);
-            CREATE INDEX IF NOT EXISTS idx_assignment_faculty
-                ON assignment (faculty_id, created_at);
-            CREATE INDEX IF NOT EXISTS idx_assignment_due_at
-                ON assignment (due_at);
+            CREATE INDEX IF NOT EXISTS idx_assignment_target ON assignment (academic_year_id, grade_id, section_id, status);
+            CREATE INDEX IF NOT EXISTS idx_assignment_faculty ON assignment (faculty_id, created_at);
+            CREATE INDEX IF NOT EXISTS idx_assignment_due_at ON assignment (due_at);
         </sql>
     </changeSet>
 
@@ -863,15 +557,12 @@
                     marks IS NULL OR (marks &gt;= 0 AND max_marks IS NOT NULL AND max_marks &gt; 0 AND marks &lt;= max_marks)
                 )
             );
-            CREATE INDEX IF NOT EXISTS idx_assignment_submission_student
-                ON assignment_submission (student_id, updated_at);
-            CREATE INDEX IF NOT EXISTS idx_assignment_submission_assignment
-                ON assignment_submission (assignment_id, submitted_at);
+            CREATE INDEX IF NOT EXISTS idx_assignment_submission_student ON assignment_submission (student_id, updated_at);
+            CREATE INDEX IF NOT EXISTS idx_assignment_submission_assignment ON assignment_submission (assignment_id, submitted_at);
         </sql>
     </changeSet>
 
     <include file="db/changelog/assessment/db.changelog-assessments.xml"/>
-
     <include file="db/changelog/notifications/db.changelog-notifications.xml"/>
     <include file="db/changelog/notifications/db.changelog-notification-assignment-source.xml"/>
     <include file="db/changelog/notifications/db.changelog-notification-activity-sources.xml"/>
@@ -881,5 +572,6 @@
     <include file="db/changelog/notifications/db.changelog-email-notifications.xml"/>
     <include file="db/changelog/notifications/db.changelog-email-attachment-snapshots.xml"/>
     <include file="db/changelog/notifications/db.changelog-email-outbox-revisions.xml"/>
+    <include file="db/changelog/db.changelog-school-settings.xml"/>
 
 </databaseChangeLog>
