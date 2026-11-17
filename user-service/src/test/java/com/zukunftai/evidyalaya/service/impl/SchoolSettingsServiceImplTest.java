@@ -84,7 +84,7 @@ class SchoolSettingsServiceImplTest {
         APIException exception = assertThrows(APIException.class,
                 () -> service.updateSettings(Map.of("unknown.setting", "value"), 42L));
 
-        assertEquals("UNSUPPORTED_SETTING", exception.getErrorCode());
+        assertEquals("UNSUPPORTED_SETTING", exception.getResponseErrorCode());
         verify(settingsRepository, never()).save(any());
         verify(auditRepository, never()).save(any());
     }
@@ -96,7 +96,7 @@ class SchoolSettingsServiceImplTest {
                         Map.of("notifications.email.enabled", "sometimes"), 42L
                 ));
 
-        assertEquals("INVALID_BOOLEAN_SETTING", exception.getErrorCode());
+        assertEquals("INVALID_BOOLEAN_SETTING", exception.getResponseErrorCode());
         verify(settingsRepository, never()).save(any());
     }
 
@@ -107,7 +107,7 @@ class SchoolSettingsServiceImplTest {
                         Map.of("attendance.minimumPercentage", "125"), 42L
                 ));
 
-        assertEquals("INVALID_NUMERIC_SETTING", exception.getErrorCode());
+        assertEquals("INVALID_NUMERIC_SETTING", exception.getResponseErrorCode());
         verify(settingsRepository, never()).save(any());
     }
 }
