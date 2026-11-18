@@ -29,7 +29,7 @@ const ACCEPTED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const ACCEPTED_LOGO_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
 
 function getErrorMessage(error: any, fallback: string) {
-    return error?.response?.data?.message || error?.response?.data?.error || fallback;
+    return error?.response?.data?.detail || error?.response?.data?.message || error?.response?.data?.error || fallback;
 }
 
 function Field({
