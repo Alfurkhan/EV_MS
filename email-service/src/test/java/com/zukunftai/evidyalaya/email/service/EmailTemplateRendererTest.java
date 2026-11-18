@@ -2,6 +2,7 @@ package com.zukunftai.evidyalaya.email.service;
 
 import com.zukunftai.evidyalaya.email.model.EmailRequest;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Map;
 
@@ -173,4 +174,108 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.plainText().contains("Authenticated email integration is working."));
         assertTrue(rendered.html().contains("Authenticated email integration is working."));
     }
+
+    @Test
+    void rendersSchoolIdentityLogoAndContactDetailsForSchoolNotifications() {
+        EmailRequest request = new EmailRequest(
+                "New announcement", null, "student@example.com", "ANNOUNCEMENT", "A Student", null);
+        request.setTemplateData(Map.of(
+                "title", "Holiday Notice",
+                "message", "School will remain closed tomorrow.",
+                "schoolName", "Green Valley School",
+                "schoolTagline", "Learning for life",
+                "schoolLogoUrl", "/public/school-branding/logo/123e4567-e89b-12d3-a456-426614174000.png",
+                "schoolAddress", "12 Lake Road",
+                "schoolPhone", "+91 9876543210",
+                "schoolEmail", "office@greenvalley.example",
+                "schoolWebsite", "https://greenvalley.example"
+        ));
+        ReflectionTestUtils.setField(renderer, "appBaseUrl", "https://school.example");
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains("Green Valley School"));
+        assertTrue(rendered.html().contains("Learning for life"));
+        assertTrue(rendered.html().contains("Powered by eVidyalaya"));
+        assertTrue(rendered.html().contains("https://school.example/api/public/school-branding/logo/123e4567-e89b-12d3-a456-426614174000.png"));
+        assertTrue(rendered.html().contains("mailto:office@greenvalley.example"));
+        assertTrue(rendered.html().contains("href=\"https://greenvalley.example\""));
+        assertTrue(rendered.html().contains("12 Lake Road"));
+        assertTrue(rendered.plainText().contains("Green Valley School"));
+        assertTrue(rendered.plainText().contains("office@greenvalley.example"));
+        assertTrue(rendered.plainText().contains("Powered by eVidyalaya"));
+    }
+
+    @Test
+    void escapesSchoolBrandingValuesBeforeRenderingHtml() {
+        EmailRequest request = new EmailRequest(
+                "Result", null, "student@example.com", "RESULT", "A Student", null);
+        request.setTemplateData(Map.of(
+                "title", "Term result",
+                "message", "Your result is ready.",
+                "schoolName", "<img src=x onerror=alert(1)>",
+                "schoolTagline", "A & B <School>",
+                "schoolAddress", "Main <Road>"
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains("&lt;img src=x onerror=alert(1)&gt;"));
+        assertTrue(rendered.html().contains("A &amp; B &lt;School&gt;"));
+        assertTrue(rendered.html().contains("Main &lt;Road&gt;"));
+        assertFalse(rendered.html().contains("<img src=x onerror=alert(1)>"));
+    }
+
+    @Test
+    void rejectsUnsafeLogoAndWebsiteUrls() {
+        EmailRequest request = new EmailRequest(
+                "Assignment", null, "student@example.com", "ASSIGNMENT", "A Student", null);
+        request.setTemplateData(Map.of(
+                "title", "Assignment",
+                "message", "New assignment available.",
+                "schoolName", "Green Valley School",
+                "schoolLogoUrl", "javascript:alert(1)",
+                "schoolWebsite", "javascript:alert(1)"
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertFalse(rendered.html().contains("javascript:"));
+        assertFalse(rendered.html().contains("<img"));
+        assertTrue(rendered.html().contains("Green Valley School"));
+    }
+
+    @Test
+    void keepsPlatformEmailsIndependentFromSchoolBranding() {
+        EmailRequest request = new EmailRequest(
+                "Verify your email", null, "student@example.com", "VERIFY", "A Student", "482913");
+        request.setTemplateData(Map.of(
+                "schoolName", "Green Valley School",
+                "schoolLogoUrl", "/public/school-branding/logo/123e4567-e89b-12d3-a456-426614174000.png",
+                "schoolEmail", "office@greenvalley.example"
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains("eVidyalaya"));
+        assertTrue(rendered.html().contains("Smarter school management"));
+        assertFalse(rendered.html().contains("Green Valley School"));
+        assertFalse(rendered.html().contains("office@greenvalley.example"));
+        assertTrue(rendered.plainText().contains("eVidyalaya Team"));
+    }
+
+    @Test
+    void fallsBackSafelyWhenSchoolBrandingIsMissing() {
+        EmailRequest request = new EmailRequest(
+                "Assessment results", "Your result is available.",
+                "student@example.com", "RESULT", "A Student", null);
+        request.setTemplateData(Map.of("title", "Assessment results", "message", "Your result is available."));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains("eVidyalaya"));
+        assertTrue(rendered.html().contains("Smarter school management"));
+        assertTrue(rendered.plainText().contains("eVidyalaya Team"));
+    }
+
 }
