@@ -157,7 +157,7 @@ public class SchoolBrandingStorageService {
         String normalized = suppliedName.replace('\\', '/');
         String name = normalized.substring(normalized.lastIndexOf('/') + 1).trim();
         if (name.isBlank() || name.equals(".") || name.equals("..")
-                || name.indexOf('\n') >= 0 || name.length() > 255) {
+                || name.contains("..") || name.indexOf('\r') >= 0
                 || name.indexOf('\n') >= 0 || name.length() > 255) {
             throw badRequest("Invalid logo filename.");
         }
