@@ -14,7 +14,8 @@ public class RouterValidator {
             "/auth/check/email",
             "/auth/send/email",
             "/auth/verify-registration-otp",
-            "/auth/login",\n            "/public/school-branding"
+            "/auth/login",
+            "/public/school-branding"
     );
 
     public Predicate<ServerHttpRequest> isSecured =
