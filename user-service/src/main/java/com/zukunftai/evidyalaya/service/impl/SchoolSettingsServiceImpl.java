@@ -130,7 +130,13 @@ public class SchoolSettingsServiceImpl implements SchoolSettingsService {
                     HttpStatus.BAD_REQUEST, "INVALID_SCHOOL_EMAIL");
         }
 
-        if ((key.equals("school.website") || key.equals("school.logoUrl"))
+        if (key.equals("school.logoUrl") && !value.isBlank()
+                && !value.matches("^/public/school-branding/logo/[a-fA-F0-9-]{36}\\.(png|jpe?g|webp)$")) {
+            throw new APIException("School logos must be uploaded through the branding upload endpoint.",
+                    HttpStatus.BAD_REQUEST, "INVALID_SCHOOL_LOGO_REFERENCE");
+        }
+
+        if (key.equals("school.website")
                 && !value.isBlank() && !value.matches("^https?://.+$")) {
             throw new APIException("Enter a valid URL beginning with http:// or https://.",
                     HttpStatus.BAD_REQUEST, "INVALID_SETTING_URL");
