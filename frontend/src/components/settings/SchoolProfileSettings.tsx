@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Building2, Camera, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe, X, type LucideIcon } from "lucide-react";
+import { Building2, Camera, ChevronDown, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe, X, type LucideIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
 
@@ -70,6 +70,7 @@ export default function SchoolProfileSettings() {
     const [logoBusy, setLogoBusy] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [localPreview, setLocalPreview] = useState("");
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -199,7 +200,7 @@ export default function SchoolProfileSettings() {
 
     return (
         <div className="space-y-7 pt-6">
-            <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <section className="space-y-6">
                 <div className="space-y-5">
                     <div>
                         <h3 className="text-base font-semibold text-slate-900">School information</h3>
@@ -219,11 +220,9 @@ export default function SchoolProfileSettings() {
                     </div>
                 </div>
 
-                <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                    <div className="mb-4">
-                        <h3 className="text-base font-semibold text-slate-900">School logo</h3>
-                        <p className="mt-1 text-sm text-slate-500">Upload the logo used to identify your institution.</p>
-                    </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
                     <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-5">
                         {logoPreview ? (
                             <img src={logoPreview} alt="School logo preview" className="max-h-32 max-w-full object-contain" />
@@ -258,31 +257,37 @@ export default function SchoolProfileSettings() {
                         ) : null}
                     </div>
                     <p className="mt-3 text-xs leading-5 text-slate-400">PNG, JPG or WebP · Maximum size 2 MB</p>
-                </aside>
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-                <div className="mb-4 flex items-center gap-2">
-                    <Building2 size={18} className="text-blue-600" />
-                    <h3 className="text-base font-semibold text-slate-900">Identity preview</h3>
-                </div>
-                <div className="flex flex-wrap items-center gap-4 rounded-xl bg-slate-50 p-4">
-                    <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
-                        {logoPreview ? <img src={logoPreview} alt="" className="h-full w-full object-contain p-1" /> : <Building2 size={25} className="text-slate-300" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                        <p className="truncate font-semibold text-slate-900">{profile.name.trim() || "Your school name"}</p>
-                        <p className="mt-0.5 truncate text-sm text-slate-500">{profile.tagline.trim() || "Your school tagline"}</p>
-                    </div>
-                    <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
-                        <div className="flex size-9 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">EV</div>
-                        <div>
-                            <p className="text-sm font-semibold text-slate-700">eVidyalaya</p>
-                            <p className="text-xs text-slate-400">School ERP</p>
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <button type="button" onClick={() => setIsPreviewOpen((open) => !open)} aria-expanded={isPreviewOpen} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-slate-50 sm:px-6">
+                    <span>
+                        <span className="block text-sm font-semibold text-slate-900">Identity preview</span>
+                        <span className="mt-0.5 block text-xs text-slate-500">Preview the school identity alongside eVidyalaya</span>
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700">
+                        {isPreviewOpen ? "Hide preview" : "Preview"}
+                        <ChevronDown size={16} className={isPreviewOpen ? "rotate-180 transition-transform" : "transition-transform"} />
+                    </span>
+                </button>
+                {isPreviewOpen && (
+                    <div className="border-t border-slate-100 p-5 sm:p-6">
+                        <div className="flex flex-wrap items-center gap-4 rounded-xl bg-slate-50 p-4">
+                            <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                                {logoPreview ? <img src={logoPreview} alt="" className="h-full w-full object-contain p-1" /> : <Building2 size={25} className="text-slate-300" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate font-semibold text-slate-900">{profile.name.trim() || "Your school name"}</p>
+                                <p className="mt-0.5 truncate text-sm text-slate-500">{profile.tagline.trim() || "Your school tagline"}</p>
+                            </div>
+                            <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">EV</div>
+                                <div><p className="text-sm font-semibold text-slate-700">eVidyalaya</p><p className="text-xs text-slate-400">School ERP</p></div>
+                            </div>
                         </div>
+                        <p className="mt-3 text-xs text-slate-400">eVidyalaya remains the platform identity; your school identity is displayed alongside it.</p>
                     </div>
-                </div>
-                <p className="mt-3 text-xs text-slate-400">eVidyalaya remains the platform identity; your school identity is displayed alongside it.</p>
+                )}
             </section>
 
             <div className="flex justify-end border-t border-slate-100 pt-5">
