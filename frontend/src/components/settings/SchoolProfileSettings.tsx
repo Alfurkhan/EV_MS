@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Building2, Camera, ChevronDown, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe, X, type LucideIcon } from "lucide-react";
+import { Building2, Camera, ChevronDown, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe, X, Info, type LucideIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
+import { useSchoolBranding } from "../../contexts/SchoolBrandingContext";
 
 type SchoolProfile = {
     name: string;
@@ -25,6 +26,7 @@ const emptyProfile: SchoolProfile = {
 
 const MAX_LOGO_SIZE = 2 * 1024 * 1024;
 const ACCEPTED_LOGO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const ACCEPTED_LOGO_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp"];
 
 function getErrorMessage(error: any, fallback: string) {
     return error?.response?.data?.message || error?.response?.data?.error || fallback;
@@ -71,6 +73,8 @@ export default function SchoolProfileSettings() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [localPreview, setLocalPreview] = useState("");
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+    const [logoTipOpen, setLogoTipOpen] = useState(false);
+    const { refreshBranding } = useSchoolBranding();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -109,8 +113,9 @@ export default function SchoolProfileSettings() {
 
     const handleFileSelection = (file?: File) => {
         if (!file) return;
-        if (!ACCEPTED_LOGO_TYPES.includes(file.type)) {
-            toast.error("Choose a PNG, JPG or WebP image.");
+        const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+        if (!ACCEPTED_LOGO_EXTENSIONS.includes(extension) || (file.type && !ACCEPTED_LOGO_TYPES.includes(file.type))) {
+            toast.error("Unsupported file format. Please upload a PNG, JPG or WebP image.");
             return;
         }
         if (file.size > MAX_LOGO_SIZE) {
