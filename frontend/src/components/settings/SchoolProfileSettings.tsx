@@ -245,11 +245,10 @@ export default function SchoolProfileSettings() {
                             <button type="button" aria-label="Logo upload requirements" aria-expanded={logoTipOpen} onClick={() => setLogoTipOpen(true)} className="inline-flex size-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200">
                                 <Info size={15} />
                             </button>
-                            <div className={"absolute left-1/2 top-8 z-20 w-64 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs leading-5 text-slate-600 shadow-lg transition-all duration-200 ease-out " + (logoTipOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
-                                <p className="font-semibold text-slate-800">Supported logo files</p>
-                                <p className="mt-1">PNG, JPG, JPEG or WebP</p>
-                                <p>Maximum file size: 2 MB</p>
-                                <p className="mt-1 text-slate-400">Use a valid image file with matching file content and extension.</p>
+                            <div className={"absolute left-0 top-8 z-20 w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 shadow-md transition-all duration-200 ease-out " + (logoTipOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
+                                <p className="font-semibold text-amber-950">Logo upload requirements</p>
+                                <p className="mt-1">Supported formats: PNG, JPG, JPEG or WebP <span className="mx-1 text-amber-400">•</span> Maximum size: 2 MB</p>
+                                <p className="mt-1 text-amber-800/80">Make sure the file is a valid image and its content matches the selected format.</p>
                             </div>
                         </div>
                     </div>
