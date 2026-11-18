@@ -185,7 +185,7 @@ export default function SchoolProfileSettings() {
         }
     };
 
-    const apiBaseUrl = (api.defaults.baseURL || "/api").replace(/\\/$/, "");
+    const apiBaseUrl = (api.defaults.baseURL || "/api").replace(/\/$/, "");
     const logoPreview = localPreview || (profile.logoUrl ? `${apiBaseUrl}${profile.logoUrl}` : "");
 
     if (loading) {
