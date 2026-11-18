@@ -89,6 +89,19 @@ public class SchoolBrandingController {
         }
     }
 
+    @DeleteMapping("/admin/settings/logo")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<Void> removeLogo(Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        String previousUrl = settingsService.getSettings().get(LOGO_SETTING_KEY);
+        settingsService.updateSettings(Map.of(LOGO_SETTING_KEY, ""), principal.getId());
+        if (previousUrl != null && previousUrl.startsWith(LOGO_URL_PREFIX)) {
+            storageService.deleteAfterCommit(previousUrl.substring(LOGO_URL_PREFIX.length()));
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     public record PublicSchoolBranding(String name, String tagline, String logoUrl) {}
     public record LogoUploadResponse(String logoUrl, String contentType, long fileSize) {}
 }
