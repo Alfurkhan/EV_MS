@@ -14,6 +14,7 @@ import { useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import UserMenu from "./UserMenu";
 import NotificationBell from "./NotificationBell";
+import { useSchoolBranding } from "../../contexts/SchoolBrandingContext";
 
 function getGreeting() {
     const hour = new Date().getHours();
@@ -50,6 +51,7 @@ export default function Topbar() {
     const { sidebarOpen, setSidebarOpen } = useLayout();
     const { profile } = useProfile();
     const { hasRole } = useAuth();
+    const { name: schoolName, logoSrc } = useSchoolBranding();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [greeting, setGreeting] = useState(getGreeting);
@@ -134,13 +136,22 @@ export default function Topbar() {
                     <Menu size={24} />
                 </button>
 
-                <div className="min-w-0">
-                    <h2 className="truncate text-xl font-bold sm:text-2xl">
-                        {currentPage.title}
-                    </h2>
-                    <p className="hidden truncate text-sm text-slate-500 sm:block">
-                        {currentPage.subtitle}
-                    </p>
+                <div className="flex min-w-0 items-center gap-3">
+                    {logoSrc ? (
+                        <img src={logoSrc} alt="" className="h-10 w-10 shrink-0 rounded-lg object-contain" />
+                    ) : (
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                            <GraduationCap size={22} />
+                        </span>
+                    )}
+                    <div className="min-w-0">
+                        <h2 className="truncate text-lg font-bold text-slate-900 sm:text-xl">
+                            {schoolName.trim() || "Your School"}
+                        </h2>
+                        <p className="hidden truncate text-xs text-slate-500 sm:block">
+                            {currentPage.title} · {currentPage.subtitle}
+                        </p>
+                    </div>
                 </div>
             </div>
 
