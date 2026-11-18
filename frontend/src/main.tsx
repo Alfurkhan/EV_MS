@@ -6,6 +6,7 @@ import App from "./App";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
+import { SchoolBrandingProvider } from "./contexts/SchoolBrandingContext";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
@@ -14,11 +15,15 @@ createRoot(document.getElementById("root")!).render(
 
             <ProfileProvider>
 
-                <LayoutProvider>
+                <SchoolBrandingProvider>
 
-                    <App />
+                    <LayoutProvider>
 
-                </LayoutProvider>
+                        <App />
+
+                    </LayoutProvider>
+
+                </SchoolBrandingProvider>
 
             </ProfileProvider>
 
