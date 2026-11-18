@@ -242,7 +242,7 @@ export default function SchoolProfileSettings() {
                     <div className="flex items-center gap-2">
                         <h3 className="text-base font-semibold text-slate-900">School logo</h3>
                         <div className="relative" onMouseEnter={() => setLogoTipOpen(true)} onMouseLeave={() => setLogoTipOpen(false)}>
-                            <button type="button" aria-label="Logo upload requirements" aria-expanded={logoTipOpen} onClick={() => setLogoTipOpen((open) => !open)} onFocus={() => setLogoTipOpen(true)} onBlur={() => setLogoTipOpen(false)} className="inline-flex size-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                            <button type="button" aria-label="Logo upload requirements" aria-expanded={logoTipOpen} onClick={() => setLogoTipOpen(true)} className="inline-flex size-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200">
                                 <Info size={15} />
                             </button>
                             <div className={"absolute left-1/2 top-8 z-20 w-64 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs leading-5 text-slate-600 shadow-lg transition-all duration-200 ease-out " + (logoTipOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
