@@ -31,7 +31,7 @@ public class SecurityConfig {
 	private static final String[] WHITE_LIST_URL = { "/v2/api-docs", "/v3/api-docs", "/v3/api-docs/**",
 			"/swagger-resources", "/swagger-resources/**", "/configuration/ui", "/configuration/security",
 			"/swagger-ui/**", "/actuator/**", "/webjars/**", "/css/**", "/fonts/**", "/img/**", "/js/**", "/close",
-			"/manage/**", "/swagger-ui.html"};
+			"/manage/**", "/swagger-ui.html", "/public/school-branding", "/public/school-branding/**"};
 
 	@Autowired
 	public SecurityConfig(CustomUserDetailsService userDetailsService, JwtAuthenticationFilter jwtAuthFilter) {
