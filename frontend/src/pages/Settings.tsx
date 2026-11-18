@@ -114,7 +114,7 @@ export default function Settings() {
             </div>
 
             <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-                <aside className="min-h-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                <aside className="settings-scrollbar min-h-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <div className="px-3 pb-3 pt-2">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                             Configuration
@@ -150,7 +150,7 @@ export default function Settings() {
                     </nav>
                 </aside>
 
-                <section className="min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+                <section className="settings-scrollbar min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                     <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
                         <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                             <SelectedIcon size={23} />
