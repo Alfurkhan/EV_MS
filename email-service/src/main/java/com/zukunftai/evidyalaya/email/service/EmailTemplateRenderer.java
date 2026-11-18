@@ -128,10 +128,12 @@ public class EmailTemplateRenderer {
                 <tr><td align="center" class="email-outer-pad" style="padding:24px 12px;">
                 <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e7edf5;border-radius:14px;overflow:hidden;">
                 <tr><td bgcolor="#173b70" class="email-header" style="padding:26px 32px;background-color:#173b70;color:#ffffff;">
+                """);
+        appendEmailBrandingHeader(html, branding);
+        html.append("""
                 </td></tr>
                 <tr><td class="email-content" style="padding:28px 32px 30px;">
                 """);
-        appendEmailBrandingHeader(html, branding);
         if (hasText(type)) {
             html.append("<p style=\"margin:0 0 18px;\"><span style=\"display:inline-block;padding:6px 10px;background-color:#edf3fb;color:#315784;font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
                     .append(escape(type.replace('_', ' '))).append("</span></p>");
