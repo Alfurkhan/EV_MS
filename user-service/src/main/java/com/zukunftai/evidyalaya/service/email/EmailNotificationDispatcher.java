@@ -3,6 +3,7 @@ package com.zukunftai.evidyalaya.service.email;
 import com.zukunftai.evidyalaya.database.EmailNotificationOutbox;
 import com.zukunftai.evidyalaya.database.EmailNotificationAttachmentSnapshot;
 import com.zukunftai.evidyalaya.repository.EmailNotificationAttachmentSnapshotRepository;
+import com.zukunftai.evidyalaya.service.SchoolSettingsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +32,7 @@ public class EmailNotificationDispatcher {
     private final EmailNotificationStateService stateService;
     private final RestTemplate restTemplate;
     private final EmailNotificationAttachmentSnapshotRepository attachmentSnapshots;
+    private final SchoolSettingsService schoolSettingsService;
     private final String emailServiceUrl;
     private final String serviceApiKey;
     private final boolean enabled;
@@ -43,6 +45,7 @@ public class EmailNotificationDispatcher {
             EmailNotificationStateService stateService,
             RestTemplate restTemplate,
             EmailNotificationAttachmentSnapshotRepository attachmentSnapshots,
+            SchoolSettingsService schoolSettingsService,
             @Value("${service.api.emailService}") String emailServiceUrl,
             @Value("${EMAIL_SERVICE_API_KEY:}") String serviceApiKey,
             @Value("${email.notifications.dispatcher.enabled:true}") boolean enabled,
@@ -53,6 +56,7 @@ public class EmailNotificationDispatcher {
         this.stateService = stateService;
         this.restTemplate = restTemplate;
         this.attachmentSnapshots = attachmentSnapshots;
+        this.schoolSettingsService = schoolSettingsService;
         this.emailServiceUrl = emailServiceUrl;
         this.serviceApiKey = serviceApiKey;
         this.enabled = enabled;
@@ -88,6 +92,16 @@ public class EmailNotificationDispatcher {
                 templateData.put("attachmentNames", attachments.stream()
                         .map(EmailNotificationAttachmentSnapshot::getFileName)
                         .toList());
+            }
+            if (usesSchoolBranding(outbox.getTemplateType())) {
+                Map<String, String> settings = schoolSettingsService.getSettings();
+                templateData.put("schoolName", settings.getOrDefault("school.name", ""));
+                templateData.put("schoolTagline", settings.getOrDefault("school.tagline", ""));
+                templateData.put("schoolLogoUrl", settings.getOrDefault("school.logoUrl", ""));
+                templateData.put("schoolAddress", settings.getOrDefault("school.address", ""));
+                templateData.put("schoolPhone", settings.getOrDefault("school.phone", ""));
+                templateData.put("schoolEmail", settings.getOrDefault("school.email", ""));
+                templateData.put("schoolWebsite", settings.getOrDefault("school.website", ""));
             }
             request.put("templateData", templateData);
             HttpHeaders headers = new HttpHeaders();
@@ -133,6 +147,14 @@ public class EmailNotificationDispatcher {
         } catch (RuntimeException exception) {
             recordFailure(outbox, attemptNumber, true, exception.getMessage());
         }
+    }
+
+    private boolean usesSchoolBranding(String templateType) {
+        if (templateType == null) return false;
+        return switch (templateType.trim().toUpperCase()) {
+            case "ANNOUNCEMENT", "ASSIGNMENT", "ASSESSMENT", "TIMETABLE", "RESULT" -> true;
+            default -> false;
+        };
     }
 
     private List<EmailNotificationAttachmentSnapshot> resolveAttachments(EmailNotificationOutbox outbox) {
