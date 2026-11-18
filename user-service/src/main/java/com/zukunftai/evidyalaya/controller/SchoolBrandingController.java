@@ -56,7 +56,7 @@ public class SchoolBrandingController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS).cachePublic())
-                .header(HttpHeaders.X_CONTENT_TYPE_OPTIONS, "nosniff")
+                .header("X-Content-Type-Options", "nosniff")
                 .body(new FileSystemResource(path));
     }
 
