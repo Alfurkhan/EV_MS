@@ -223,7 +223,11 @@ export default function SchoolProfileSettings() {
             </section>
 
             <section className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-                    <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-5">
+                <div className="mb-4">
+                    <h3 className="text-base font-semibold text-slate-900">School logo</h3>
+                    <p className="mt-1 text-sm text-slate-500">Upload the logo used to identify your institution.</p>
+                </div>
+                <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-5">
                         {logoPreview ? (
                             <img src={logoPreview} alt="School logo preview" className="max-h-32 max-w-full object-contain" />
                         ) : (
