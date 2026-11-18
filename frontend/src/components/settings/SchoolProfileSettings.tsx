@@ -136,9 +136,17 @@ export default function SchoolProfileSettings() {
             });
             setProfile((current) => ({ ...current, logoUrl: data.logoUrl }));
             setSelectedFile(null);
-            toast.success("School logo uploaded.");
-        } catch (error) {
-            toast.error(getErrorMessage(error, "Unable to upload school logo."));
+            await refreshBranding();
+            toast.success("School logo uploaded successfully.");
+        } catch (error: any) {
+            const detail = String(error?.response?.data?.detail || error?.response?.data?.message || error?.response?.data?.error || "");
+            if (/does not match its image format|invalid image|unsupported image|image format/i.test(detail)) {
+                toast.error("The selected file content does not match its extension. Please upload a valid PNG, JPG or WebP image.");
+            } else if (error?.response?.status === 413) {
+                toast.error("The logo is too large. Please choose an image up to 2 MB.");
+            } else {
+                toast.error(getErrorMessage(error, "Unable to upload the school logo. Please try again."));
+            }
         } finally {
             setLogoBusy(false);
         }
@@ -150,9 +158,10 @@ export default function SchoolProfileSettings() {
             await api.delete("/admin/settings/logo");
             setProfile((current) => ({ ...current, logoUrl: "" }));
             setSelectedFile(null);
-            toast.success("School logo removed.");
+            await refreshBranding();
+            toast.success("School logo removed successfully.");
         } catch (error) {
-            toast.error(getErrorMessage(error, "Unable to remove school logo."));
+            toast.error(getErrorMessage(error, "Unable to remove the school logo. Please try again."));
         } finally {
             setLogoBusy(false);
         }
@@ -183,9 +192,10 @@ export default function SchoolProfileSettings() {
         setSaving(true);
         try {
             await api.put("/admin/settings", { settings });
-            toast.success("School profile saved.");
+            await refreshBranding();
+            toast.success("School profile details saved successfully.");
         } catch (error) {
-            toast.error(getErrorMessage(error, "Unable to save school profile."));
+            toast.error(getErrorMessage(error, "Unable to save school profile details. Please try again."));
         } finally {
             setSaving(false);
         }
