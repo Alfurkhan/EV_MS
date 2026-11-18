@@ -75,6 +75,9 @@ logging:
     org.springframework.boot.autoconfigure.liquibase: INFO
     com.zukunftai.evidyalaya: INFO
 
+app:
+  school-branding-storage-dir: ${SCHOOL_BRANDING_STORAGE_DIR:uploads/school-branding}
+
 application:
   security:
     jwt:
