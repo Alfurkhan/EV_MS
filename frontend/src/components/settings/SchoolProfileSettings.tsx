@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Building2, Camera, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe, type LucideIcon } from "lucide-react";
+import { Building2, Camera, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe, X, type LucideIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
 
@@ -199,7 +199,7 @@ export default function SchoolProfileSettings() {
 
     return (
         <div className="space-y-7 pt-6">
-            <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+            <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="space-y-5">
                     <div>
                         <h3 className="text-base font-semibold text-slate-900">School information</h3>
@@ -219,7 +219,7 @@ export default function SchoolProfileSettings() {
                     </div>
                 </div>
 
-                <aside className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                <aside className="h-fit rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
                     <div className="mb-4">
                         <h3 className="text-base font-semibold text-slate-900">School logo</h3>
                         <p className="mt-1 text-sm text-slate-500">Upload the logo used to identify your institution.</p>
@@ -236,16 +236,21 @@ export default function SchoolProfileSettings() {
                         )}
                     </div>
                     {selectedFile && <p className="mt-2 truncate text-xs text-slate-500">{selectedFile.name}</p>}
-                    <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => handleFileSelection(event.target.files?.[0])} />
+                    <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(event) => { handleFileSelection(event.target.files?.[0]); event.target.value = ""; }} />
                     <div className="mt-4 flex flex-wrap gap-2">
                         <button type="button" onClick={() => fileInputRef.current?.click()} disabled={logoBusy} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50">
                             {profile.logoUrl || selectedFile ? <Camera size={16} /> : <Upload size={16} />}
                             {profile.logoUrl || selectedFile ? "Choose another" : "Choose logo"}
                         </button>
                         {selectedFile ? (
-                            <button type="button" onClick={uploadLogo} disabled={logoBusy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">
-                                {logoBusy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Upload
-                            </button>
+                            <>
+                                <button type="button" onClick={uploadLogo} disabled={logoBusy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">
+                                    {logoBusy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Upload
+                                </button>
+                                <button type="button" onClick={() => setSelectedFile(null)} disabled={logoBusy} aria-label="Cancel selected logo" className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-500 transition hover:bg-slate-100 disabled:opacity-50">
+                                    <X size={16} />
+                                </button>
+                            </>
                         ) : profile.logoUrl ? (
                             <button type="button" onClick={removeLogo} disabled={logoBusy} aria-label="Remove school logo" className="inline-flex items-center justify-center rounded-xl border border-red-100 bg-white px-3 py-2.5 text-red-600 transition hover:bg-red-50 disabled:opacity-50">
                                 {logoBusy ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
