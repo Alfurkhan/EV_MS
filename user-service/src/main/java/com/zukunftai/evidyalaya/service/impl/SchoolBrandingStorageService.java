@@ -72,7 +72,7 @@ public class SchoolBrandingStorageService {
 
     public Path resolve(String storedName) {
         if (storedName == null || storedName.isBlank()
-                || storedName.contains("/") || storedName.contains("\\\\")) {
+                || storedName.contains("/") || storedName.contains("\\")) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "School logo not found.");
         }
         Path resolved = storageRoot.resolve(storedName).normalize();
@@ -154,11 +154,11 @@ public class SchoolBrandingStorageService {
         if (suppliedName == null || suppliedName.isBlank()) {
             throw badRequest("The logo must have a filename.");
         }
-        String normalized = suppliedName.replace('\\\\', '/');
+        String normalized = suppliedName.replace('\\', '/');
         String name = normalized.substring(normalized.lastIndexOf('/') + 1).trim();
         if (name.isBlank() || name.equals(".") || name.equals("..")
-                || name.contains("..") || name.indexOf('\\r') >= 0
-                || name.indexOf('\\n') >= 0 || name.length() > 255) {
+                || name.indexOf('\n') >= 0 || name.length() > 255) {
+                || name.indexOf('\n') >= 0 || name.length() > 255) {
             throw badRequest("Invalid logo filename.");
         }
         return name;
