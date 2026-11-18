@@ -18,7 +18,6 @@ type SettingsCategory = {
     id: string;
     title: string;
     description: string;
-    phase: string;
     icon: LucideIcon;
     details: string;
 };
@@ -28,7 +27,6 @@ const categories: SettingsCategory[] = [
         id: "school",
         title: "School profile",
         description: "School identity and branding",
-        phase: "Phase 2",
         icon: School,
         details: "Manage the school's name, logo, contact details and identity across eVidyalaya. eVidyalaya branding will remain visible alongside the school's identity.",
     },
@@ -36,7 +34,6 @@ const categories: SettingsCategory[] = [
         id: "academic",
         title: "Academic settings",
         description: "Academic year and grading",
-        phase: "Phase 3",
         icon: GraduationCap,
         details: "Choose the default academic year and configure academic calendar and grading preferences.",
     },
@@ -52,7 +49,6 @@ const categories: SettingsCategory[] = [
         id: "timetable",
         title: "Timetable",
         description: "Class scheduling preferences",
-        phase: "Phase 5",
         icon: CalendarDays,
         details: "Set default class durations, working days and scheduling preferences used when creating timetables.",
     },
@@ -60,7 +56,6 @@ const categories: SettingsCategory[] = [
         id: "notifications",
         title: "Notifications",
         description: "Email and in-app preferences",
-        phase: "Phase 4",
         icon: Bell,
         details: "Control school-wide email and in-app notifications for announcements, assignments, assessments, timetables and results.",
     },
@@ -76,7 +71,6 @@ const categories: SettingsCategory[] = [
         id: "users",
         title: "User management",
         description: "Account creation and activation",
-        phase: "Phase 6",
         icon: Users,
         details: "Manage school-wide account creation, registration and account-activation policies.",
     },
@@ -92,7 +86,6 @@ const categories: SettingsCategory[] = [
         id: "system",
         title: "System information",
         description: "Application and service status",
-        phase: "Phase 7",
         icon: Activity,
         details: "View read-only application version and service information. Sensitive infrastructure configuration will not be exposed here.",
     },
@@ -166,14 +159,9 @@ export default function Settings() {
                             <SelectedIcon size={23} />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <h2 className="text-xl font-bold text-slate-900">
-                                    {selectedCategory.title}
-                                </h2>
-                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-                                    {selectedCategory.phase}
-                                </span>
-                            </div>
+                            <h2 className="text-xl font-bold text-slate-900">
+                                {selectedCategory.title}
+                            </h2>
                             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
                                 {selectedCategory.details}
                             </p>
