@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Building2, Camera, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe } from "lucide-react";
+import { Building2, Camera, ImagePlus, Loader2, Mail, MapPin, Phone, Save, Trash2, Upload, Globe, type LucideIcon } from "lucide-react";
 import toast from "react-hot-toast";
-import api from "../api/axios";
+import api from "../../api/axios";
 
 type SchoolProfile = {
     name: string;
@@ -44,7 +44,7 @@ function Field({
     onChange: (value: string) => void;
     placeholder?: string;
     type?: string;
-    icon?: typeof Building2;
+    icon?: LucideIcon;
     multiline?: boolean;
 }) {
     const controlClass = "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-50";
@@ -185,7 +185,8 @@ export default function SchoolProfileSettings() {
         }
     };
 
-    const logoPreview = localPreview || (profile.logoUrl ? `/api${profile.logoUrl}` : "");
+    const apiBaseUrl = (api.defaults.baseURL || "/api").replace(/\\/$/, "");
+    const logoPreview = localPreview || (profile.logoUrl ? `${apiBaseUrl}${profile.logoUrl}` : "");
 
     if (loading) {
         return (
