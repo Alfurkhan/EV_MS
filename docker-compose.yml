@@ -80,6 +80,10 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
 
       EMAIL_SERVICE_URL: http://email-service:9091/email/send
+      SCHOOL_BRANDING_STORAGE_DIR: /app/uploads/school-branding
+
+    volumes:
+      - school_branding_data:/app/uploads/school-branding
 
     networks:
       - evidyalaya-network
@@ -151,6 +155,7 @@ services:
 # ==========================================
 volumes:
   postgres_data:
+  school_branding_data:
 
 
 # ==========================================
