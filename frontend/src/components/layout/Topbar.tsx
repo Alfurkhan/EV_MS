@@ -51,7 +51,7 @@ export default function Topbar() {
     const { sidebarOpen, setSidebarOpen } = useLayout();
     const { profile } = useProfile();
     const { hasRole } = useAuth();
-    const { name: schoolName, logoSrc } = useSchoolBranding();
+    const { name: schoolName, tagline: schoolTagline, logoSrc } = useSchoolBranding();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [greeting, setGreeting] = useState(getGreeting);
@@ -149,7 +149,7 @@ export default function Topbar() {
                             {schoolName.trim() || "Your School"}
                         </h2>
                         <p className="hidden truncate text-xs text-slate-500 sm:block">
-                            {currentPage.title} · {currentPage.subtitle}
+                            {schoolTagline.trim() || "School"}
                         </p>
                     </div>
                 </div>
