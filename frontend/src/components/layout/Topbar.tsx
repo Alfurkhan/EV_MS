@@ -10,7 +10,6 @@ import {
 import { useLayout } from "../../contexts/LayoutContext";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import UserMenu from "./UserMenu";
 import NotificationBell from "./NotificationBell";
@@ -47,7 +46,6 @@ function getRoleIcon(role: string | null | undefined) {
 }
 
 export default function Topbar() {
-    const location = useLocation();
     const { sidebarOpen, setSidebarOpen } = useLayout();
     const { profile } = useProfile();
     const { hasRole } = useAuth();
@@ -56,27 +54,6 @@ export default function Topbar() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [greeting, setGreeting] = useState(getGreeting);
     const menuRef = useRef<HTMLDivElement>(null);
-
-    const pageInfo: Record<string, { title: string; subtitle: string }> = {
-        "/dashboard": { title: "Dashboard", subtitle: "Welcome back" },
-        "/students": { title: "Students", subtitle: "Manage student records" },
-        "/faculty": { title: "Faculty", subtitle: "Manage faculty members" },
-        "/attendance": { title: "Attendance", subtitle: "Track and manage attendance" },
-        "/courses": { title: "Courses", subtitle: "Manage courses and subjects" },
-        "/academic-management": {
-            title: "Academic Management",
-            subtitle: "Manage academic years, grades, sections and enrollments",
-        },
-        "/notifications": { title: "Notifications", subtitle: "Stay updated with school activities" },
-        "/announcements": { title: "Announcements", subtitle: "School updates and class communication" },
-        "/settings": { title: "Settings", subtitle: "Manage system settings" },
-        "/profile": { title: "My Profile", subtitle: "Manage your personal information" },
-    };
-
-    const currentPage = pageInfo[location.pathname] ?? {
-        title: "E-Vidyalaya",
-        subtitle: "School ERP",
-    };
 
     const fullName = profile?.fullName?.trim() || "";
     const displayName = fullName ? fullName.split(/\s+/)[0] : "there";
