@@ -41,7 +41,6 @@ const categories: SettingsCategory[] = [
         id: "attendance",
         title: "Attendance",
         description: "Attendance rules and thresholds",
-        phase: "Phase 3",
         icon: ClipboardCheck,
         details: "Configure attendance thresholds, working days and the rules applied when attendance is recorded.",
     },
@@ -63,7 +62,6 @@ const categories: SettingsCategory[] = [
         id: "assessments",
         title: "Assignments & examinations",
         description: "Submission and result rules",
-        phase: "Phase 5",
         icon: BookOpen,
         details: "Configure submission limits, accepted file types, evaluation and result-publication preferences.",
     },
@@ -78,7 +76,6 @@ const categories: SettingsCategory[] = [
         id: "security",
         title: "Security",
         description: "Account and session policies",
-        phase: "Phase 6",
         icon: ShieldCheck,
         details: "Review configurable password, login and session policies. Infrastructure secrets remain managed outside this page.",
     },
@@ -100,7 +97,7 @@ export default function Settings() {
     const SelectedIcon = selectedCategory.icon;
 
     return (
-        <div className="space-y-6 pb-8">
+        <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-600">
@@ -116,8 +113,8 @@ export default function Settings() {
                 </div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-                <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+                <aside className="min-h-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
                     <div className="px-3 pb-3 pt-2">
                         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                             Configuration
@@ -153,7 +150,7 @@ export default function Settings() {
                     </nav>
                 </aside>
 
-                <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+                <section className="min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                     <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
                         <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                             <SelectedIcon size={23} />
