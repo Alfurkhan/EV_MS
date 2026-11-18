@@ -239,7 +239,20 @@ export default function SchoolProfileSettings() {
 
             <section className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
                 <div className="mb-4">
-                    <h3 className="text-base font-semibold text-slate-900">School logo</h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-base font-semibold text-slate-900">School logo</h3>
+                        <div className="relative" onMouseEnter={() => setLogoTipOpen(true)} onMouseLeave={() => setLogoTipOpen(false)}>
+                            <button type="button" aria-label="Logo upload requirements" aria-expanded={logoTipOpen} onClick={() => setLogoTipOpen((open) => !open)} onFocus={() => setLogoTipOpen(true)} onBlur={() => setLogoTipOpen(false)} className="inline-flex size-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                                <Info size={15} />
+                            </button>
+                            <div className={"absolute left-1/2 top-8 z-20 w-64 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs leading-5 text-slate-600 shadow-lg transition-all duration-200 ease-out " + (logoTipOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
+                                <p className="font-semibold text-slate-800">Supported logo files</p>
+                                <p className="mt-1">PNG, JPG, JPEG or WebP</p>
+                                <p>Maximum file size: 2 MB</p>
+                                <p className="mt-1 text-slate-400">Use a valid image file with matching file content and extension.</p>
+                            </div>
+                        </div>
+                    </div>
                     <p className="mt-1 text-sm text-slate-500">Upload the logo used to identify your institution.</p>
                 </div>
                 <div className="flex min-h-40 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-5">
