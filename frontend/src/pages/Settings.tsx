@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SchoolProfileSettings from "../components/settings/SchoolProfileSettings";
 import {
     Activity,
     Bell,
@@ -179,17 +180,21 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    <div className="flex min-h-64 flex-col items-center justify-center px-4 py-10 text-center">
-                        <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
-                            <Settings2 size={25} />
+                    {selectedCategory.id === "school" ? (
+                        <SchoolProfileSettings />
+                    ) : (
+                        <div className="flex min-h-64 flex-col items-center justify-center px-4 py-10 text-center">
+                            <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                                <Settings2 size={25} />
+                            </div>
+                            <h3 className="text-base font-semibold text-slate-800">
+                                This section is being prepared
+                            </h3>
+                            <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+                                The settings foundation is in place. Controls will be enabled in the planned implementation phase, once each option is connected to its actual application behavior.
+                            </p>
                         </div>
-                        <h3 className="text-base font-semibold text-slate-800">
-                            This section is being prepared
-                        </h3>
-                        <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                            The settings foundation is in place. Controls will be enabled in the planned implementation phase, once each option is connected to its actual application behavior.
-                        </p>
-                    </div>
+                    )}
                 </section>
             </div>
         </div>
