@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SchoolProfileSettings from "../components/settings/SchoolProfileSettings";
+import AppearanceSettings from "../components/settings/AppearanceSettings";
 import {
     Activity,
     Bell,
@@ -7,6 +8,7 @@ import {
     CalendarDays,
     ClipboardCheck,
     GraduationCap,
+    Palette,
     School,
     Settings2,
     ShieldCheck,
@@ -29,6 +31,13 @@ const categories: SettingsCategory[] = [
         description: "School identity and branding",
         icon: School,
         details: "Manage the school's name, logo, contact details and identity across eVidyalaya. eVidyalaya branding will remain visible alongside the school's identity.",
+    },
+    {
+        id: "appearance",
+        title: "Appearance & theme",
+        description: "Application colors and palette",
+        icon: Palette,
+        details: "Choose the color palette used throughout eVidyalaya. Theme changes apply school-wide to Admin, Faculty and Student accounts.",
     },
     {
         id: "academic",
@@ -167,6 +176,8 @@ export default function Settings() {
 
                     {selectedCategory.id === "school" ? (
                         <SchoolProfileSettings />
+                    ) : selectedCategory.id === "appearance" ? (
+                        <AppearanceSettings />
                     ) : (
                         <div className="flex min-h-64 flex-col items-center justify-center px-4 py-10 text-center">
                             <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
