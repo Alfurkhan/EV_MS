@@ -2,7 +2,7 @@ import Toast from "../../../components/common/Toast";
 import EditProfileModal from "../components/EditProfileModal";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, BookOpen, BriefcaseBusiness } from "lucide-react";
+import { ArrowUpRight, BookOpen, BriefcaseBusiness, Building2 } from "lucide-react";
 
 import { useProfile } from "../../../contexts/ProfileContext";
 import { useSchoolBranding } from "../../../contexts/SchoolBrandingContext";
@@ -33,12 +33,13 @@ function SchoolAffiliation({ role }: { role: string | null }) {
                 {logoSrc ? (
                     <img src={logoSrc} alt="" className="h-full w-full object-contain" />
                 ) : (
-                    <AffiliationIcon size={21} className="text-blue-600" />
+                    <Building2 size={21} className="text-blue-600" />
                 )}
             </span>
 
             <span className="min-w-0 flex-1">
-                <span className="block text-xs font-medium uppercase tracking-wide text-slate-400">
+                <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <AffiliationIcon size={14} strokeWidth={2} className="shrink-0 text-blue-600" />
                     {isStudent ? "Studying at" : "Teaching at"}
                 </span>
                 <span className="mt-0.5 block truncate text-sm font-semibold text-slate-800 transition-colors group-hover:text-blue-700">
