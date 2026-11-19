@@ -33,6 +33,22 @@ public class SchoolBrandingController {
     private final SchoolSettingsService settingsService;
     private final SchoolBrandingStorageService storageService;
 
+    @GetMapping(path = "/school-profile", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY', 'STUDENT')")
+    public SchoolProfileDetails getSchoolProfile() {
+        Map<String, String> settings = settingsService.getSettings();
+        return new SchoolProfileDetails(
+                settings.getOrDefault("school.name", ""),
+                settings.getOrDefault("school.tagline", ""),
+                settings.getOrDefault("school.about", ""),
+                settings.getOrDefault("school.address", ""),
+                settings.getOrDefault("school.phone", ""),
+                settings.getOrDefault("school.email", ""),
+                settings.getOrDefault("school.website", ""),
+                settings.getOrDefault("school.logoUrl", "")
+        );
+    }
+
     @GetMapping(path = "/public/school-branding", produces = MediaType.APPLICATION_JSON_VALUE)
     public PublicSchoolBranding getPublicBranding() {
         Map<String, String> settings = settingsService.getSettings();
@@ -102,6 +118,6 @@ public class SchoolBrandingController {
         return ResponseEntity.noContent().build();
     }
 
-    public record PublicSchoolBranding(String name, String tagline, String logoUrl) {}
+    public record SchoolProfileDetails(String name, String tagline, String about, String address, String phone, String email, String website, String logoUrl) {}\n    public record PublicSchoolBranding(String name, String tagline, String logoUrl) {}
     public record LogoUploadResponse(String logoUrl, String contentType, long fileSize) {}
 }
