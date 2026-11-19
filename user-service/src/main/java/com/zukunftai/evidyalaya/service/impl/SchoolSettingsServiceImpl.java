@@ -24,7 +24,7 @@ import java.util.Set;
 public class SchoolSettingsServiceImpl implements SchoolSettingsService {
 
     private static final Set<String> ALLOWED_KEYS = Set.of(
-            "school.name", "school.tagline", "school.address", "school.phone",
+            "school.name", "school.tagline", "school.about", "school.address", "school.phone",
             "school.email", "school.website", "school.logoUrl",
             "academic.defaultAcademicYearId", "academic.gradingScale",
             "attendance.minimumPercentage", "attendance.workingDays",
