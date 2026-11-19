@@ -7,9 +7,12 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { ProfileProvider } from "./contexts/ProfileContext";
 import { SchoolBrandingProvider } from "./contexts/SchoolBrandingContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
+
+        <ThemeProvider>
 
         <AuthProvider>
 
@@ -28,6 +31,8 @@ createRoot(document.getElementById("root")!).render(
             </ProfileProvider>
 
         </AuthProvider>
+
+        </ThemeProvider>
 
     </StrictMode>
 );
