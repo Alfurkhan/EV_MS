@@ -7,6 +7,7 @@ import { useSchoolBranding } from "../../contexts/SchoolBrandingContext";
 type SchoolProfile = {
     name: string;
     tagline: string;
+    about: string;
     address: string;
     phone: string;
     email: string;
@@ -17,6 +18,7 @@ type SchoolProfile = {
 const emptyProfile: SchoolProfile = {
     name: "",
     tagline: "",
+    about: "",
     address: "",
     phone: "",
     email: "",
@@ -85,6 +87,7 @@ export default function SchoolProfileSettings() {
                 setProfile({
                     name: data["school.name"] || "",
                     tagline: data["school.tagline"] || "",
+                    about: data["school.about"] || "",
                     address: data["school.address"] || "",
                     phone: data["school.phone"] || "",
                     email: data["school.email"] || "",
@@ -184,6 +187,7 @@ export default function SchoolProfileSettings() {
         const settings = {
             "school.name": profile.name.trim(),
             "school.tagline": profile.tagline.trim(),
+            "school.about": profile.about.trim(),
             "school.address": profile.address.trim(),
             "school.phone": profile.phone.trim(),
             "school.email": profile.email.trim(),
@@ -224,6 +228,10 @@ export default function SchoolProfileSettings() {
                     <div className="grid gap-5 sm:grid-cols-2">
                         <Field label="School name" value={profile.name} onChange={(v) => update("name", v)} placeholder="Enter school name" icon={Building2} />
                         <Field label="Tagline" value={profile.tagline} onChange={(v) => update("tagline", v)} placeholder="A short line about your school" />
+                        <div className="sm:col-span-2">
+                            <Field label="About the school" value={profile.about} onChange={(v) => update("about", v)} placeholder="Write a brief introduction about your school, its vision, values and learning environment" multiline />
+                            <p className="mt-1.5 text-xs text-slate-400">A short introduction that will appear on your School Profile page.</p>
+                        </div>
                         <div className="sm:col-span-2">
                             <Field label="School address" value={profile.address} onChange={(v) => update("address", v)} placeholder="Full school address" icon={MapPin} multiline />
                         </div>
