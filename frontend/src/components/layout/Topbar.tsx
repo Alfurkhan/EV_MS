@@ -11,7 +11,7 @@ import { useLayout } from "../../contexts/LayoutContext";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { useState, useRef, useEffect } from "react";
-import UserMenu from "./UserMenu";
+import UserMenu from "./UserMenu";\nimport { Link } from "react-router-dom";
 import NotificationBell from "./NotificationBell";
 import { useSchoolBranding } from "../../contexts/SchoolBrandingContext";
 
@@ -113,7 +113,11 @@ export default function Topbar() {
                     <Menu size={24} />
                 </button>
 
-                <div className="flex min-w-0 items-center gap-3">
+                <Link
+                    to="/school-profile"
+                    aria-label="View school profile"
+                    className="group flex min-w-0 items-center gap-3 rounded-xl py-1 pr-2 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                >
                     {logoSrc ? (
                         <img src={logoSrc} alt="" className="h-10 w-10 shrink-0 rounded-lg object-contain" />
                     ) : (
@@ -122,14 +126,14 @@ export default function Topbar() {
                         </span>
                     )}
                     <div className="min-w-0">
-                        <h2 className="truncate text-lg font-bold text-slate-900 sm:text-xl">
+                        <h2 className="truncate text-lg font-bold text-slate-900 transition group-hover:text-blue-700 sm:text-xl">
                             {schoolName.trim() || "Your School"}
                         </h2>
                         <p className="hidden truncate text-xs text-slate-500 sm:block">
                             {schoolTagline.trim() || "School"}
                         </p>
                     </div>
-                </div>
+                </Link>
             </div>
 
             {/* RIGHT SIDE */}
