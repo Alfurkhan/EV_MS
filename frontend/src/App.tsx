@@ -16,6 +16,7 @@ import Courses from "./pages/Courses";
 import Notifications from "./pages/Notifications";
 import AnnouncementsPage from "./features/announcements/pages/AnnouncementsPage";
 import Settings from "./pages/Settings";
+import SchoolProfilePage from "./pages/SchoolProfilePage";
 import StudentsPage from "./features/students/pages/StudentsPage";
 import ProfilePage from "./features/profile/pages/ProfilePage";
 
@@ -75,6 +76,11 @@ export default function App() {
                     <Route
                         path="/profile"
                         element={<ProfilePage />}
+                    />
+
+                    <Route
+                        path="/school-profile"
+                        element={<SchoolProfilePage />}
                     />
 
                     <Route
