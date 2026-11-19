@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
     ArrowLeft, Building2, Globe, Mail, MapPin, Phone, Pencil, GraduationCap,
-    Loader2, School,
+    Loader2, School, type LucideIcon,
 } from "lucide-react";
 import api from "../api/axios";
 import { useAuth } from "../contexts/AuthContext";
@@ -24,9 +24,9 @@ function Detail({
     label,
     children,
 }: {
-    icon: typeof MapPin;
+    icon: LucideIcon;
     label: string;
-    children: React.ReactNode;
+    children: ReactNode;
 }) {
     return (
         <div className="flex min-w-0 gap-3">
