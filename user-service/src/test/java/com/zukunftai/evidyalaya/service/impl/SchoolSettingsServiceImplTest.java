@@ -142,4 +142,43 @@ class SchoolSettingsServiceImplTest {
         assertEquals("INVALID_NUMERIC_SETTING", exception.getResponseErrorCode());
         verify(settingsRepository, never()).save(any());
     }
+    @Test
+    void updateSettingsAcceptsValidThemeConfiguration() {
+        when(settingsRepository.findById("theme.palette")).thenReturn(Optional.empty());
+        when(settingsRepository.findById("theme.primaryColor")).thenReturn(Optional.empty());
+        when(settingsRepository.findById("theme.accentColor")).thenReturn(Optional.empty());
+        when(settingsRepository.save(any(SchoolSetting.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(settingsRepository.findAll()).thenReturn(List.of());
+
+        service.updateSettings(Map.of(
+                "theme.palette", "ocean-blue",
+                "theme.primaryColor", "#2563EB",
+                "theme.accentColor", "#0D9488"
+        ), 42L);
+
+        verify(settingsRepository, times(3)).save(any(SchoolSetting.class));
+        verify(auditRepository, times(3)).save(any());
+    }
+
+    @Test
+    void updateSettingsRejectsUnsupportedThemePalette() {
+        APIException exception = assertThrows(APIException.class,
+                () -> service.updateSettings(Map.of("theme.palette", "neon-pink"), 42L));
+
+        assertEquals("INVALID_THEME_PALETTE", exception.getResponseErrorCode());
+        verify(settingsRepository, never()).save(any());
+        verify(auditRepository, never()).save(any());
+    }
+
+    @Test
+    void updateSettingsRejectsInvalidThemeHexColor() {
+        APIException exception = assertThrows(APIException.class,
+                () -> service.updateSettings(Map.of("theme.primaryColor", "blue"), 42L));
+
+        assertEquals("INVALID_THEME_COLOR", exception.getResponseErrorCode());
+        verify(settingsRepository, never()).save(any());
+        verify(auditRepository, never()).save(any());
+    }
+
 }
