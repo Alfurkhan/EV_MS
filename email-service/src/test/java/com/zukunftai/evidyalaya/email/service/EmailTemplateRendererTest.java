@@ -197,6 +197,9 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("Green Valley School"));
         assertTrue(rendered.html().contains("Learning for life"));
         assertTrue(rendered.html().contains("Powered by eVidyalaya"));
+        assertEquals(1, rendered.html().split("Powered by eVidyalaya", -1).length - 1);
+        assertTrue(rendered.html().contains("This is an automated message. Please do not reply to this email."));
+        assertFalse(rendered.html().contains("This is an automated message from eVidyalaya."));
         assertTrue(rendered.html().contains("https://school.example/api/public/school-branding/logo/123e4567-e89b-12d3-a456-426614174000.png"));
         assertTrue(rendered.html().contains("mailto:office@greenvalley.example"));
         assertTrue(rendered.html().contains("href=\"https://greenvalley.example\""));
@@ -204,6 +207,23 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.plainText().contains("Green Valley School"));
         assertTrue(rendered.plainText().contains("office@greenvalley.example"));
         assertTrue(rendered.plainText().contains("Powered by eVidyalaya"));
+    }
+
+    @Test
+    void formatsIsoDueDatesForSchoolNotifications() {
+        EmailRequest request = new EmailRequest(
+                "New assignment", null, "student@example.com", "ASSIGNMENT", "A Student", null);
+        request.setTemplateData(Map.of(
+                "title", "New assignment: Assignment Test",
+                "message", "A new Probability & Statistics assignment was published by Faculty Name for Grade 10 - A. Due: 2026-11-30T23:59."
+                        , "schoolName", "Sri Nagarjuna High School"
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.plainText().contains("Due: 30 November 2026, 11:59 PM."));
+        assertTrue(rendered.html().contains("Due: 30 November 2026, 11:59 PM."));
+        assertFalse(rendered.html().contains("2026-11-30T23:59"));
     }
 
     @Test
