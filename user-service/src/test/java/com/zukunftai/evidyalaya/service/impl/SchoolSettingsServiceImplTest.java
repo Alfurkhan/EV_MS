@@ -79,6 +79,38 @@ class SchoolSettingsServiceImplTest {
         assertSame(admin, auditCaptor.getValue().getChangedBy());
     }
 
+
+    @Test
+    void updateSettingsPersistsSchoolAboutAndCreatesAuditEntry() {
+        when(settingsRepository.findById("school.about")).thenReturn(Optional.empty());
+        when(settingsRepository.save(any(SchoolSetting.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(settingsRepository.findAll()).thenReturn(List.of(
+                SchoolSetting.builder()
+                        .settingKey("school.about")
+                        .settingValue("A welcoming learning community.")
+                        .build()
+        ));
+
+        Map<String, String> result = service.updateSettings(
+                Map.of("school.about", "A welcoming learning community."), 42L
+        );
+
+        assertEquals("A welcoming learning community.", result.get("school.about"));
+
+        ArgumentCaptor<SchoolSetting> settingCaptor =
+                ArgumentCaptor.forClass(SchoolSetting.class);
+        verify(settingsRepository).save(settingCaptor.capture());
+        assertEquals("school.about", settingCaptor.getValue().getSettingKey());
+        assertEquals("A welcoming learning community.", settingCaptor.getValue().getSettingValue());
+
+        ArgumentCaptor<com.zukunftai.evidyalaya.database.SchoolSettingAudit> auditCaptor =
+                ArgumentCaptor.forClass(com.zukunftai.evidyalaya.database.SchoolSettingAudit.class);
+        verify(auditRepository).save(auditCaptor.capture());
+        assertEquals("school.about", auditCaptor.getValue().getSettingKey());
+        assertEquals("A welcoming learning community.", auditCaptor.getValue().getNewValue());
+    }
+
     @Test
     void updateSettingsRejectsUnknownKeys() {
         APIException exception = assertThrows(APIException.class,
