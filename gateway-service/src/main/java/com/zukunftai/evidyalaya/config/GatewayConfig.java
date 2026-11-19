@@ -123,6 +123,16 @@ public class GatewayConfig {
                                 .uri(userServiceUrl)
                 )
 
+                /*
+                 * Global theme settings
+                 */
+                .route(
+                        "user-service-theme",
+                        r -> r.path("/theme")
+                                .filters(f -> f.filter(filter))
+                                .uri(userServiceUrl)
+                )
+
                 .build();
     }
 }
