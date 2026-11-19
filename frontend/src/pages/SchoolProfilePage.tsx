@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
-    ArrowLeft, Building2, Globe, Mail, MapPin, Phone, Pencil, GraduationCap,
+    ArrowLeft, Building2, FileText, Globe, Mail, MapPin, Phone, Pencil, GraduationCap,
     Loader2, School, type LucideIcon,
 } from "lucide-react";
 import api from "../api/axios";
@@ -30,8 +30,8 @@ function Detail({
 }) {
     return (
         <div className="flex min-w-0 gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                <Icon size={18} />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <Icon size={18} strokeWidth={1.9} />
             </span>
             <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
@@ -98,7 +98,7 @@ export default function SchoolProfilePage() {
                     <ArrowLeft size={17} /> Back to dashboard
                 </Link>
                 {hasRole("ROLE_ADMIN") && (
-                    <Link to="/settings" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                    <Link to="/settings" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                         <Pencil size={15} /> Edit school profile
                     </Link>
                 )}
@@ -124,24 +124,28 @@ export default function SchoolProfilePage() {
 
             {school.about && (
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-                    <div className="flex items-center gap-2">
-                        <span className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><GraduationCap size={19} /></span>
+                    <div className="flex items-center gap-3">
+                        <span className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <FileText size={18} strokeWidth={1.9} />
+                        </span>
                         <h2 className="text-base font-semibold text-slate-900">About our school</h2>
                     </div>
-                    <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">{school.about}</p>
+                    <p className="mt-4 max-w-4xl whitespace-pre-line text-sm leading-7 text-slate-600">{school.about}</p>
                 </section>
             )}
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
-                <div className="mb-6 flex items-center gap-2">
-                    <span className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><Building2 size={18} /></span>
+                <div className="mb-6 flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <Building2 size={18} strokeWidth={1.9} />
+                    </span>
                     <h2 className="text-base font-semibold text-slate-900">School information</h2>
                 </div>
-                <div className="grid gap-6 sm:grid-cols-2">
+                <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
                     {school.address && <Detail icon={MapPin} label="Address">{school.address}</Detail>}
                     {school.phone && <Detail icon={Phone} label="Contact number">{school.phone}</Detail>}
-                    {school.email && <Detail icon={Mail} label="Official email"><a href={`mailto:${school.email}`} className="hover:text-blue-700">{school.email}</a></Detail>}
-                    {school.website && <Detail icon={Globe} label="Website"><a href={school.website} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{school.website}</a></Detail>}
+                    {school.email && <Detail icon={Mail} label="Official email"><a href={`mailto:${school.email}`} className="transition-colors hover:text-blue-700 hover:underline">{school.email}</a></Detail>}
+                    {school.website && <Detail icon={Globe} label="Website"><a href={school.website} target="_blank" rel="noreferrer" className="text-blue-600 transition-colors hover:text-blue-700 hover:underline">{school.website}</a></Detail>}
                     {!school.address && !school.phone && !school.email && !school.website && (
                         <p className="text-sm text-slate-400">Additional school contact information has not been added yet.</p>
                     )}
