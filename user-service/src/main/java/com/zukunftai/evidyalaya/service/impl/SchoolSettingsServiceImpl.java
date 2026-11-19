@@ -36,7 +36,8 @@ public class SchoolSettingsServiceImpl implements SchoolSettingsService {
             "notifications.result.email",
             "assignments.maxUploadSizeMb", "assignments.allowedFileTypes",
             "examinations.allowResultRepublish",
-            "users.requireAdminApproval", "security.sessionTimeoutMinutes"
+            "users.requireAdminApproval", "security.sessionTimeoutMinutes",
+            "theme.palette", "theme.primaryColor", "theme.accentColor"
     );
 
     private static final Set<String> BOOLEAN_KEYS = Set.of(
@@ -124,6 +125,19 @@ public class SchoolSettingsServiceImpl implements SchoolSettingsService {
     }
 
     private void validateSettingValue(String key, String value) {
+        if (key.equals("theme.palette")
+                && !Set.of("ocean-blue", "emerald-green", "royal-violet", "teal", "sunrise-amber", "custom")
+                .contains(value)) {
+            throw new APIException("Choose a supported theme palette.",
+                    HttpStatus.BAD_REQUEST, "INVALID_THEME_PALETTE");
+        }
+
+        if ((key.equals("theme.primaryColor") || key.equals("theme.accentColor"))
+                && !value.matches("^#[0-9A-Fa-f]{6}$")) {
+            throw new APIException("Theme colors must use a valid six-digit HEX value.",
+                    HttpStatus.BAD_REQUEST, "INVALID_THEME_COLOR");
+        }
+
         if (key.equals("school.email") && !value.isBlank()
                 && !value.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
             throw new APIException("Enter a valid school email address.",
