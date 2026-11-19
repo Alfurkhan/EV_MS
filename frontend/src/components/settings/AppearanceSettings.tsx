@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Loader2, Palette, RotateCcw, Save, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
@@ -107,13 +107,6 @@ export default function AppearanceSettings() {
     }, [draft, loading, setPreviewTheme]);
 
     const hasValidColors = isValidHexColor(draft.primaryColor) && isValidHexColor(draft.accentColor);
-    const isDirty = useMemo(
-        () => draft.palette !== DEFAULT_THEME.palette
-            || draft.primaryColor !== DEFAULT_THEME.primaryColor
-            || draft.accentColor !== DEFAULT_THEME.accentColor,
-        [draft],
-    );
-
     const selectPalette = (paletteId: Exclude<PaletteId, "custom">) => {
         setDraft(getPaletteTheme(paletteId));
     };
