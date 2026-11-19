@@ -5,9 +5,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class EmailTemplateRenderer {
@@ -69,6 +74,11 @@ public class EmailTemplateRenderer {
             }
         }
 
+        if (branding.enabled()) {
+            content = formatDateTimes(content);
+            publicationDetails = formatDateTimes(publicationDetails);
+        }
+
         actionUrl = resolveActionUrl(actionUrl);
         List<String> attachmentNames = attachmentNames(data);
         String plainText = buildPlainText(name, heading, content, publicationDetails,
@@ -99,8 +109,10 @@ public class EmailTemplateRenderer {
         } else {
             text.append("\n\nRegards,\neVidyalaya Team");
         }
-        return text.append("\n\nThis is an automated message from eVidyalaya. Please do not reply to this email.")
-                .toString();
+        String automatedFooter = branding.enabled()
+                ? "This is an automated message. Please do not reply to this email."
+                : "This is an automated message from eVidyalaya. Please do not reply to this email.";
+        return text.append("\n\n").append(automatedFooter).toString();
     }
 
     private String buildHtml(String name, String heading, String content, String publicationDetails,
@@ -171,10 +183,13 @@ public class EmailTemplateRenderer {
                     .append(escape(actionLabel)).append("</a></td></tr></table>");
         }
         appendEmailBrandingFooter(html, branding);
+        String automatedFooter = branding.enabled()
+                ? "This is an automated message. Please do not reply to this email."
+                : "This is an automated message from eVidyalaya. Please do not reply to this email.";
         html.append("""
                 </td></tr>
                 <tr><td bgcolor="#f8fafc" class="email-footer" style="padding:16px 24px;background-color:#f8fafc;font-size:11px;line-height:18px;color:#8792a3;text-align:center;">
-                This is an automated message from eVidyalaya. Please do not reply to this email.
+                """).append(escape(automatedFooter)).append("""
                 </td></tr></table></td></tr></table></body></html>
                 """);
         return html.toString();
@@ -239,7 +254,6 @@ public class EmailTemplateRenderer {
         html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin-top:28px;\"><tr><td style=\"padding-top:18px;border-top:1px solid #e8edf4;font-size:13px;line-height:21px;color:#718096;\">Regards,<br><strong style=\"color:#40516a;\">");
         html.append(branding.enabled() ? escape(branding.name()) : "eVidyalaya Team").append("</strong>");
         if (branding.enabled()) {
-            html.append("<br><span style=\"font-size:11px;color:#8792a3;\">Powered by eVidyalaya</span>");
             if (hasText(branding.address())) html.append("<br>").append(escape(branding.address()));
             if (hasText(branding.phone())) html.append("<br>").append(escape(branding.phone()));
             if (hasText(branding.email())) html.append("<br><a href=\"mailto:").append(escape(branding.email())).append("\" style=\"color:#315784;text-decoration:none;\">").append(escape(branding.email())).append("</a>");
@@ -253,6 +267,26 @@ public class EmailTemplateRenderer {
         if (hasText(branding.phone())) text.append("\n").append(branding.phone());
         if (hasText(branding.email())) text.append("\n").append(branding.email());
         if (hasText(branding.website())) text.append("\n").append(branding.website());
+    }
+
+    private String formatDateTimes(String value) {
+        if (!hasText(value)) return value;
+        Pattern pattern = Pattern.compile("\\b\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(?::\\d{2})?\\b");
+        Matcher matcher = pattern.matcher(value);
+        StringBuffer formatted = new StringBuffer();
+        DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("d MMMM yyyy, h:mm a", Locale.ENGLISH);
+        while (matcher.find()) {
+            String replacement = matcher.group();
+            try {
+                replacement = LocalDateTime.parse(replacement, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        .format(outputFormat);
+            } catch (java.time.format.DateTimeParseException ignored) {
+                // Preserve the original value if it is not a valid ISO local date-time.
+            }
+            matcher.appendReplacement(formatted, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(formatted);
+        return formatted.toString();
     }
 
     private AnnouncementContent splitAnnouncementMessage(String rawMessage) {
