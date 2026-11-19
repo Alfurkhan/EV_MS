@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+  --ev-primary: #2563EB;
+  --ev-primary-hover: color-mix(in srgb, var(--ev-primary) 88%, black);
+  --ev-primary-soft: color-mix(in srgb, var(--ev-primary) 10%, white);
+  --ev-accent: #0D9488;
+  --ev-accent-soft: color-mix(in srgb, var(--ev-accent) 10%, white);
   font-family: Inter, system-ui, sans-serif;
 }
 
