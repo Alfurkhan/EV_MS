@@ -711,9 +711,9 @@ export default function ManageAcademicYearModal({
                                             text-slate-700
                                             outline-none
                                             transition
-                                            focus:border-blue-500
+                                            focus:border-brand
                                             focus:ring-2
-                                            focus:ring-blue-100
+                                            focus:ring-brand-soft
                                             disabled:bg-slate-50
                                         "
                                     />
@@ -756,9 +756,9 @@ export default function ManageAcademicYearModal({
                                             text-slate-700
                                             outline-none
                                             transition
-                                            focus:border-blue-500
+                                            focus:border-brand
                                             focus:ring-2
-                                            focus:ring-blue-100
+                                            focus:ring-brand-soft
                                             disabled:bg-slate-50
                                         "
                                     />
@@ -801,9 +801,9 @@ export default function ManageAcademicYearModal({
                                             text-slate-700
                                             outline-none
                                             transition
-                                            focus:border-blue-500
+                                            focus:border-brand
                                             focus:ring-2
-                                            focus:ring-blue-100
+                                            focus:ring-brand-soft
                                             disabled:bg-slate-50
                                         "
                                     />
@@ -960,14 +960,14 @@ export default function ManageAcademicYearModal({
                                 justify-center
                                 gap-2
                                 rounded-xl
-                                bg-blue-600
+                                bg-brand
                                 px-5
                                 py-2.5
                                 text-sm
                                 font-semibold
                                 text-white
                                 transition
-                                hover:bg-blue-700
+                                hover:bg-brand-hover
                                 active:scale-[0.98]
                                 disabled:cursor-not-allowed
                                 disabled:opacity-50
