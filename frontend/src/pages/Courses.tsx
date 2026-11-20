@@ -164,9 +164,9 @@ export default function Courses() {
                             text-slate-700
                             shadow-sm
                             transition
-                            hover:border-blue-300
-                            hover:bg-blue-50
-                            hover:text-blue-700
+                            hover:border-brand
+                            hover:bg-brand-soft
+                            hover:text-brand
                             disabled:cursor-not-allowed
                             disabled:opacity-50
                         "
@@ -199,7 +199,7 @@ export default function Courses() {
                                 justify-center
                                 gap-2
                                 rounded-xl
-                                bg-blue-600
+                                bg-brand
                                 px-4
                                 py-2.5
                                 text-sm
@@ -207,7 +207,7 @@ export default function Courses() {
                                 text-white
                                 shadow-sm
                                 transition
-                                hover:bg-blue-700
+                                hover:bg-brand-hover
                                 active:scale-[0.98]
                             "
                         >
@@ -522,8 +522,8 @@ export default function Courses() {
                                                         items-center
                                                         justify-center
                                                         rounded-xl
-                                                        bg-blue-100
-                                                        text-blue-600
+                                                        bg-brand-soft
+                                                        text-brand
                                                     "
                                                         >
                                                             <BookOpen size={18} />
@@ -554,12 +554,12 @@ export default function Courses() {
                                             <span
                                                 className="
                                                     rounded-lg
-                                                    bg-blue-50
+                                                    bg-brand-soft
                                                     px-3
                                                     py-1.5
                                                     text-sm
                                                     font-medium
-                                                    text-blue-700
+                                                    text-brand
                                                 "
                                             >
                                                 {subject.code}
@@ -705,9 +705,9 @@ export default function Courses() {
                                                             py-2
                                                             text-sm
                                                             font-medium
-                                                            text-blue-600
+                                                            text-brand
                                                             transition
-                                                            hover:bg-blue-50
+                                                            hover:bg-brand-soft
     "
                                                     >
                                                         Manage
@@ -780,8 +780,8 @@ export default function Courses() {
                                         items-center
                                         justify-center
                                         rounded-xl
-                                        bg-blue-100
-                                        text-blue-600
+                                        bg-brand-soft
+                                        text-brand
                                     "
                                             >
                                                 <BookOpen size={21} />
@@ -826,7 +826,7 @@ export default function Courses() {
                                     mt-1
                                     text-sm
                                     font-medium
-                                    text-blue-600
+                                    text-brand
                                 "
                                         >
                                             {subject.code}
