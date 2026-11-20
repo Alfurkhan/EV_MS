@@ -454,8 +454,8 @@ export default function AddStudentEnrollmentModal({
                                 items-center
                                 justify-center
                                 rounded-xl
-                                bg-blue-50
-                                text-blue-600
+                                bg-brand-soft
+                                text-brand
                             "
                         >
                             <UserRound size={20} />
@@ -615,9 +615,9 @@ export default function AddStudentEnrollmentModal({
                                                 text-slate-900
                                                 outline-none
                                                 transition
-                                                focus:border-blue-500
+                                                focus:border-brand
                                                 focus:ring-2
-                                                focus:ring-blue-100
+                                                focus:ring-brand-soft
                                                 disabled:cursor-not-allowed
                                                 disabled:bg-slate-100
                                             "
@@ -748,9 +748,9 @@ export default function AddStudentEnrollmentModal({
                                                 text-slate-900
                                                 outline-none
                                                 transition
-                                                focus:border-blue-500
+                                                focus:border-brand
                                                 focus:ring-2
-                                                focus:ring-blue-100
+                                                focus:ring-brand-soft
                                                 disabled:cursor-not-allowed
                                                 disabled:bg-slate-100
                                             "
@@ -818,9 +818,9 @@ export default function AddStudentEnrollmentModal({
                                                 text-slate-900
                                                 outline-none
                                                 transition
-                                                focus:border-blue-500
+                                                focus:border-brand
                                                 focus:ring-2
-                                                focus:ring-blue-100
+                                                focus:ring-brand-soft
                                                 disabled:cursor-not-allowed
                                                 disabled:bg-slate-100
                                             "
@@ -896,9 +896,9 @@ export default function AddStudentEnrollmentModal({
                                                 text-slate-900
                                                 outline-none
                                                 transition
-                                                focus:border-blue-500
+                                                focus:border-brand
                                                 focus:ring-2
-                                                focus:ring-blue-100
+                                                focus:ring-brand-soft
                                                 disabled:cursor-not-allowed
                                                 disabled:bg-slate-100
                                             "
@@ -988,14 +988,14 @@ export default function AddStudentEnrollmentModal({
                             items-center
                             gap-2
                             rounded-xl
-                            bg-blue-600
+                            bg-brand
                             px-5
                             py-2.5
                             text-sm
                             font-medium
                             text-white
                             transition
-                            hover:bg-blue-700
+                            hover:bg-brand-hover
                             disabled:cursor-not-allowed
                             disabled:opacity-50
                         "
