@@ -1015,7 +1015,7 @@ export default function StudentTimetablePage() {
                                     items-center
                                     justify-center
                                     rounded-xl
-                                    bg-blue-100
+                                    bg-brand-soft
                                 "
                             >
 
@@ -1333,7 +1333,7 @@ export default function StudentTimetablePage() {
                                                 className={[
                                                     "mb-3 rounded-xl border px-4 py-3 transition",
                                                     isToday
-                                                        ? "border-brand/40 bg-blue-100 shadow-sm"
+                                                        ? "border-brand/40 bg-brand-soft shadow-sm"
                                                         : "border-brand/15 bg-brand-soft",
                                                 ].join(" ")}
                                             >
