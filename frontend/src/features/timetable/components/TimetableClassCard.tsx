@@ -78,7 +78,7 @@ export default function TimetableClassCard({
         <div
             className={`group relative min-h-[185px] rounded-xl border p-3 shadow-sm transition ${
     timetable.active
-        ? "border-indigo-100 bg-white hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md"
+        ? "border-brand/20 bg-white hover:-translate-y-0.5 hover:border-brand/40 hover:shadow-md"
         : "border-slate-200 bg-slate-50 opacity-75"
 }`}
         >
@@ -114,7 +114,7 @@ export default function TimetableClassCard({
             <div className="mb-2 flex items-center gap-1.5 text-[11px] text-slate-500">
                 <CalendarDays
                     size={12}
-                    className="shrink-0 text-indigo-500"
+                    className="shrink-0 text-brand"
                 />
 
                 <span
@@ -129,7 +129,7 @@ export default function TimetableClassCard({
             <div className="mb-2 flex items-center gap-1.5 text-xs text-slate-500">
                 <Clock3
                     size={13}
-                    className="shrink-0 text-indigo-500"
+                    className="shrink-0 text-brand"
                 />
 
                 <span>
@@ -186,7 +186,7 @@ export default function TimetableClassCard({
                                 onClick={(event) =>
                                     event.stopPropagation()
                                 }
-                                className="truncate text-blue-600 hover:text-blue-700 hover:underline"
+                                className="truncate text-brand hover:text-brand hover:underline"
                                 title={timetable.meetingLink}
                             >
                                 Join meeting
