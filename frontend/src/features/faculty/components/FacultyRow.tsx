@@ -68,7 +68,7 @@ export default function FacultyRow({
                     <div
                         className="
                             flex h-10 w-10 shrink-0 items-center justify-center
-                            rounded-full bg-blue-50 text-sm font-semibold text-blue-600
+                            rounded-full bg-brand-soft text-sm font-semibold text-brand
                         "
                     >
                         {getInitials(faculty.fullName)}
