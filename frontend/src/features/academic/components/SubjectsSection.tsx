@@ -432,7 +432,7 @@ export default function SubjectsSection({
                             >
                                 <div className="flex min-w-0 items-center gap-3">
                                     {/* Grade Icon */}
-                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
                                         <BookOpen className="h-4 w-4" />
                                     </div>
 
@@ -504,7 +504,7 @@ export default function SubjectsSection({
                                                     isAssigningThisGrade ||
                                                     loadingAllSubjects
                                                 }
-                                                className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 {isAssigningThisGrade &&
                                                 loadingAllSubjects ? (
@@ -557,7 +557,7 @@ export default function SubjectsSection({
                                                 disabled={
                                                     loadingAllSubjects
                                                 }
-                                                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 <Plus className="h-3.5 w-3.5" />
                                                 Assign Subject
@@ -611,7 +611,7 @@ export default function SubjectsSection({
                                                                     {/* Subject */}
                                                                     <td className="px-4 py-3.5">
                                                                         <div className="flex items-center gap-3">
-                                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
                                                                                 <BookOpen className="h-4 w-4" />
                                                                             </div>
 
