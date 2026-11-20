@@ -501,7 +501,7 @@ function FacultyAttendance() {
                     <div className="flex items-center gap-3">
                         <ClipboardCheck
                             size={30}
-                            className="text-blue-600"
+                            className="text-brand"
                         />
 
                         <h1 className="text-4xl font-bold text-slate-800">
@@ -529,11 +529,11 @@ function FacultyAttendance() {
                             className="
                                 inline-flex items-center
                                 justify-center gap-2
-                                rounded-xl bg-blue-600
+                                rounded-xl bg-brand
                                 px-5 py-2.5
                                 text-sm font-semibold text-white
                                 shadow-sm transition
-                                hover:bg-blue-700
+                                hover:bg-brand-hover
                                 disabled:cursor-not-allowed
                                 disabled:opacity-50
                             "
@@ -564,7 +564,7 @@ flex-1 rounded-lg px-4 py-2.5
 text-sm font-semibold transition
 ${
                         view === "TAKE"
-                            ? "bg-white text-blue-600 shadow-sm"
+                            ? "bg-white text-brand shadow-sm"
                             : "text-slate-500 hover:text-slate-700"
                     }
 `}
@@ -583,7 +583,7 @@ flex-1 rounded-lg px-4 py-2.5
 text-sm font-semibold transition
 ${
                         view === "HISTORY"
-                            ? "bg-white text-blue-600 shadow-sm"
+                            ? "bg-white text-brand shadow-sm"
                             : "text-slate-500 hover:text-slate-700"
                     }
 `}
@@ -691,7 +691,7 @@ ${
                                     <div className="flex items-center gap-3 text-sm text-slate-500">
                                         <Loader2
                                             size={18}
-                                            className="animate-spin text-blue-500"
+                                            className="animate-spin text-brand"
                                         />
 
                                         Loading students...
@@ -736,7 +736,7 @@ ${
                                                 className="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-[2fr_1fr_2fr] md:items-center md:gap-4"
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-600">
+                                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-semibold text-brand">
                                                         {student.studentName
                                                             .charAt(0)
                                                             .toUpperCase()}
@@ -777,7 +777,7 @@ transition
 ${
                                                                     student.status ===
                                                                     option.value
-                                                                        ? "border-blue-600 bg-blue-600 text-white"
+                                                                        ? "border-brand bg-brand text-white"
                                                                         : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
                                                                 }
 `}
@@ -813,9 +813,9 @@ ${
                                                         outline-none
                                                         transition
                                                         placeholder:text-slate-400
-                                                        focus:border-blue-500
+                                                        focus:border-brand
                                                         focus:ring-2
-                                                        focus:ring-blue-100
+                                                        focus:ring-brand-soft
                                                     "
                                                 />
                                             </div>
@@ -882,7 +882,7 @@ ${
                                                         setHistorySearch(event.target.value)
                                                     }
                                                     placeholder="Search subject..."
-                                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                                 />
                                             </div>
 
@@ -898,7 +898,7 @@ ${
                                                     onChange={(event) =>
                                                         setHistoryFromDate(event.target.value)
                                                     }
-                                                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                                 />
                                             </div>
 
@@ -914,7 +914,7 @@ ${
                                                     onChange={(event) =>
                                                         setHistoryToDate(event.target.value)
                                                     }
-                                                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                                 />
                                             </div>
 
@@ -931,7 +931,7 @@ ${
                                                             event.target.value
                                                         )
                                                     }
-                                                    className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                                 >
                                                     <option value="">All Subjects</option>
 
@@ -966,7 +966,7 @@ ${
                                                             event.target.value
                                                         )
                                                     }
-                                                    className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                                 >
                                                     <option value="">All Grades</option>
 
@@ -1001,7 +1001,7 @@ ${
                                                             event.target.value
                                                         )
                                                     }
-                                                    className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                                 >
                                                     <option value="">All Sections</option>
 
@@ -1039,7 +1039,7 @@ ${
                                                                 | "CANCELLED"
                                                         )
                                                     }
-                                                    className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                                    className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                                 >
                                                     <option value="ALL">
                                                         All Sessions
@@ -1093,7 +1093,7 @@ ${
                                     <div className="flex items-center gap-3 text-sm text-slate-500">
                                         <Loader2
                                             size={18}
-                                            className="animate-spin text-blue-500"
+                                            className="animate-spin text-brand"
                                         />
 
                                         Loading attendance history...
@@ -1232,13 +1232,13 @@ ${
                                                         className="
                                                             inline-flex items-center gap-2
                                                             rounded-xl border
-                                                            border-blue-200
-                                                            bg-blue-50
+                                                            border-brand/20
+                                                            bg-brand-soft
                                                             px-4 py-2
                                                             text-sm font-semibold
-                                                            text-blue-700
+                                                            text-brand
                                                             transition
-                                                            hover:bg-blue-100
+                                                            hover:bg-brand-soft
                                                         "
                                                     >
                                                         <Eye size={16} />
@@ -1261,7 +1261,7 @@ ${
                                     text-sm font-semibold
                                     text-slate-600
                                     transition
-                                    hover:text-blue-600
+                                    hover:text-brand
                                 "
                             >
                                 <ArrowLeft size={17} />
@@ -1395,7 +1395,7 @@ ${
                                     <div className="flex items-center gap-3 text-sm text-slate-500">
                                         <Loader2
                                             size={18}
-                                            className="animate-spin text-blue-500"
+                                            className="animate-spin text-brand"
                                         />
 
                                         Loading attendance records...
@@ -1479,7 +1479,7 @@ ${
                                                                         : record.status ===
                                                                         "LATE"
                                                                             ? "bg-amber-50 text-amber-700"
-                                                                            : "bg-blue-50 text-blue-700"
+                                                                            : "bg-brand-soft text-brand"
                                                             }
 `}
                                                         >
@@ -1663,7 +1663,7 @@ function StudentAttendance() {
                 <div className="flex items-center gap-3">
                     <ClipboardCheck
                         size={30}
-                        className="text-blue-600"
+                        className="text-brand"
                     />
 
                     <h1 className="text-4xl font-bold text-slate-800">
@@ -1702,7 +1702,7 @@ function StudentAttendance() {
                     <div className="flex items-center gap-3 text-sm text-slate-500">
                         <Loader2
                             size={18}
-                            className="animate-spin text-blue-500"
+                            className="animate-spin text-brand"
                         />
 
                         Loading your attendance...
@@ -1785,7 +1785,7 @@ function StudentAttendance() {
                                             setSearch(event.target.value)
                                         }
                                         placeholder="Search subject..."
-                                        className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     />
                                 </div>
 
@@ -1801,7 +1801,7 @@ function StudentAttendance() {
                                         onChange={(event) =>
                                             setFromDate(event.target.value)
                                         }
-                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     />
                                 </div>
 
@@ -1817,7 +1817,7 @@ function StudentAttendance() {
                                         onChange={(event) =>
                                             setToDate(event.target.value)
                                         }
-                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     />
                                 </div>
 
@@ -1832,7 +1832,7 @@ function StudentAttendance() {
                                         onChange={(event) =>
                                             setSubjectFilter(event.target.value)
                                         }
-                                        className="min-w-44 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="min-w-44 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     >
                                         <option value="">All Subjects</option>
 
@@ -1868,7 +1868,7 @@ function StudentAttendance() {
                                                     | "ALL"
                                             )
                                         }
-                                        className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     >
                                         <option value="ALL">All Status</option>
                                         <option value="PRESENT">Present</option>
@@ -2088,7 +2088,7 @@ function StudentStatusBadge({
                 ? "bg-red-50 text-red-700"
                 : status === "LATE"
                     ? "bg-amber-50 text-amber-700"
-                    : "bg-blue-50 text-blue-700";
+                    : "bg-brand-soft text-brand";
 
     return (
         <span
@@ -2326,7 +2326,7 @@ function AdminAttendance() {
                 <div className="flex items-center gap-3">
                     <ClipboardCheck
                         size={30}
-                        className="text-blue-600"
+                        className="text-brand"
                     />
 
                     <h1 className="text-4xl font-bold text-slate-800">
@@ -2365,7 +2365,7 @@ function AdminAttendance() {
                     <div className="flex items-center gap-3 text-sm text-slate-500">
                         <Loader2
                             size={18}
-                            className="animate-spin text-blue-500"
+                            className="animate-spin text-brand"
                         />
 
                         Loading school attendance...
@@ -2394,7 +2394,7 @@ function AdminAttendance() {
                                             )
                                         }
                                         placeholder="Student, subject, or faculty..."
-                                        className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     />
                                 </div>
 
@@ -2412,7 +2412,7 @@ function AdminAttendance() {
                                                 event.target.value
                                             )
                                         }
-                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     />
                                 </div>
 
@@ -2430,7 +2430,7 @@ function AdminAttendance() {
                                                 event.target.value
                                             )
                                         }
-                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     />
                                 </div>
 
@@ -2447,7 +2447,7 @@ function AdminAttendance() {
                                                 event.target.value
                                             )
                                         }
-                                        className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     >
                                         <option value="">
                                             All Subjects
@@ -2484,7 +2484,7 @@ function AdminAttendance() {
                                                 event.target.value
                                             )
                                         }
-                                        className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     >
                                         <option value="">
                                             All Faculty
@@ -2528,7 +2528,7 @@ function AdminAttendance() {
                                                 event.target.value
                                             )
                                         }
-                                        className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     >
                                         <option value="">
                                             All Grades
@@ -2565,7 +2565,7 @@ function AdminAttendance() {
                                                 event.target.value
                                             )
                                         }
-                                        className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     >
                                         <option value="">
                                             All Sections
@@ -2604,7 +2604,7 @@ function AdminAttendance() {
                                                     | "ALL"
                                             )
                                         }
-                                        className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                                        className="min-w-40 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                     >
                                         <option value="ALL">
                                             All Statuses
@@ -2898,7 +2898,7 @@ function AdminAttendanceCard({
                     </p>
                 </div>
 
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand">
                     {icon}
                 </div>
             </div>
@@ -2919,7 +2919,7 @@ function AdminStatusBadge({
         LATE:
             "bg-amber-50 text-amber-700 border-amber-200",
         EXCUSED:
-            "bg-blue-50 text-blue-700 border-blue-200",
+            "bg-brand-soft text-brand border-brand/20",
     };
 
     const labels: Record<AttendanceStatus, string> = {
