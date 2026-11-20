@@ -16,23 +16,6 @@ function getErrorMessage(error: any, fallback: string) {
     return error?.response?.data?.detail || error?.response?.data?.message || error?.response?.data?.error || fallback;
 }
 
-function normalizeTheme(data: Partial<ThemeConfig> | undefined): ThemeConfig {
-    const palette = data?.palette;
-    const validPalette = THEME_PALETTES.some((item) => item.id === palette) || palette === "custom";
-    const primaryColor = typeof data?.primaryColor === "string" && isValidHexColor(data.primaryColor)
-        ? data.primaryColor.toUpperCase()
-        : DEFAULT_THEME.primaryColor;
-    const accentColor = typeof data?.accentColor === "string" && isValidHexColor(data.accentColor)
-        ? data.accentColor.toUpperCase()
-        : DEFAULT_THEME.accentColor;
-
-    return {
-        palette: validPalette ? palette as PaletteId : DEFAULT_THEME.palette,
-        primaryColor,
-        accentColor,
-    };
-}
-
 function ColorField({
     label,
     value,
@@ -72,39 +55,33 @@ function ColorField({
 }
 
 export default function AppearanceSettings() {
-    const { setTheme, setPreviewTheme, clearPreviewTheme } = useTheme();
-    const [draft, setDraft] = useState<ThemeConfig>(DEFAULT_THEME);
-    const [loading, setLoading] = useState(true);
+    const {
+        theme,
+        loading,
+        loadError,
+        setTheme,
+        setPreviewTheme,
+        clearPreviewTheme,
+    } = useTheme();
+
+    const [draft, setDraft] = useState<ThemeConfig>(theme);
     const [saving, setSaving] = useState(false);
-    const [loadWarning, setLoadWarning] = useState("");
 
     useEffect(() => {
-        let active = true;
-        api.get<ThemeConfig>("/theme")
-            .then(({ data }) => {
-                if (!active) return;
-                const savedTheme = normalizeTheme(data);
-                setDraft(savedTheme);
-                setTheme(savedTheme);
-            })
-            .catch((error) => {
-                if (!active) return;
-                setLoadWarning(getErrorMessage(error, "Saved theme settings could not be loaded. The default palette is shown for now."));
-                setDraft(DEFAULT_THEME);
-            })
-            .finally(() => {
-                if (active) setLoading(false);
-            });
-
-        return () => {
-            active = false;
-            clearPreviewTheme();
-        };
-    }, [clearPreviewTheme, setTheme]);
+        if (!loading) {
+            setDraft(theme);
+        }
+    }, [theme, loading]);
 
     useEffect(() => {
-        if (!loading) setPreviewTheme(draft);
+        if (!loading) {
+            setPreviewTheme(draft);
+        }
     }, [draft, loading, setPreviewTheme]);
+
+    useEffect(() => {
+        return () => clearPreviewTheme();
+    }, [clearPreviewTheme]);
 
     const hasValidColors = isValidHexColor(draft.primaryColor) && isValidHexColor(draft.accentColor);
     const selectPalette = (paletteId: Exclude<PaletteId, "custom">) => {
@@ -130,11 +107,14 @@ export default function AppearanceSettings() {
                     "theme.accentColor": draft.accentColor.toUpperCase(),
                 },
             });
-            const savedTheme = { ...draft, primaryColor: draft.primaryColor.toUpperCase(), accentColor: draft.accentColor.toUpperCase() };
+            const savedTheme = {
+                ...draft,
+                primaryColor: draft.primaryColor.toUpperCase(),
+                accentColor: draft.accentColor.toUpperCase(),
+            };
             setDraft(savedTheme);
             setTheme(savedTheme);
             toast.success("Application theme saved successfully.");
-            setLoadWarning("");
         } catch (error) {
             toast.error(getErrorMessage(error, "Unable to save the application theme. Please try again."));
         } finally {
@@ -237,9 +217,9 @@ export default function AppearanceSettings() {
                 </div>
             </section>
 
-            {loadWarning && (
+            {loadError && (
                 <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-800">
-                    {loadWarning} You can still choose a palette; saving will require the theme API to be reachable.
+                    {loadError} You can still choose a palette; saving will require the theme API to be reachable.
                 </div>
             )}
 
