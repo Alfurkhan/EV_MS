@@ -80,7 +80,7 @@ function SubjectCard({
                             items-center
                             justify-center
                             rounded-xl
-                            bg-blue-100
+                            bg-brand-soft
                         "
                     >
 
@@ -379,7 +379,7 @@ function EmptySubjects() {
                         className="
                             h-7
                             w-7
-                            text-blue-500
+                            text-brand
                         "
                     />
 
@@ -681,7 +681,7 @@ export default function MySubjectsPage() {
                                 items-center
                                 justify-center
                                 rounded-xl
-                                bg-blue-100
+                                bg-brand-soft
                             "
                         >
 
@@ -784,7 +784,7 @@ export default function MySubjectsPage() {
                                     items-center
                                     justify-center
                                     rounded-xl
-                                    bg-blue-100
+                                    bg-brand-soft
                                 "
                             >
 
