@@ -26,23 +26,23 @@ function SchoolAffiliation({ role }: { role: string | null }) {
     return (
         <Link
             to="/school-profile"
-            className="group my-5 flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all duration-200 hover:border-blue-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="group my-5 flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-all duration-200 hover:border-brand/20 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
             aria-label={`View ${name} school profile`}
         >
             <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 p-1.5">
                 {logoSrc ? (
                     <img src={logoSrc} alt="" className="h-full w-full object-contain" />
                 ) : (
-                    <Building2 size={21} className="text-blue-600" />
+                    <Building2 size={21} className="text-brand" />
                 )}
             </span>
 
             <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <AffiliationIcon size={14} strokeWidth={2} className="shrink-0 text-blue-600" />
+                    <AffiliationIcon size={14} strokeWidth={2} className="shrink-0 text-brand" />
                     {isStudent ? "Studying at" : "Teaching at"}
                 </span>
-                <span className="mt-0.5 block truncate text-sm font-semibold text-slate-800 transition-colors group-hover:text-blue-700">
+                <span className="mt-0.5 block truncate text-sm font-semibold text-slate-800 transition-colors group-hover:text-brand">
                     {name}
                 </span>
                 {tagline && (
@@ -52,7 +52,7 @@ function SchoolAffiliation({ role }: { role: string | null }) {
                 )}
             </span>
 
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-all group-hover:bg-blue-50 group-hover:text-blue-600">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-all group-hover:bg-brand-soft group-hover:text-brand">
                 <ArrowUpRight size={17} />
             </span>
         </Link>
