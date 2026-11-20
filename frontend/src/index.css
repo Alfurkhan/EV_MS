@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/*
+ * Runtime school theme values are set by ThemeProvider.
+ * Tailwind's inline theme tokens make them available as utilities:
+ * bg-brand, text-brand, border-brand, bg-brand-soft, etc.
+ */
+@theme inline {
+  --color-brand: var(--ev-primary);
+  --color-brand-hover: var(--ev-primary-hover);
+  --color-brand-soft: var(--ev-primary-soft);
+  --color-accent: var(--ev-accent);
+  --color-accent-soft: var(--ev-accent-soft);
+}
+
 :root {
   --ev-primary: #2563EB;
   --ev-primary-hover: color-mix(in srgb, var(--ev-primary) 88%, black);
