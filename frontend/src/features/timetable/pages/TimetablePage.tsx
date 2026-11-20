@@ -489,7 +489,7 @@ export default function TimetablePage() {
             <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-soft text-brand">
                             <CalendarDays size={22} />
                         </div>
 
@@ -512,7 +512,7 @@ export default function TimetablePage() {
                             setRequestsOpen((current) => !current);
                             if (!requestsOpen) void refreshPendingRequests();
                         }}
-                        className={`relative inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition ${requestsOpen ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+                        className={`relative inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition ${requestsOpen ? "border-brand/20 bg-brand-soft text-brand" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
                     >
                         <ClipboardCheck size={17} />
                         Requests
@@ -523,7 +523,7 @@ export default function TimetablePage() {
                         onClick={() =>
                             setAddScheduleOpen(true)
                         }
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-hover"
                     >
                         <Plus size={17} />
                         Add Schedule
@@ -539,7 +539,7 @@ export default function TimetablePage() {
                         className={`relative inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
     filtersOpen ||
     activeFilterCount > 0
-        ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+        ? "border-brand/20 bg-brand-soft text-brand"
         : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
 }`}
                     >
@@ -547,7 +547,7 @@ export default function TimetablePage() {
                         Filters
 
                         {activeFilterCount > 0 && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-[11px] font-bold text-white">
+                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[11px] font-bold text-white">
                                 {activeFilterCount}
                             </span>
                         )}
@@ -626,7 +626,7 @@ export default function TimetablePage() {
                             setSearch(event.target.value)
                         }
                         placeholder="Search by subject, faculty, date, class type, room, meeting link..."
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-10 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand-soft"
                     />
 
                     {search && (
@@ -660,7 +660,7 @@ export default function TimetablePage() {
                             <button
                                 type="button"
                                 onClick={clearFilters}
-                                className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 transition hover:text-indigo-700"
+                                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand transition hover:text-brand"
                             >
                                 <X size={14} />
                                 Clear filters
@@ -682,7 +682,7 @@ export default function TimetablePage() {
                                         event.target.value
                                     )
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                             >
                                 <option value="ALL">
                                     All Academic Years
@@ -714,7 +714,7 @@ export default function TimetablePage() {
                                         event.target.value
                                     )
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                             >
                                 <option value="ALL">
                                     All Grades
@@ -749,7 +749,7 @@ export default function TimetablePage() {
                                 disabled={
                                     sections.length === 0
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
                             >
                                 <option value="ALL">
                                     All Sections
@@ -781,7 +781,7 @@ export default function TimetablePage() {
                                         event.target.value
                                     )
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                             >
                                 <option value="ALL">
                                     All Faculty
@@ -813,7 +813,7 @@ export default function TimetablePage() {
                                         event.target.value as ClassTypeFilter
                                     )
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                             >
                                 <option value="ALL">
                                     All Types
@@ -842,7 +842,7 @@ export default function TimetablePage() {
                                         event.target.value
                                     )
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                             >
                                 <option value="ALL">
                                     All Status
@@ -886,7 +886,7 @@ export default function TimetablePage() {
                             }
                             className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition ${
     viewMode === "timetable"
-        ? "bg-indigo-600 text-white shadow-sm"
+        ? "bg-brand text-white shadow-sm"
         : "text-slate-600 hover:bg-slate-50"
 }`}
                         >
@@ -901,7 +901,7 @@ export default function TimetablePage() {
                             }
                             className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition ${
     viewMode === "list"
-        ? "bg-indigo-600 text-white shadow-sm"
+        ? "bg-brand text-white shadow-sm"
         : "text-slate-600 hover:bg-slate-50"
 }`}
                         >
@@ -943,7 +943,7 @@ export default function TimetablePage() {
                     <button
                         type="button"
                         onClick={() => void refresh()}
-                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700"
+                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover"
                     >
                         <RefreshCw size={16} />
                         Try Again
@@ -1060,7 +1060,7 @@ export default function TimetablePage() {
                                         >
                                             <td className="px-5 py-4">
                                                 <div className="flex items-start gap-3">
-                                                    <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                                    <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand">
                                                         <CalendarDays size={17} />
                                                     </div>
 
@@ -1127,7 +1127,7 @@ export default function TimetablePage() {
                                             <td className="px-5 py-4">
                                                 {item.classType ===
                                                 "ONLINE" ? (
-                                                    <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                                                    <span className="inline-flex rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand">
                                                         Online
                                                     </span>
                                                 ) : (
@@ -1144,7 +1144,7 @@ export default function TimetablePage() {
                                                             href={item.meetingLink}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="block max-w-[220px] truncate text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+                                                            className="block max-w-[220px] truncate text-sm font-medium text-brand hover:text-brand hover:underline"
                                                             title={item.meetingLink}
                                                         >
                                                             Join online class
