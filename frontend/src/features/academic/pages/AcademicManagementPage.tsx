@@ -569,8 +569,8 @@ export default function AcademicManagementPage() {
                             items-center
                             justify-center
                             rounded-xl
-                            bg-blue-50
-                            text-blue-600
+                            bg-brand-soft
+                            text-brand
                         "
                     >
                         {icon}
@@ -745,14 +745,14 @@ export default function AcademicManagementPage() {
                                     items-center
                                     gap-2
                                     rounded-xl
-                                    bg-blue-600
+                                    bg-brand
                                     px-4
                                     py-2.5
                                     text-sm
                                     font-semibold
                                     text-white
                                     transition
-                                    hover:bg-blue-700
+                                    hover:bg-brand-hover
                                     active:scale-[0.98]
                                 "
                             >
@@ -893,9 +893,9 @@ export default function AcademicManagementPage() {
                                 text-slate-700
                                 outline-none
                                 transition
-                                focus:border-blue-500
+                                focus:border-brand
                                 focus:ring-2
-                                focus:ring-blue-100
+                                focus:ring-brand-soft
                             "
                                 >
 
@@ -937,14 +937,14 @@ export default function AcademicManagementPage() {
                                 items-center
                                 gap-2
                                 rounded-xl
-                                bg-blue-600
+                                bg-brand
                                 px-4
                                 py-2.5
                                 text-sm
                                 font-semibold
                                 text-white
                                 transition
-                                hover:bg-blue-700
+                                hover:bg-brand-hover
                                 disabled:cursor-not-allowed
                                 disabled:opacity-50
                             "
@@ -1158,8 +1158,8 @@ export default function AcademicManagementPage() {
                                                             items-center
                                                             justify-center
                                                             rounded-lg
-                                                            bg-blue-50
-                                                            text-blue-600
+                                                            bg-brand-soft
+                                                            text-brand
                                                         "
                                                     >
                                                         <GraduationCap size={18} />
@@ -1244,14 +1244,14 @@ export default function AcademicManagementPage() {
                                                                 items-center
                                                                 gap-2
                                                                 rounded-xl
-                                                                bg-blue-600
+                                                                bg-brand
                                                                 px-4
                                                                 py-2.5
                                                                 text-sm
                                                                 font-semibold
                                                                 text-white
                                                                 transition
-                                                                hover:bg-blue-700
+                                                                hover:bg-brand-hover
                                                                 active:scale-[0.98]
                                                             "
                                                         >
@@ -1389,14 +1389,14 @@ export default function AcademicManagementPage() {
                             items-center
                             gap-2
                             rounded-xl
-                            bg-blue-600
+                            bg-brand
                             px-4
                             py-2.5
                             text-sm
                             font-medium
                             text-white
                             transition
-                            hover:bg-blue-700
+                            hover:bg-brand-hover
                         "
                             >
                                 + Add Student Enrollment
