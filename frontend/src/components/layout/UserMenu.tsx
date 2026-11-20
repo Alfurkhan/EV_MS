@@ -18,7 +18,7 @@ export default function UserMenu({ onClose }: Props) {
             {/* User Info */}
             <div className="px-5 py-4 border-b">
 
-                <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-bold mb-3">
+                <div className="w-12 h-12 rounded-full bg-brand text-white flex items-center justify-center text-lg font-bold mb-3">
                     {profile?.fullName?.charAt(0).toUpperCase()}
                 </div>
 
