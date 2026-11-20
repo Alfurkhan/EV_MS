@@ -353,9 +353,9 @@ export default function EditStudentModal({
                                     bg-white
                                     px-3
                                     transition
-                                    focus-within:border-blue-500
+                                    focus-within:border-brand
                                     focus-within:ring-2
-                                    focus-within:ring-blue-100
+                                    focus-within:ring-brand-soft
                                 "
                             >
                                 <User
@@ -477,9 +477,9 @@ export default function EditStudentModal({
                                     border
                                     border-slate-200
                                     bg-white
-                                    focus-within:border-blue-500
+                                    focus-within:border-brand
                                     focus-within:ring-2
-                                    focus-within:ring-blue-100
+                                    focus-within:ring-brand-soft
                                 "
                             >
                                 <div
@@ -629,7 +629,7 @@ export default function EditStudentModal({
                                 items-center
                                 gap-2
                                 rounded-xl
-                                bg-blue-600
+                                bg-brand
                                 px-5
                                 py-2.5
                                 text-sm
@@ -637,7 +637,7 @@ export default function EditStudentModal({
                                 text-white
                                 shadow-sm
                                 transition
-                                hover:bg-blue-700
+                                hover:bg-brand-hover
                                 disabled:cursor-not-allowed
                                 disabled:opacity-60
                             "
