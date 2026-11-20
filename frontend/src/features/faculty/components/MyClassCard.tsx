@@ -299,9 +299,9 @@ export default function MyClassCard({
                             gap-2
                             text-sm
                             font-medium
-                            text-blue-600
+                            text-brand
                             transition
-                            hover:text-blue-700
+                            hover:text-brand
                             hover:underline
                         "
                     >
@@ -418,11 +418,11 @@ export default function MyClassCard({
                         onClick={() => onStart(classItem)}
                         className="
                 inline-flex items-center gap-2
-                rounded-xl bg-blue-600
+                rounded-xl bg-brand
                 px-5 py-2.5
                 text-sm font-semibold text-white
                 shadow-sm transition
-                hover:bg-blue-700
+                hover:bg-brand-hover
             "
                     >
                         <PlayCircle size={17} />
@@ -441,12 +441,12 @@ export default function MyClassCard({
                             }
                             className="
                     inline-flex items-center gap-2
-                    rounded-xl border border-blue-200
-                    bg-blue-50
+                    rounded-xl border border-brand/30
+                    bg-brand-soft
                     px-5 py-2.5
-                    text-sm font-semibold text-blue-700
+                    text-sm font-semibold text-brand
                     shadow-sm transition
-                    hover:bg-blue-100
+                    hover:bg-brand-soft
                 "
                         >
                             <ClipboardCheck size={17} />
