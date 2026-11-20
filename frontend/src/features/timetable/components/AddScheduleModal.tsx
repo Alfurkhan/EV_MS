@@ -539,10 +539,10 @@ export default function AddScheduleModal({
                 <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
                     <div>
                         <div className="flex items-center gap-2">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft">
                                 <CalendarDays
                                     size={20}
-                                    className="text-indigo-600"
+                                    className="text-brand"
                                 />
                             </div>
 
@@ -575,7 +575,7 @@ export default function AddScheduleModal({
                             <div className="flex flex-col items-center gap-3">
                                 <Loader2
                                     size={28}
-                                    className="animate-spin text-indigo-600"
+                                    className="animate-spin text-brand"
                                 />
 
                                 <p className="text-sm text-gray-500">
@@ -622,7 +622,7 @@ export default function AddScheduleModal({
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                         >
                                             <option value="">
                                                 Select academic year
@@ -665,7 +665,7 @@ export default function AddScheduleModal({
                                                 !academicYearId ||
                                                 loadingGrades
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
                                         >
                                             <option value="">
                                                 {loadingGrades
@@ -707,7 +707,7 @@ export default function AddScheduleModal({
                                                 !gradeId ||
                                                 loadingSections
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
                                         >
                                             <option value="">
                                                 {loadingSections
@@ -749,7 +749,7 @@ export default function AddScheduleModal({
                                                 !gradeId ||
                                                 loadingSubjects
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
                                         >
                                             <option value="">
                                                 {loadingSubjects
@@ -796,7 +796,7 @@ export default function AddScheduleModal({
                                                 availableFaculties.length ===
                                                 0
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
                                         >
                                             <option value="">
                                                 {!subjectId
@@ -871,7 +871,7 @@ export default function AddScheduleModal({
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                         />
                                     </div>
 
@@ -894,7 +894,7 @@ export default function AddScheduleModal({
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                         />
                                     </div>
 
@@ -915,7 +915,7 @@ export default function AddScheduleModal({
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                         >
                                             <option value="">
                                                 Select day
@@ -964,7 +964,7 @@ export default function AddScheduleModal({
                                                     setMeetingLink("");
                                                 }
                                             }}
-                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                         >
                                             <option value="OFFLINE">
                                                 Offline
@@ -999,7 +999,7 @@ export default function AddScheduleModal({
                                                         e.target.value
                                                     )
                                                 }
-                                                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                             />
                                         </div>
                                     </div>
@@ -1028,7 +1028,7 @@ export default function AddScheduleModal({
                                                         e.target.value
                                                     )
                                                 }
-                                                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                             />
                                         </div>
                                     </div>
@@ -1070,7 +1070,7 @@ export default function AddScheduleModal({
                                                 }
                                                 maxLength={100}
                                                 placeholder="e.g. Room 102"
-                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                             />
 
                                             <div className="mt-1 text-right text-xs text-gray-400">
@@ -1100,7 +1100,7 @@ export default function AddScheduleModal({
                                                 }
                                                 maxLength={500}
                                                 placeholder="e.g. https://meet.google.com/..."
-                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                             />
 
                                             <div className="mt-1 text-right text-xs text-gray-400">
@@ -1125,7 +1125,7 @@ export default function AddScheduleModal({
                                             maxLength={500}
                                             rows={3}
                                             placeholder="Optional notes about this schedule..."
-                                            className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                                            className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-brand focus:ring-2 focus:ring-brand-soft"
                                         />
 
                                         <div className="mt-1 text-right text-xs text-gray-400">
@@ -1159,7 +1159,7 @@ export default function AddScheduleModal({
                             loadingSections ||
                             loadingSubjects
                         }
-                        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {saving ? (
                             <>
