@@ -30,7 +30,7 @@ function Detail({
 }) {
     return (
         <div className="flex min-w-0 gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
                 <Icon size={18} strokeWidth={1.9} />
             </span>
             <div className="min-w-0">
@@ -68,7 +68,7 @@ export default function SchoolProfilePage() {
     if (loading) {
         return (
             <div className="flex min-h-80 items-center justify-center gap-3 text-sm text-slate-500">
-                <Loader2 size={22} className="animate-spin text-blue-600" />
+                <Loader2 size={22} className="animate-spin text-brand" />
                 Loading school profile...
             </div>
         );
@@ -82,7 +82,7 @@ export default function SchoolProfilePage() {
                 </span>
                 <h1 className="mt-4 text-lg font-semibold text-slate-900">School profile unavailable</h1>
                 <p className="mt-2 text-sm text-slate-500">{error || "School details could not be found."}</p>
-                <Link to="/dashboard" className="mt-5 text-sm font-semibold text-blue-600 hover:text-blue-700">Return to dashboard</Link>
+                <Link to="/dashboard" className="mt-5 text-sm font-semibold text-brand hover:text-brand">Return to dashboard</Link>
             </div>
         );
     }
@@ -98,24 +98,24 @@ export default function SchoolProfilePage() {
                     <ArrowLeft size={17} /> Back to dashboard
                 </Link>
                 {hasRole("ROLE_ADMIN") && (
-                    <Link to="/settings" className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                    <Link to="/settings" className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">
                         <Pencil size={15} /> Edit school profile
                     </Link>
                 )}
             </div>
 
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="h-2 bg-gradient-to-r from-blue-700 via-blue-500 to-sky-400" />
+                <div className="h-2 bg-gradient-to-r from-brand via-brand to-sky-400" />
                 <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-9">
                     <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3">
                         {resolvedLogo ? (
                             <img src={resolvedLogo} alt={school.name ? `${school.name} logo` : "School logo"} className="h-full w-full object-contain" />
                         ) : (
-                            <Building2 size={42} className="text-blue-500" />
+                            <Building2 size={42} className="text-brand" />
                         )}
                     </div>
                     <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">School profile</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">School profile</p>
                         <h1 className="mt-2 break-words text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{school.name || "Your School"}</h1>
                         {school.tagline && <p className="mt-2 text-base text-slate-500">{school.tagline}</p>}
                     </div>
@@ -125,7 +125,7 @@ export default function SchoolProfilePage() {
             {school.about && (
                 <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
                     <div className="flex items-center gap-3">
-                        <span className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                        <span className="flex size-9 items-center justify-center rounded-xl bg-brand-soft text-brand">
                             <FileText size={18} strokeWidth={1.9} />
                         </span>
                         <h2 className="text-base font-semibold text-slate-900">About our school</h2>
@@ -136,7 +136,7 @@ export default function SchoolProfilePage() {
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-7">
                 <div className="mb-6 flex items-center gap-3">
-                    <span className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <span className="flex size-9 items-center justify-center rounded-xl bg-brand-soft text-brand">
                         <Building2 size={18} strokeWidth={1.9} />
                     </span>
                     <h2 className="text-base font-semibold text-slate-900">School information</h2>
@@ -144,8 +144,8 @@ export default function SchoolProfilePage() {
                 <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
                     {school.address && <Detail icon={MapPin} label="Address">{school.address}</Detail>}
                     {school.phone && <Detail icon={Phone} label="Contact number">{school.phone}</Detail>}
-                    {school.email && <Detail icon={Mail} label="Official email"><a href={`mailto:${school.email}`} className="transition-colors hover:text-blue-700 hover:underline">{school.email}</a></Detail>}
-                    {school.website && <Detail icon={Globe} label="Website"><a href={school.website} target="_blank" rel="noreferrer" className="text-blue-600 transition-colors hover:text-blue-700 hover:underline">{school.website}</a></Detail>}
+                    {school.email && <Detail icon={Mail} label="Official email"><a href={`mailto:${school.email}`} className="transition-colors hover:text-brand hover:underline">{school.email}</a></Detail>}
+                    {school.website && <Detail icon={Globe} label="Website"><a href={school.website} target="_blank" rel="noreferrer" className="text-brand transition-colors hover:text-brand hover:underline">{school.website}</a></Detail>}
                     {!school.address && !school.phone && !school.email && !school.website && (
                         <p className="text-sm text-slate-400">Additional school contact information has not been added yet.</p>
                     )}
