@@ -5,6 +5,57 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <script>
+      // Apply the last server-confirmed school theme before the app's first paint.
+      (function () {
+        try {
+          var hasSession =
+            localStorage.getItem("accessToken") &&
+            localStorage.getItem("refreshToken") &&
+            localStorage.getItem("roles");
+          if (!hasSession) return;
+
+          var cached = localStorage.getItem("ev_school_theme_v1");
+          if (!cached) return;
+
+          var theme = JSON.parse(cached);
+          var palettes = [
+            "ocean-blue",
+            "emerald-green",
+            "royal-violet",
+            "teal",
+            "sunrise-amber",
+            "custom"
+          ];
+          var validColor = function (value) {
+            return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+          };
+
+          if (!palettes.includes(theme.palette) ||
+              !validColor(theme.primaryColor) ||
+              !validColor(theme.accentColor)) return;
+
+          var root = document.documentElement;
+          root.style.setProperty("--ev-primary", theme.primaryColor.toUpperCase());
+          root.style.setProperty(
+            "--ev-primary-hover",
+            "color-mix(in srgb, var(--ev-primary) 88%, black)"
+          );
+          root.style.setProperty(
+            "--ev-primary-soft",
+            "color-mix(in srgb, var(--ev-primary) 10%, white)"
+          );
+          root.style.setProperty("--ev-accent", theme.accentColor.toUpperCase());
+          root.style.setProperty(
+            "--ev-accent-soft",
+            "color-mix(in srgb, var(--ev-accent) 10%, white)"
+          );
+          root.dataset.theme = theme.palette;
+        } catch (error) {
+          // React will load the theme from the authenticated API as a fallback.
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
