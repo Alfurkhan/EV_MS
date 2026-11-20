@@ -192,7 +192,7 @@ export default function FacultyTodayClasses() {
                     >
                         View All
 
-                        <ArrowRight size={15} />
+                        <ArrowRight size={15} className="text-white" />
                     </button>
 
                 </div>
@@ -244,7 +244,7 @@ export default function FacultyTodayClasses() {
                     <div className="flex items-center gap-3 text-sm text-slate-500">
                         <RefreshCw
                             size={18}
-                            className="animate-spin text-blue-500"
+                            className="animate-spin text-brand"
                         />
 
                         Loading today's classes...
