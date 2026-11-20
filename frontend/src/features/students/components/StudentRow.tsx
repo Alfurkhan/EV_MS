@@ -77,10 +77,10 @@ export default function StudentRow({
                             items-center
                             justify-center
                             rounded-full
-                            bg-blue-50
+                            bg-brand-soft
                             text-sm
                             font-semibold
-                            text-blue-600
+                            text-brand
                         "
                     >
                         {getInitials(student.fullName)}
@@ -153,7 +153,7 @@ export default function StudentRow({
                             font-medium
                             ${
                             enrollment?.active
-                                ? "bg-blue-50 text-blue-700"
+                                ? "bg-brand-soft text-blue-700"
                                 : "bg-slate-100 text-slate-500"
                         }
                         `}
