@@ -19,12 +19,9 @@ import {
 
 type ThemeContextValue = {
     theme: ThemeConfig;
-    previewTheme: ThemeConfig | null;
     loading: boolean;
     loadError: string;
     setTheme: (theme: ThemeConfig) => void;
-    setPreviewTheme: (theme: ThemeConfig) => void;
-    clearPreviewTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -75,8 +72,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const { isAuthenticated, loading: authLoading, user } = useAuth();
 
     const [theme, setThemeState] = useState<ThemeConfig>(DEFAULT_THEME);
-    const [previewTheme, setPreviewThemeState] =
-        useState<ThemeConfig | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
 
@@ -87,7 +82,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
         if (!isAuthenticated) {
             setThemeState(DEFAULT_THEME);
-            setPreviewThemeState(null);
             setLoadError("");
             setLoading(false);
 
@@ -102,9 +96,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         api.get<Partial<ThemeConfig>>("/theme")
             .then(({ data }) => {
                 if (!active) return;
-
                 setThemeState(normalizeTheme(data));
-                setPreviewThemeState(null);
             })
             .catch((error) => {
                 if (!active) return;
@@ -127,42 +119,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }, [authLoading, isAuthenticated, user?.accessToken]);
 
     const setTheme = useCallback((nextTheme: ThemeConfig) => {
-        setThemeState(nextTheme);
-        setPreviewThemeState(null);
+        setThemeState(normalizeTheme(nextTheme));
         setLoadError("");
     }, []);
 
-    const setPreviewTheme = useCallback((nextTheme: ThemeConfig) => {
-        setPreviewThemeState(nextTheme);
-    }, []);
-
-    const clearPreviewTheme = useCallback(() => {
-        setPreviewThemeState(null);
-    }, []);
-
     useEffect(() => {
-        applyThemeVariables(previewTheme ?? theme);
-    }, [theme, previewTheme]);
+        applyThemeVariables(theme);
+    }, [theme]);
 
     const value = useMemo(
-        () => ({
-            theme,
-            previewTheme,
-            loading,
-            loadError,
-            setTheme,
-            setPreviewTheme,
-            clearPreviewTheme,
-        }),
-        [
-            theme,
-            previewTheme,
-            loading,
-            loadError,
-            setTheme,
-            setPreviewTheme,
-            clearPreviewTheme,
-        ],
+        () => ({ theme, loading, loadError, setTheme }),
+        [theme, loading, loadError, setTheme],
     );
 
     return (
