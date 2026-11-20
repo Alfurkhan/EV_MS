@@ -24,7 +24,7 @@ export default function InfoCard({
                 transition-all
                 duration-200
                 hover:shadow-md
-                hover:border-blue-200
+                hover:border-brand/30
             "
         >
 
@@ -35,8 +35,8 @@ export default function InfoCard({
                         w-10
                         h-10
                         rounded-xl
-                        bg-blue-50
-                        text-blue-600
+                        bg-brand-soft
+                        text-brand
                         flex
                         items-center
                         justify-center
