@@ -134,7 +134,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     return (
         <ThemeContext.Provider value={value}>
-            {children}
+            {authLoading || (isAuthenticated && loading) ? (
+                <div className="min-h-screen bg-slate-50" aria-busy="true" />
+            ) : (
+                children
+            )}
         </ThemeContext.Provider>
     );
 }
