@@ -21,7 +21,7 @@ export default function ProfileCard({
 
             {/* Cover */}
 
-            <div className="h-40 bg-gradient-to-r from-blue-700 via-blue-600 to-cyan-500 relative">
+            <div className="h-40 bg-gradient-to-r from-brand via-brand-hover to-accent relative">
 
                 <button
                     className="
@@ -55,7 +55,7 @@ export default function ProfileCard({
                         w-28
                         h-28
                         rounded-full
-                        bg-blue-700
+                        bg-brand
                         border-4
                         border-white
                         flex
@@ -93,8 +93,8 @@ export default function ProfileCard({
                                 flex
                                 items-center
                                 gap-2
-                                bg-blue-100
-                                text-blue-700
+                                bg-brand-soft
+                                text-brand
                                 text-sm
                                 px-4
                                 py-2
@@ -146,9 +146,9 @@ export default function ProfileCard({
                                 px-5
                                 py-2
                                 rounded-xl
-                                hover:bg-blue-50
-                                hover:border-blue-400
-                                hover:text-blue-700
+                                hover:bg-brand-soft
+                                hover:border-brand/40
+                                hover:text-brand
                                 transition-all
                                 duration-200
                             "
