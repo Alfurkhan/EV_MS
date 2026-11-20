@@ -197,7 +197,7 @@ export default function MyClassesPage() {
                 ] as const).map((tab) => (
                     <button key={tab.id} type="button" role="tab" aria-selected={activeView === tab.id}
                         onClick={() => setActiveView(tab.id)}
-                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${activeView === tab.id ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"}`}>
+                        className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition ${activeView === tab.id ? "bg-brand text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"}`}>
                         {tab.label}
                     </button>
                 ))}
@@ -242,9 +242,9 @@ export default function MyClassesPage() {
                 <div className="flex flex-col items-start gap-3">
                     <div className="flex w-full justify-end">
                         <button type="button" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen} aria-controls="faculty-class-filters"
-                            className={"inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition " + (filtersOpen || activeFilterCount > 0 ? "border-indigo-200 bg-indigo-50 text-indigo-700" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50")}>
+                            className={"inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition " + (filtersOpen || activeFilterCount > 0 ? "border-brand/20 bg-brand-soft text-brand" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50")}>
                             <Filter size={16} /> Filters
-                            {activeFilterCount > 0 && <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}
+                            {activeFilterCount > 0 && <span className="rounded-full bg-brand px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}
                             <ChevronDown size={16} className={"transition-transform " + (filtersOpen ? "rotate-180" : "")} />
                         </button>
                     </div>
@@ -252,33 +252,33 @@ export default function MyClassesPage() {
                         <section id="faculty-class-filters" className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
                             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                                 <div><h3 className="font-semibold text-slate-800">Filter classes</h3><p className="text-xs text-slate-500">Narrow your timetable by keyword, weekday, subject, status, or class type.</p></div>
-                                <button type="button" onClick={clearFilters} disabled={activeFilterCount === 0} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-slate-400">Clear filters</button>
+                                <button type="button" onClick={clearFilters} disabled={activeFilterCount === 0} className="text-sm font-semibold text-brand hover:text-brand disabled:cursor-not-allowed disabled:text-slate-400">Clear filters</button>
                             </div>
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 <label className="text-xs font-semibold text-slate-600 sm:col-span-2 lg:col-span-3">Search classes
                                     <span className="relative mt-1 block"><Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search subject, code, grade, section, or room..." className="w-full rounded-lg border border-slate-300 py-2.5 pl-9 pr-3 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100" />
+                                        <input value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder="Search subject, code, grade, section, or room..." className="w-full rounded-lg border border-slate-300 py-2.5 pl-9 pr-3 text-sm font-normal outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft" />
                                     </span>
                                 </label>
                                 <label className="text-xs font-semibold text-slate-600">Weekday
-                                    <select value={dayFilter} onChange={(e) => setDayFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                    <select value={dayFilter} onChange={(e) => setDayFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft">
                                         <option value="ALL">All weekdays</option>
                                         {[...new Set(classes.map((item) => item.dayOfWeek).filter((day): day is string => Boolean(day)))].sort().map((day) => <option key={day} value={day}>{day.charAt(0) + day.slice(1).toLowerCase()}</option>)}
                                     </select>
                                 </label>
                                 <label className="text-xs font-semibold text-slate-600">Subject
-                                    <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                    <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft">
                                         <option value="ALL">All subjects</option>
                                         {[...new Set(classes.map((item) => item.subjectName))].sort().map((subject) => <option key={subject} value={subject}>{subject}</option>)}
                                     </select>
                                 </label>
                                 <label className="text-xs font-semibold text-slate-600">Status
-                                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft">
                                         <option value="ALL">All statuses</option><option value="NOT_STARTED">Not started</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option>
                                     </select>
                                 </label>
                                 <label className="text-xs font-semibold text-slate-600">Class type
-                                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
+                                    <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-normal outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft">
                                         <option value="ALL">All class types</option><option value="ONLINE">Online</option><option value="OFFLINE">Offline</option>
                                     </select>
                                 </label>
@@ -308,7 +308,7 @@ export default function MyClassesPage() {
                     <div className="flex items-center gap-3 text-sm text-slate-500">
                         <RefreshCw
                             size={18}
-                            className="animate-spin text-blue-500"
+                            className="animate-spin text-brand"
                         />
 
                         Loading your classes...
@@ -354,7 +354,7 @@ export default function MyClassesPage() {
                         You don't have any approved class schedules assigned yet. You can create a class schedule or review drafts awaiting administrator approval.
                     </p>
                     <div className="mt-5 flex flex-wrap justify-center gap-3">
-                        <button type="button" onClick={() => setActiveView("create")} className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Schedule a Class</button>
+                        <button type="button" onClick={() => setActiveView("create")} className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">Schedule a Class</button>
                         <button type="button" onClick={() => setActiveView("drafts")} className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">View Drafts</button>
                     </div>
                 </div>
@@ -368,7 +368,7 @@ export default function MyClassesPage() {
                         <SearchX size={28} className="mx-auto text-slate-400" />
                         <h2 className="mt-3 text-base font-semibold text-slate-800">No matching classes</h2>
                         <p className="mt-1 text-sm text-slate-500">Try changing your search or filters to see more classes.</p>
-                        <button type="button" onClick={clearFilters} className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Clear filters</button>
+                        <button type="button" onClick={clearFilters} className="mt-4 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-hover">Clear filters</button>
                     </div>
                 )
             )}
