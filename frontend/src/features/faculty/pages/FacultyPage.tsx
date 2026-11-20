@@ -146,7 +146,7 @@ export default function FacultyPage() {
                             items-center
                             gap-2
                             rounded-xl
-                            bg-blue-600
+                            bg-brand
                             px-4
                             py-2.5
                             text-sm
@@ -154,7 +154,7 @@ export default function FacultyPage() {
                             text-white
                             shadow-sm
                             transition
-                            hover:bg-blue-700
+                            hover:bg-brand-hover
                         "
                     >
                         <span className="text-lg leading-none">
@@ -219,7 +219,7 @@ export default function FacultyPage() {
                     <div className="flex items-center gap-3 text-sm text-slate-500">
                         <RefreshCw
                             size={18}
-                            className="animate-spin text-blue-500"
+                            className="animate-spin text-brand"
                         />
 
                         Loading faculty...
