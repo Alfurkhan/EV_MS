@@ -241,8 +241,8 @@ export default function AddAcademicYearModal({
                                 items-center
                                 justify-center
                                 rounded-xl
-                                bg-blue-50
-                                text-blue-600
+                                bg-brand-soft
+                                text-brand
                             "
                         >
 
@@ -346,9 +346,9 @@ export default function AddAcademicYearModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                 "
                             />
 
@@ -398,9 +398,9 @@ export default function AddAcademicYearModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                 "
                             />
 
@@ -450,9 +450,9 @@ export default function AddAcademicYearModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                 "
                             />
 
