@@ -51,7 +51,7 @@ function SubjectCard({
                 shadow-sm
                 transition
                 hover:-translate-y-0.5
-                hover:border-blue-200
+                hover:border-brand/30
                 hover:shadow-md
             "
         >
@@ -88,7 +88,7 @@ function SubjectCard({
                             className="
                                 h-6
                                 w-6
-                                text-blue-600
+                                text-brand
                             "
                         />
 
@@ -113,7 +113,7 @@ function SubjectCard({
                                 text-xs
                                 font-semibold
                                 tracking-wide
-                                text-blue-600
+                                text-brand
                             "
                         >
                             {subject.code}
@@ -138,7 +138,7 @@ function SubjectCard({
                         tracking-wide
                         ${
                         subject.active
-                            ? "bg-blue-50 text-blue-700"
+                            ? "bg-brand-soft text-brand"
                             : "bg-gray-100 text-gray-500"
                     }
                     `}
@@ -371,7 +371,7 @@ function EmptySubjects() {
                         items-center
                         justify-center
                         rounded-full
-                        bg-blue-50
+                        bg-brand-soft
                     "
                 >
 
@@ -536,14 +536,14 @@ function SubjectsError({
                         items-center
                         gap-2
                         rounded-lg
-                        bg-blue-600
+                        bg-brand
                         px-4
                         py-2
                         text-sm
                         font-medium
                         text-white
                         transition
-                        hover:bg-blue-700
+                        hover:bg-brand-hover
                     "
                 >
 
@@ -689,7 +689,7 @@ export default function MySubjectsPage() {
                                 className="
                                     h-6
                                     w-6
-                                    text-blue-600
+                                    text-brand
                                 "
                             />
 
@@ -792,7 +792,7 @@ export default function MySubjectsPage() {
                                     className="
                                         h-6
                                         w-6
-                                        text-blue-600
+                                        text-brand
                                     "
                                 />
 
@@ -1004,7 +1004,7 @@ export default function MySubjectsPage() {
                                 items-center
                                 justify-center
                                 rounded-lg
-                                bg-blue-50
+                                bg-brand-soft
                             "
                         >
 
@@ -1012,7 +1012,7 @@ export default function MySubjectsPage() {
                                 className="
                                     h-5
                                     w-5
-                                    text-blue-600
+                                    text-brand
                                 "
                             />
 
@@ -1070,7 +1070,7 @@ export default function MySubjectsPage() {
                                 items-center
                                 justify-center
                                 rounded-lg
-                                bg-blue-50
+                                bg-brand-soft
                             "
                         >
 
@@ -1078,7 +1078,7 @@ export default function MySubjectsPage() {
                                 className="
                                     h-5
                                     w-5
-                                    text-blue-600
+                                    text-brand
                                 "
                             />
 
