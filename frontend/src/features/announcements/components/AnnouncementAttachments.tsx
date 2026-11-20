@@ -90,7 +90,7 @@ export default function AnnouncementAttachments({
   return <section className="space-y-3" aria-label="Announcement attachments">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-        <Paperclip size={16} className="text-indigo-600"/>Attachments
+        <Paperclip size={16} className="text-brand"/>Attachments
         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{attachments.length+selectedFiles.length}/5</span>
       </div>
       {editable&&<span className="text-[11px] text-slate-500">Up to 25 MB per file</span>}
@@ -101,11 +101,11 @@ export default function AnnouncementAttachments({
       onDragOver={event=>{event.preventDefault();setDragging(true);}}
       onDragLeave={event=>{event.preventDefault();if(!event.currentTarget.contains(event.relatedTarget as Node|null))setDragging(false);}}
       onDrop={event=>{event.preventDefault();setDragging(false);addFiles(event.dataTransfer.files);}}
-      className={`rounded-xl border-2 border-dashed p-5 text-center transition-colors ${dragging?"border-indigo-500 bg-indigo-50":"border-slate-300 bg-slate-50/70 hover:border-indigo-300 hover:bg-indigo-50/40"} `}
+      className={`rounded-xl border-2 border-dashed p-5 text-center transition-colors ${dragging?"border-brand bg-brand-soft":"border-slate-300 bg-slate-50/70 hover:border-brand/40 hover:bg-brand-soft/40"} `}
     >
       <input ref={inputRef} type="file" multiple accept={ACCEPTED_EXTENSIONS.join(",")} className="hidden" onChange={event=>event.target.files&&addFiles(event.target.files)}/>
-      <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-indigo-600 shadow-sm"><UploadCloud size={21}/></span>
-      <p className="mt-2 text-sm font-semibold text-slate-800">Drop files here, or <button type="button" disabled={remaining===0} onClick={()=>inputRef.current?.click()} className="text-indigo-600 underline underline-offset-2 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">browse files</button></p>
+      <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-brand shadow-sm"><UploadCloud size={21}/></span>
+      <p className="mt-2 text-sm font-semibold text-slate-800">Drop files here, or <button type="button" disabled={remaining===0} onClick={()=>inputRef.current?.click()} className="text-brand underline underline-offset-2 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">browse files</button></p>
       <p className="mt-1 text-xs text-slate-500">{ACCEPTED_LABEL} · 25 MB maximum per file · {remaining} {remaining===1?"slot":"slots"} remaining</p>
       <p className="mt-1 text-[11px] text-slate-400">Files are uploaded securely when you save the announcement.</p>
     </div>}
@@ -116,22 +116,22 @@ export default function AnnouncementAttachments({
       {attachments.map(attachment=>{
         const Icon=fileIcon(attachment.fileName);
         return <div key={attachment.id} className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><Icon size={20}/></span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand"><Icon size={20}/></span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-800" title={attachment.fileName}>{attachment.fileName}</p>
             <p className="mt-0.5 text-xs text-slate-500">{formatSize(attachment.fileSize)} · Uploaded</p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {canPreview(attachment)&&<button type="button" onClick={()=>void action("preview",attachment)} title="Preview attachment" aria-label={`Preview ${attachment.fileName}`} className="rounded-lg p-2 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"><Eye size={16}/></button>}
-            <button type="button" onClick={()=>void action("download",attachment)} title="Download attachment" aria-label={`Download ${attachment.fileName}`} className="rounded-lg p-2 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"><Download size={16}/></button>
+            {canPreview(attachment)&&<button type="button" onClick={()=>void action("preview",attachment)} title="Preview attachment" aria-label={`Preview ${attachment.fileName}`} className="rounded-lg p-2 text-slate-500 hover:bg-brand-soft hover:text-brand"><Eye size={16}/></button>}
+            <button type="button" onClick={()=>void action("download",attachment)} title="Download attachment" aria-label={`Download ${attachment.fileName}`} className="rounded-lg p-2 text-slate-500 hover:bg-brand-soft hover:text-brand"><Download size={16}/></button>
             {editable&&onRemoveAttachment&&<button type="button" disabled={removingAttachmentId===attachment.id} onClick={()=>onRemoveAttachment(attachment.id)} title="Remove attachment" aria-label={`Remove ${attachment.fileName}`} className="rounded-lg p-2 text-rose-500 hover:bg-rose-50 disabled:opacity-40"><Trash2 size={16}/></button>}
           </div>
         </div>;
       })}
       {selectedFiles.map((file,index)=>{
         const Icon=fileIcon(file.name);
-        return <div key={`${file.name}-${file.lastModified}-${index}`} className="flex min-w-0 items-center gap-3 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 p-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600"><Icon size={20}/></span>
+        return <div key={`${file.name}-${file.lastModified}-${index}`} className="flex min-w-0 items-center gap-3 rounded-xl border border-dashed border-brand/25 bg-brand-soft/40 p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-brand"><Icon size={20}/></span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-slate-800" title={file.name}>{file.name}</p>
             <p className="mt-0.5 text-xs text-slate-500">{formatSize(file.size)} · Ready to upload</p>
