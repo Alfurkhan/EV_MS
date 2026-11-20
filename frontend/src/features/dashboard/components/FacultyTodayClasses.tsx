@@ -118,7 +118,7 @@ export default function FacultyTodayClasses() {
                     <div className="flex items-center gap-2">
                         <CalendarDays
                             size={20}
-                            className="text-blue-600"
+                            className="text-brand"
                         />
 
                         <h2 className="text-xl font-bold text-slate-800">
@@ -179,7 +179,7 @@ export default function FacultyTodayClasses() {
                             items-center
                             gap-2
                             rounded-xl
-                            bg-blue-600
+                            bg-brand
                             px-4
                             py-2
                             text-sm
@@ -187,7 +187,7 @@ export default function FacultyTodayClasses() {
                             text-white
                             shadow-sm
                             transition
-                            hover:bg-blue-700
+                            hover:bg-brand-hover
                         "
                     >
                         View All
