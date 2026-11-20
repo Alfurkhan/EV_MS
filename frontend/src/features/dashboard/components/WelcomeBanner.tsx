@@ -17,20 +17,24 @@ export default function WelcomeBanner() {
         : profile?.fullName || "User";
 
     return (
-        <div className="rounded-3xl bg-gradient-to-r from-blue-700 to-indigo-600 text-white p-8 shadow-lg">
-
+        <div
+            className="rounded-3xl p-8 text-white shadow-lg"
+            style={{
+                backgroundImage:
+                    "linear-gradient(110deg, var(--ev-primary), color-mix(in srgb, var(--ev-primary) 72%, var(--ev-accent)))",
+            }}
+        >
             <h1 className="text-3xl font-bold">
                 {greeting} 👋
             </h1>
 
-            <p className="text-blue-100 mt-2 text-lg">
+            <p className="mt-2 text-lg text-white/90">
                 Welcome back, {displayName}.
             </p>
 
-            <p className="text-blue-200 mt-1">
+            <p className="mt-1 text-white/80">
                 Here's what's happening in your school today.
             </p>
-
         </div>
     );
 }
