@@ -166,7 +166,7 @@ function TimetableClassCard({
                 shadow-sm
                 transition
                 hover:-translate-y-0.5
-                hover:border-blue-200
+                hover:border-brand/30
                 hover:shadow-md
             "
         >
@@ -177,7 +177,7 @@ function TimetableClassCard({
                 className="
                     mb-3
                     rounded-lg
-                    bg-blue-50
+                    bg-brand-soft
                     px-3
                     py-2
                 "
@@ -190,7 +190,7 @@ function TimetableClassCard({
                         gap-2
                         text-sm
                         font-semibold
-                        text-blue-700
+                        text-brand
                     "
                 >
 
@@ -218,7 +218,7 @@ function TimetableClassCard({
                         h-5
                         w-5
                         shrink-0
-                        text-blue-600
+                        text-brand
                     "
                 />
 
@@ -389,8 +389,8 @@ function TimetableClassCard({
                 gap-2
                 text-sm
                 font-semibold
-                text-blue-600
-                hover:text-blue-700
+                text-brand
+                hover:text-brand
                 hover:underline
             "
                     >
@@ -782,14 +782,14 @@ export default function StudentTimetablePage() {
                             items-center
                             gap-2
                             rounded-lg
-                            bg-blue-600
+                            bg-brand
                             px-4
                             py-2
                             text-sm
                             font-medium
                             text-white
                             transition
-                            hover:bg-blue-700
+                            hover:bg-brand-hover
                         "
                     >
 
@@ -847,7 +847,7 @@ export default function StudentTimetablePage() {
                                     className="
                                         h-6
                                         w-6
-                                        text-blue-600
+                                        text-brand
                                     "
                                 />
 
@@ -1023,7 +1023,7 @@ export default function StudentTimetablePage() {
                                     className="
                                         h-6
                                         w-6
-                                        text-blue-600
+                                        text-brand
                                     "
                                 />
 
@@ -1231,9 +1231,9 @@ export default function StudentTimetablePage() {
                                     className={[
                                         "shrink-0 rounded-lg px-4 py-2 text-sm font-medium transition",
                                         selectedDay === day
-                                            ? "bg-blue-600 text-white shadow-sm"
+                                            ? "bg-brand text-white shadow-sm"
                                             : isToday
-                                                ? "border border-blue-200 bg-blue-50 text-blue-700"
+                                                ? "border border-brand/25 bg-brand-soft text-brand"
                                                 : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
                                     ].join(" ")}
                                 >
@@ -1333,8 +1333,8 @@ export default function StudentTimetablePage() {
                                                 className={[
                                                     "mb-3 rounded-xl border px-4 py-3 transition",
                                                     isToday
-                                                        ? "border-blue-300 bg-blue-100 shadow-sm"
-                                                        : "border-blue-100 bg-blue-50",
+                                                        ? "border-brand/40 bg-blue-100 shadow-sm"
+                                                        : "border-brand/15 bg-brand-soft",
                                                 ].join(" ")}
                                             >
 
@@ -1353,7 +1353,7 @@ export default function StudentTimetablePage() {
                                                         font-bold
                                                         uppercase
                                                         tracking-wide
-                                                        text-blue-700
+                                                        text-brand
                                                     "
                                                     >
                                                         {formatDay(day)}
@@ -1363,7 +1363,7 @@ export default function StudentTimetablePage() {
                                                         <span
                                                             className="
                                                             rounded-full
-                                                            bg-blue-600
+                                                            bg-brand
                                                             px-2
                                                             py-0.5
                                                             text-[10px]
