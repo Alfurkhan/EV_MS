@@ -143,8 +143,8 @@ export default function AddGradeModal({
                                 items-center
                                 justify-center
                                 rounded-xl
-                                bg-blue-50
-                                text-blue-600
+                                bg-brand-soft
+                                text-brand
                             "
                         >
                             <GraduationCap size={20} />
@@ -289,9 +289,9 @@ export default function AddGradeModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                     disabled:bg-slate-50
                                 "
                             />
@@ -336,9 +336,9 @@ export default function AddGradeModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                     disabled:bg-slate-50
                                 "
                             />
