@@ -292,8 +292,8 @@ export default function StudentsPage() {
                             items-center
                             justify-center
                             rounded-full
-                            bg-blue-50
-                            text-blue-600
+                            bg-brand-soft
+                            text-brand
                         ">
                             <RefreshCw
                                 size={22}
@@ -397,7 +397,7 @@ export default function StudentsPage() {
                                 items-center
                                 gap-2
                                 rounded-xl
-                                bg-blue-600
+                                bg-brand
                                 px-5
                                 py-2.5
                                 text-sm
@@ -405,7 +405,7 @@ export default function StudentsPage() {
                                 text-white
                                 shadow-sm
                                 transition
-                                hover:bg-blue-700
+                                hover:bg-brand-hover
                             "
                         >
                             <RefreshCw size={16} />
@@ -491,7 +491,7 @@ export default function StudentsPage() {
                         }
                         className="
                             rounded-xl
-                            bg-blue-600
+                            bg-brand
                             px-4
                             py-2.5
                             text-sm
@@ -499,7 +499,7 @@ export default function StudentsPage() {
                             text-white
                             shadow-sm
                             transition
-                            hover:bg-blue-700
+                            hover:bg-brand-hover
                         "
                     >
                         + Add Student
