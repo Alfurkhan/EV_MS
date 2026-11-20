@@ -80,11 +80,11 @@ export default function AddSectionModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
-        <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 px-4 py-4 sm:items-center sm:py-6">
+        <div className="my-auto flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
 
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4">
     <div>
         <h2 className="text-lg font-semibold text-slate-900">
         Add Section
@@ -106,7 +106,7 @@ export default function AddSectionModal({
     </div>
 
     {/* Content */}
-    <div className="space-y-6 px-6 py-6">
+    <div className="min-h-0 space-y-6 overflow-y-auto px-6 py-6">
 
     {/* Academic Context */}
     <div>
@@ -195,7 +195,7 @@ export default function AddSectionModal({
         </div>
 
     {/* Footer */}
-    <div className="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+    <div className="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
     <button
         type="button"
     onClick={onClose}
