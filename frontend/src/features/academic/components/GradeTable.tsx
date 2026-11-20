@@ -198,8 +198,8 @@ export default function GradeTable({
                                                 items-center
                                                 justify-center
                                                 rounded-xl
-                                                bg-blue-50
-                                                text-blue-600
+                                                bg-brand-soft
+                                                text-brand
                                             "
                                     >
 
@@ -337,9 +337,9 @@ export default function GradeTable({
                                             py-2
                                             text-sm
                                             font-semibold
-                                            text-blue-600
+                                            text-brand
                                             transition
-                                            hover:bg-blue-50
+                                            hover:bg-brand-soft
                                         "
                                 >
                                     Manage
