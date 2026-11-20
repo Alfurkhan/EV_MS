@@ -11,28 +11,16 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
-
-        <ThemeProvider>
-
         <AuthProvider>
-
-            <ProfileProvider>
-
-                <SchoolBrandingProvider>
-
-                    <LayoutProvider>
-
-                        <App />
-
-                    </LayoutProvider>
-
-                </SchoolBrandingProvider>
-
-            </ProfileProvider>
-
+            <ThemeProvider>
+                <ProfileProvider>
+                    <SchoolBrandingProvider>
+                        <LayoutProvider>
+                            <App />
+                        </LayoutProvider>
+                    </SchoolBrandingProvider>
+                </ProfileProvider>
+            </ThemeProvider>
         </AuthProvider>
-
-        </ThemeProvider>
-
-    </StrictMode>
+    </StrictMode>,
 );
