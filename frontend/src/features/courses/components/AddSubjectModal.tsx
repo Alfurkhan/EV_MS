@@ -352,9 +352,9 @@ export default function AddSubjectModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                     disabled:bg-slate-50
                                     disabled:text-slate-400
                                 "
@@ -401,9 +401,9 @@ export default function AddSubjectModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                     disabled:bg-slate-50
                                     disabled:text-slate-400
                                 "
@@ -451,9 +451,9 @@ export default function AddSubjectModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                     disabled:bg-slate-50
                                     disabled:text-slate-400
                                 "
@@ -502,9 +502,9 @@ export default function AddSubjectModal({
                                     text-slate-700
                                     outline-none
                                     transition
-                                    focus:border-blue-500
+                                    focus:border-brand
                                     focus:ring-2
-                                    focus:ring-blue-100
+                                    focus:ring-brand-soft
                                     disabled:bg-slate-50
                                     disabled:text-slate-400
                                 "
