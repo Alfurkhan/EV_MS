@@ -331,7 +331,7 @@ export default function ManageStudentEnrollmentModal({
                                     handleGradeChange(event.target.value)
                                 }
                                 disabled={loading || loadingOptions}
-                                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:bg-slate-50"
                             >
                                 <option value="">
                                     {loadingOptions
@@ -370,7 +370,7 @@ export default function ManageStudentEnrollmentModal({
                                     loadingSections ||
                                     !selectedGradeId
                                 }
-                                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+                                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:bg-slate-50"
                             >
                                 <option value="">
                                     {loadingSections
@@ -467,7 +467,7 @@ export default function ManageStudentEnrollmentModal({
                             type="button"
                             onClick={handleSave}
                             disabled={loading}
-                            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {loading ? "Saving..." : "Save"}
                         </button>
