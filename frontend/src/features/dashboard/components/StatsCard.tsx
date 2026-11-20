@@ -8,54 +8,17 @@ type Props = {
     border: string;
 };
 
-export default function StatsCard({
-                                      title,
-                                      value,
-                                      subtitle,
-                                      icon: Icon,
-                                      color,
-                                      bg,
-                                      border,
-                                  }: Props) {
+export default function StatsCard({ title, value, subtitle, icon: Icon }: Props) {
     return (
-        <div
-            className={`
-        bg-white
-        rounded-2xl
-        shadow-sm
-        hover:shadow-lg
-        transition-all
-        duration-300
-        p-6
-        border-t-4
-        ${border}
-      `}
-        >
-            <div className="flex justify-between items-center">
+        <div className="rounded-2xl border-t-4 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg" style={{ borderTopColor: "var(--ev-primary)" }}>
+            <div className="flex items-center justify-between">
                 <div>
-                    <p className="text-gray-500 text-sm">{title}</p>
-
-                    <h2 className="text-3xl font-bold mt-2">
-                        {value}
-                    </h2>
-
-                    <p className="text-sm text-gray-400 mt-2">
-                        {subtitle}
-                    </p>
+                    <p className="text-sm text-gray-500">{title}</p>
+                    <h2 className="mt-2 text-3xl font-bold">{value}</h2>
+                    <p className="mt-2 text-sm text-gray-400">{subtitle}</p>
                 </div>
-
-                <div
-                    className={`
-            w-14
-            h-14
-            rounded-xl
-            flex
-            items-center
-            justify-center
-            ${bg}
-          `}
-                >
-                    <Icon className={`w-7 h-7 ${color}`} />
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl" style={{ backgroundColor: "var(--ev-primary-soft)" }}>
+                    <Icon className="h-7 w-7" style={{ color: "var(--ev-primary)" }} />
                 </div>
             </div>
         </div>
