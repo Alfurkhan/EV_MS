@@ -28,7 +28,7 @@ function ColorField({
     return (
         <label className="block">
             <span className="mb-2 block text-sm font-semibold text-slate-700">{label}</span>
-            <span className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 transition focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-50">
+            <span className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5 transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand-soft">
                 <input
                     type="color"
                     value={isValidHexColor(value) ? value : "#000000"}
@@ -55,14 +55,7 @@ function ColorField({
 }
 
 export default function AppearanceSettings() {
-    const {
-        theme,
-        loading,
-        loadError,
-        setTheme,
-        setPreviewTheme,
-        clearPreviewTheme,
-    } = useTheme();
+    const { theme, loading, loadError, setTheme } = useTheme();
 
     const [draft, setDraft] = useState<ThemeConfig>(theme);
     const [saving, setSaving] = useState(false);
@@ -72,16 +65,6 @@ export default function AppearanceSettings() {
             setDraft(theme);
         }
     }, [theme, loading]);
-
-    useEffect(() => {
-        if (!loading) {
-            setPreviewTheme(draft);
-        }
-    }, [draft, loading, setPreviewTheme]);
-
-    useEffect(() => {
-        return () => clearPreviewTheme();
-    }, [clearPreviewTheme]);
 
     const hasValidColors = isValidHexColor(draft.primaryColor) && isValidHexColor(draft.accentColor);
     const selectPalette = (paletteId: Exclude<PaletteId, "custom">) => {
@@ -130,7 +113,7 @@ export default function AppearanceSettings() {
     if (loading) {
         return (
             <div className="flex min-h-72 items-center justify-center">
-                <Loader2 className="animate-spin text-blue-600" size={25} />
+                <Loader2 className="animate-spin text-brand" size={25} />
                 <span className="ml-3 text-sm text-slate-500">Loading appearance settings...</span>
             </div>
         );
@@ -142,7 +125,7 @@ export default function AppearanceSettings() {
                 <div className="mb-5">
                     <h3 className="text-base font-semibold text-slate-900">Choose a color palette</h3>
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                        Select a coordinated palette for the school-wide application appearance. Your selection is previewed before it is saved.
+                        Select a coordinated palette for the school-wide application appearance. Your selection is previewed below and will not affect the application until saved.
                     </p>
                 </div>
 
@@ -155,11 +138,12 @@ export default function AppearanceSettings() {
                                 type="button"
                                 onClick={() => selectPalette(palette.id)}
                                 aria-pressed={selected}
-                                className={`rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100 ${selected ? "border-blue-500 bg-blue-50/50 shadow-sm" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}`}
+                                style={selected ? { borderColor: draft.primaryColor, backgroundColor: `${draft.primaryColor}0D` } : undefined}
+                                className={`rounded-2xl border p-4 text-left transition focus:outline-none focus:ring-4 focus:ring-brand-soft ${selected ? "shadow-sm" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"}`}
                             >
                                 <span className="mb-3 flex items-center justify-between gap-3">
                                     <span className="text-sm font-semibold text-slate-800">{palette.name}</span>
-                                    {selected && <Check size={17} className="text-blue-600" />}
+                                    {selected && <Check size={17} style={{ color: draft.primaryColor }} />}
                                 </span>
                                 <span className="mb-3 flex items-center gap-2">
                                     <span className="size-9 rounded-xl shadow-inner" style={{ backgroundColor: palette.primaryColor }} />
@@ -236,7 +220,7 @@ export default function AppearanceSettings() {
                     type="button"
                     onClick={saveTheme}
                     disabled={saving || !hasValidColors}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {saving ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
                     {saving ? "Saving..." : "Save changes"}
