@@ -3,6 +3,7 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useState,
     type ReactNode,
@@ -16,6 +17,8 @@ import {
     type PaletteId,
     type ThemeConfig,
 } from "../theme/palettes";
+
+const THEME_CACHE_KEY = "ev_school_theme_v1";
 
 type ThemeContextValue = {
     theme: ThemeConfig;
@@ -48,6 +51,32 @@ function normalizeTheme(data: Partial<ThemeConfig> | undefined): ThemeConfig {
     };
 }
 
+function readCachedTheme(): ThemeConfig {
+    try {
+        const hasRestorableSession =
+            !!localStorage.getItem("accessToken") &&
+            !!localStorage.getItem("refreshToken") &&
+            !!localStorage.getItem("roles");
+
+        if (!hasRestorableSession) return DEFAULT_THEME;
+
+        const cached = localStorage.getItem(THEME_CACHE_KEY);
+        return cached
+            ? normalizeTheme(JSON.parse(cached) as Partial<ThemeConfig>)
+            : DEFAULT_THEME;
+    } catch {
+        return DEFAULT_THEME;
+    }
+}
+
+function cacheTheme(theme: ThemeConfig) {
+    try {
+        localStorage.setItem(THEME_CACHE_KEY, JSON.stringify(theme));
+    } catch (error) {
+        console.warn("Unable to cache school theme:", error);
+    }
+}
+
 function applyThemeVariables(theme: ThemeConfig) {
     const root = document.documentElement;
 
@@ -71,7 +100,8 @@ function applyThemeVariables(theme: ThemeConfig) {
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const { isAuthenticated, loading: authLoading, user } = useAuth();
 
-    const [theme, setThemeState] = useState<ThemeConfig>(DEFAULT_THEME);
+    // Reuse the last server-confirmed theme immediately on a browser refresh.
+    const [theme, setThemeState] = useState<ThemeConfig>(readCachedTheme);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState("");
 
@@ -96,17 +126,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         api.get<Partial<ThemeConfig>>("/theme")
             .then(({ data }) => {
                 if (!active) return;
-                setThemeState(normalizeTheme(data));
+                const savedTheme = normalizeTheme(data);
+                setThemeState(savedTheme);
+                cacheTheme(savedTheme);
             })
             .catch((error) => {
                 if (!active) return;
 
+                // Keep the cached theme visible if the API is temporarily unavailable.
                 console.error("Failed to load school theme:", error);
-                setThemeState(DEFAULT_THEME);
                 setLoadError(
                     error?.response?.data?.detail ||
                         error?.response?.data?.message ||
-                        "Saved school theme could not be loaded. The default palette is being used.",
+                        "Saved school theme could not be refreshed. The last saved appearance is being used.",
                 );
             })
             .finally(() => {
@@ -119,11 +151,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }, [authLoading, isAuthenticated, user?.accessToken]);
 
     const setTheme = useCallback((nextTheme: ThemeConfig) => {
-        setThemeState(normalizeTheme(nextTheme));
+        const normalizedTheme = normalizeTheme(nextTheme);
+        setThemeState(normalizedTheme);
+        cacheTheme(normalizedTheme);
         setLoadError("");
     }, []);
 
-    useEffect(() => {
+    // Apply before the browser paints the next frame after React updates.
+    useLayoutEffect(() => {
         applyThemeVariables(theme);
     }, [theme]);
 
