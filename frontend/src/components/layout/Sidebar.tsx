@@ -325,7 +325,7 @@ export default function Sidebar() {
                                                     transition
                                                     ${
                                                     isActive
-                                                        ? "bg-blue-600 text-white shadow"
+                                                        ? "bg-brand text-white shadow"
                                                         : "text-slate-300 hover:bg-slate-800"
                                                 }
         `
