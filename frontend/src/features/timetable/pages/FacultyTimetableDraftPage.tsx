@@ -185,7 +185,7 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
         } catch { toast.error("Could not submit this timetable."); }
     };
 
-    const field = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
+    const field = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand-soft";
     const errorText = (key: string) => fieldErrors[key] ? <span className="block text-xs font-normal text-rose-600">{fieldErrors[key]}</span> : null;
     return <div className="mx-auto max-w-5xl space-y-6">
         {view === "create" && <form noValidate onSubmit={saveDraft} className="grid grid-cols-1 gap-4 rounded-2xl border-0 bg-white p-6 shadow-sm sm:grid-cols-2 lg:grid-cols-3">
@@ -273,7 +273,7 @@ export default function FacultyTimetableDraftPage({ view, onViewChange }: { view
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400"><span className="text-2xl">＋</span></div>
                 <h3 className="mt-4 text-base font-semibold text-slate-800">No class drafts yet</h3>
                 <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">You haven’t created or scheduled any classes yet. Start by creating a class draft, then submit it to the administrator for approval.</p>
-                <button type="button" onClick={() => onViewChange("create")} className="mt-5 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">Schedule a Class</button>
+                <button type="button" onClick={() => onViewChange("create")} className="mt-5 rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover">Schedule a Class</button>
             </div> :
                 <div className="space-y-3">{items.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
                     <div><p className="font-semibold text-slate-900">{item.subjectName} · {item.dayOfWeek}</p><p className="text-sm text-slate-600">Grade {item.gradeName}, Section {item.sectionName} · {item.startTime}–{item.endTime}</p><p className="text-xs text-slate-500">Status: {item.status}</p>{item.notes && <p className="mt-1 max-w-xl whitespace-pre-wrap text-sm text-amber-700">Notes / feedback: {item.notes}</p>}</div>
