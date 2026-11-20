@@ -89,7 +89,7 @@ export default function AssignSubjectModal({
                 {/* ================================================= */}
                 <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
                     <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
                             <BookOpen className="h-4 w-4" />
                         </div>
 
@@ -168,7 +168,7 @@ export default function AssignSubjectModal({
                                         )
                                     }
                                     disabled={assigning}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand-soft disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     <option value="">
                                         Select a subject
@@ -217,7 +217,7 @@ export default function AssignSubjectModal({
                                 !selectedSubjectId ||
                                 availableSubjects.length === 0
                             }
-                            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {assigning && (
                                 <Loader2 className="h-4 w-4 animate-spin" />
