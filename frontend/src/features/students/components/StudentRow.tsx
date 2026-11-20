@@ -153,7 +153,7 @@ export default function StudentRow({
                             font-medium
                             ${
                             enrollment?.active
-                                ? "bg-brand-soft text-blue-700"
+                                ? "bg-brand-soft text-brand"
                                 : "bg-slate-100 text-slate-500"
                         }
                         `}
