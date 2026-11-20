@@ -6,18 +6,18 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export default function Button({
-                                   children,
-                                   loading = false,
-                                   loadingText = "Signing In...",
-                                   className = "",
-                                   disabled,
-                                   ...props
-                               }: Props) {
+    children,
+    loading = false,
+    loadingText = "Signing In...",
+    className = "",
+    disabled,
+    ...props
+}: Props) {
     return (
         <button
             {...props}
             disabled={disabled || loading}
-            className={`w-full h-14 rounded-xl bg-blue-700 text-lg text-white font-semibold transition hover:bg-blue-800 active:scale-[0.98] disabled:opacity-60 ${className}`}
+            className={`w-full h-14 rounded-xl bg-brand text-lg text-white font-semibold transition hover:bg-brand-hover active:scale-[0.98] disabled:opacity-60 ${className}`}
         >
             {loading ? loadingText : children}
         </button>
