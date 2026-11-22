@@ -62,12 +62,12 @@ export default function AccountImportButton({
         fixed bottom-8 right-8 z-50
         flex h-14 w-14 items-center justify-center
         rounded-full
-        bg-white text-blue-600
+        bg-white text-brand
         shadow-lg
         transition-all duration-300 ease-out
-        hover:scale-110 hover:bg-blue-50
+        hover:scale-110 hover:bg-brand-soft
         focus:outline-none
-        focus:ring-4 focus:ring-blue-200
+        focus:ring-4 focus:ring-brand/20
         ${
                 isVisible
                     ? "translate-y-0 scale-100 opacity-100"
