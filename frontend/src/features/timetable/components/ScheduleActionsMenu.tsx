@@ -190,7 +190,7 @@ export default function ScheduleActionsMenu({
                 }}
                 className={`inline-flex h-9 w-9 items-center justify-center rounded-lg border transition ${
     open
-        ? "border-indigo-200 bg-indigo-50 text-indigo-600"
+        ? "border-brand/30 bg-brand-soft text-brand"
         : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700"
 }`}
                 aria-label="Schedule actions"
@@ -221,7 +221,7 @@ export default function ScheduleActionsMenu({
                         >
                             <Eye
                                 size={16}
-                                className="text-indigo-600"
+                                className="text-brand"
                             />
 
                             <span>
