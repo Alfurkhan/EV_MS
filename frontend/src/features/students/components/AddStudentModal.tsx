@@ -728,7 +728,7 @@ export default function AddStudentModal({
                                             bg-white
                                             focus-within:border-brand
                                             focus-within:ring-2
-                                            focus-within:ring-blue-100
+                                            focus-within:ring-brand/20
                                         "
                                     >
 
