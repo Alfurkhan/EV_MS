@@ -157,7 +157,7 @@ export default function TimetableClassCard({
             {/* Class Type */}
             <div className="mb-2">
                 {isOnline ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand">
                         <Monitor size={11} />
                         Online
                     </span>
