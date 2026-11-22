@@ -150,9 +150,9 @@ export default function StatsGrid() {
                         value="1,248"
                         subtitle="+32 this month"
                         icon={Users}
-                        color="text-blue-600"
-                        bg="bg-blue-100"
-                        border="border-blue-600"
+                        color="text-brand"
+                        bg="bg-brand-soft"
+                        border="border-brand"
                     />
 
                     <StatsCard
@@ -207,9 +207,9 @@ export default function StatsGrid() {
                         }
                         subtitle="Scheduled today"
                         icon={School}
-                        color="text-blue-600"
-                        bg="bg-blue-100"
-                        border="border-blue-600"
+                        color="text-brand"
+                        bg="bg-brand-soft"
+                        border="border-brand"
                     />
 
                     <StatsCard
@@ -272,9 +272,9 @@ export default function StatsGrid() {
                         }
                         subtitle="Available for your grade"
                         icon={BookOpen}
-                        color="text-blue-600"
-                        bg="bg-blue-100"
-                        border="border-blue-600"
+                        color="text-brand"
+                        bg="bg-brand-soft"
+                        border="border-brand"
                     />
 
                     <StatsCard
