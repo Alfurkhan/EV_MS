@@ -88,7 +88,7 @@ export default function ScheduleDetailsModal({
                 <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
                     <div>
                         <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-soft text-brand">
                                 <CalendarDays size={20} />
                             </div>
 
@@ -116,10 +116,10 @@ export default function ScheduleDetailsModal({
                 {/* Content */}
                 <div className="max-h-[75vh] overflow-y-auto p-6">
                     {/* Schedule Summary */}
-                    <div className="mb-6 rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
+                    <div className="mb-6 rounded-2xl border border-brand/20 bg-brand-soft p-5">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-brand">
                                     Schedule
                                 </p>
 
@@ -158,7 +158,7 @@ export default function ScheduleDetailsModal({
 
                             <div className="flex flex-wrap items-center gap-2">
                                 {isOnline ? (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700">
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-xs font-semibold text-brand">
                                         <Monitor size={14} />
                                         Online
                                     </span>
@@ -188,7 +188,7 @@ export default function ScheduleDetailsModal({
                         <div className="mb-3 flex items-center gap-2">
                             <GraduationCap
                                 size={18}
-                                className="text-indigo-600"
+                                className="text-brand"
                             />
 
                             <h3 className="text-sm font-semibold text-slate-900">
@@ -248,7 +248,7 @@ export default function ScheduleDetailsModal({
                         <div className="mb-3 flex items-center gap-2">
                             <User
                                 size={18}
-                                className="text-indigo-600"
+                                className="text-brand"
                             />
 
                             <h3 className="text-sm font-semibold text-slate-900">
@@ -276,7 +276,7 @@ export default function ScheduleDetailsModal({
                         <div className="mb-3 flex items-center gap-2">
                             <Clock3
                                 size={18}
-                                className="text-indigo-600"
+                                className="text-brand"
                             />
 
                             <h3 className="text-sm font-semibold text-slate-900">
@@ -345,10 +345,10 @@ export default function ScheduleDetailsModal({
                                         <>
                                             <Monitor
                                                 size={15}
-                                                className="text-blue-500"
+                                                className="text-brand"
                                             />
 
-                                            <p className="font-semibold text-blue-700">
+                                            <p className="font-semibold text-brand">
                                                 Online
                                             </p>
                                         </>
@@ -382,7 +382,7 @@ export default function ScheduleDetailsModal({
                                             }
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                                            className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 hover:text-brand hover:underline"
                                         >
                                             Join Meeting
                                             <ExternalLink
@@ -426,7 +426,7 @@ export default function ScheduleDetailsModal({
                         <div className="mb-3 flex items-center gap-2">
                             <FileText
                                 size={18}
-                                className="text-indigo-600"
+                                className="text-brand"
                             />
 
                             <h3 className="text-sm font-semibold text-slate-900">
