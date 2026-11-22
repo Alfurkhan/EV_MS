@@ -109,7 +109,7 @@ export default function Settings() {
         <div className="flex h-full min-h-0 flex-col gap-6 overflow-hidden">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-600">
+                    <div className="mb-2 flex items-center gap-2 text-sm font-medium text-brand">
                         <Settings2 size={16} />
                         Administration
                     </div>
@@ -140,7 +140,7 @@ export default function Settings() {
                                     onClick={() => setActiveCategory(category.id)}
                                     className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
                                         active
-                                            ? "bg-blue-50 text-blue-700"
+                                            ? "bg-brand-soft text-brand"
                                             : "text-slate-600 hover:bg-slate-50"
                                     }`}
                                 >
@@ -148,7 +148,7 @@ export default function Settings() {
                                     <span className="min-w-0 flex-1">
                                         <span className="block text-sm font-semibold">{category.title}</span>
                                         <span className={`mt-0.5 block truncate text-xs ${
-                                            active ? "text-blue-600/80" : "text-slate-400"
+                                            active ? "text-brand/80" : "text-slate-400"
                                         }`}>
                                             {category.description}
                                         </span>
@@ -161,7 +161,7 @@ export default function Settings() {
 
                 <section className="settings-scrollbar min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
                     <div className="flex flex-col gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand-soft text-brand">
                             <SelectedIcon size={23} />
                         </div>
                         <div className="min-w-0 flex-1">
