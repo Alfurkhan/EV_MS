@@ -81,7 +81,7 @@ export default function StudentDetailsModal({
         : student.accountEnabled
             ? {
                 label: "Enabled",
-                className: "bg-blue-50 text-blue-700",
+                className: "bg-brand-soft text-brand",
             }
             : {
                 label: "Disabled",
@@ -206,10 +206,10 @@ export default function StudentDetailsModal({
                                 items-center
                                 justify-center
                                 rounded-full
-                                bg-blue-100
+                                bg-brand-soft
                                 text-lg
                                 font-semibold
-                                text-blue-600
+                                text-brand
                             "
                         >
                             {getInitials(student.fullName)}
@@ -582,7 +582,7 @@ export default function StudentDetailsModal({
                                                 font-medium
                                                 ${
                                                 enrollment.active
-                                                    ? "bg-blue-50 text-blue-700"
+                                                    ? "bg-brand-soft text-brand"
                                                     : "bg-slate-100 text-slate-500"
                                             }
                                             `}
@@ -604,18 +604,18 @@ export default function StudentDetailsModal({
                                         gap-3
                                         rounded-xl
                                         border
-                                        border-blue-100
-                                        bg-blue-50/60
+                                        border-brand/20
+                                        bg-brand-soft/60
                                         px-4
                                         py-3
                                     "
                                 >
                                     <GraduationCap
                                         size={18}
-                                        className="shrink-0 text-blue-500"
+                                        className="shrink-0 text-brand"
                                     />
 
-                                    <p className="text-sm text-blue-800">
+                                    <p className="text-sm text-brand">
                                         {enrollment.active
                                             ? `Currently enrolled in ${enrollment.gradeName} — ${enrollment.sectionName} for ${enrollment.academicYearName}.`
                                             : `Enrollment is inactive for ${enrollment.academicYearName}.`}
