@@ -98,7 +98,7 @@ export default function TimetableGrid({
     if (activeTimetables.length === 0) {
         return (
             <div className="flex min-h-[350px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-center shadow-sm">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-500">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-soft text-brand">
                     <CalendarDays size={28} />
                 </div>
 
