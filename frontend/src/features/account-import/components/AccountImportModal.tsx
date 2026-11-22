@@ -203,8 +203,8 @@ export default function AccountImportModal({
                 <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5 sm:px-8 sm:py-6">
                     {/* Upload area */}
                     {!importResult && (
-                        <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition hover:border-blue-400 hover:bg-blue-50/30">
-                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                        <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 py-8 text-center transition hover:border-brand hover:bg-brand-soft/30">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-brand-soft text-brand">
                                 <FileSpreadsheet size={28} />
                             </div>
 
@@ -229,7 +229,7 @@ export default function AccountImportModal({
                                 type="button"
                                 onClick={handleChooseFile}
                                 disabled={isImporting}
-                                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-700 px-6 py-3 font-semibold text-white transition hover:bg-blue-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="mt-5 inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-3 font-semibold text-white transition hover:bg-brand-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Upload size={18} />
                                 Choose Excel File
@@ -243,10 +243,10 @@ export default function AccountImportModal({
 
                     {/* Selected file */}
                     {selectedFile && !importResult && (
-                        <div className="mt-4 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                        <div className="mt-4 flex items-center gap-3 rounded-xl border border-brand/20 bg-brand-soft px-4 py-3">
                             <FileSpreadsheet
                                 size={22}
-                                className="shrink-0 text-blue-600"
+                                className="shrink-0 text-brand"
                             />
 
                             <div className="min-w-0">
@@ -263,19 +263,19 @@ export default function AccountImportModal({
 
                     {/* Validation preview */}
                     {validationResult && !importResult && (
-                        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 sm:p-5">
-                            <h3 className="text-lg font-semibold text-blue-900">
+                        <div className="mt-4 rounded-xl border border-brand/20 bg-brand-soft p-4 sm:p-5">
+                            <h3 className="text-lg font-semibold text-brand">
                                 Validation Successful
                             </h3>
 
-                            <p className="mt-1 text-sm text-blue-700">
+                            <p className="mt-1 text-sm text-brand">
                                 No accounts have been created yet. Review the
                                 counts below.
                             </p>
 
                             <div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
                                 <div className="rounded-lg bg-white p-3 text-center">
-                                    <p className="text-xl font-bold text-blue-700 sm:text-2xl">
+                                    <p className="text-xl font-bold text-brand sm:text-2xl">
                                         {validationResult.studentsToCreate}
                                     </p>
                                     <p className="text-xs text-slate-600">
@@ -310,14 +310,14 @@ export default function AccountImportModal({
 
                     {/* Loading status */}
                     {isImporting && (
-                        <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 text-center">
-                            <p className="text-sm font-medium text-blue-700">
+                        <div className="mt-4 rounded-xl border border-brand/20 bg-brand-soft px-4 py-4 text-center">
+                            <p className="text-sm font-medium text-brand">
                                 {errorStage === "import" && validationResult
                                     ? "Importing accounts..."
                                     : "Validating Excel file..."}
                             </p>
 
-                            <p className="mt-1 text-xs text-blue-500">
+                            <p className="mt-1 text-xs text-brand">
                                 Please wait. Do not close this window.
                             </p>
                         </div>
@@ -378,7 +378,7 @@ export default function AccountImportModal({
 
                             <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
                                 <div className="rounded-xl bg-white p-3 text-center shadow-sm sm:p-4">
-                                    <p className="text-xl font-bold text-blue-700 sm:text-2xl">
+                                    <p className="text-xl font-bold text-brand sm:text-2xl">
                                         {importResult.studentsCreated}
                                     </p>
                                     <p className="mt-1 text-xs font-medium text-slate-500">
@@ -442,7 +442,7 @@ export default function AccountImportModal({
                             type="button"
                             onClick={handleValidateAndPreview}
                             disabled={!selectedFile || isImporting}
-                            className="rounded-xl bg-blue-700 px-4 py-3 font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40 sm:px-5"
+                            className="rounded-xl bg-brand px-4 py-3 font-semibold text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40 sm:px-5"
                         >
                             {isImporting
                                 ? "Validating..."
