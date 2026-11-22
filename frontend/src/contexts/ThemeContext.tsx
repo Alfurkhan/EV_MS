@@ -103,6 +103,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     // Reuse the last server-confirmed theme immediately on a browser refresh.
     const [theme, setThemeState] = useState<ThemeConfig>(readCachedTheme);
     const [loading, setLoading] = useState(true);
+    const [resolvedAccessToken, setResolvedAccessToken] = useState<string | null>(null);
     const [loadError, setLoadError] = useState("");
 
     useEffect(() => {
@@ -114,6 +115,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             setThemeState(DEFAULT_THEME);
             setLoadError("");
             setLoading(false);
+            setResolvedAccessToken(null);
 
             return () => {
                 active = false;
@@ -142,7 +144,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
                 );
             })
             .finally(() => {
-                if (active) setLoading(false);
+                if (active) {
+                    setLoading(false);
+                    setResolvedAccessToken(user?.accessToken ?? null);
+                }
             });
 
         return () => {
@@ -169,7 +174,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     return (
         <ThemeContext.Provider value={value}>
-            {authLoading || (isAuthenticated && loading) ? (
+            {authLoading || (isAuthenticated && (loading || resolvedAccessToken !== user?.accessToken)) ? (
                 <div className="min-h-screen bg-slate-50" aria-busy="true" />
             ) : (
                 children
