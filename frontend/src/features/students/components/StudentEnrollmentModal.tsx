@@ -629,8 +629,8 @@ export default function StudentEnrollmentModal({
                                         animate-spin
                                         rounded-full
                                         border-2
-                                        border-blue-100
-                                        border-t-blue-600
+                                        border-brand/20
+                                        border-t-brand
                                     "
                                 />
 
@@ -683,10 +683,10 @@ export default function StudentEnrollmentModal({
                                                 items-center
                                                 justify-center
                                                 rounded-full
-                                                bg-blue-100
+                                                bg-brand-soft
                                                 text-sm
                                                 font-semibold
-                                                text-blue-600
+                                                text-brand
                                             "
                                         >
                                             {student.fullName
@@ -736,8 +736,8 @@ export default function StudentEnrollmentModal({
                                             gap-3
                                             rounded-xl
                                             border
-                                            border-blue-100
-                                            bg-blue-50/60
+                                            border-brand/20
+                                            bg-brand-soft/60
                                             px-4
                                             py-3
                                         "
@@ -747,16 +747,16 @@ export default function StudentEnrollmentModal({
                                             className="
                                                 mt-0.5
                                                 shrink-0
-                                                text-blue-500
+                                                text-brand
                                             "
                                         />
 
                                         <div>
-                                            <p className="text-xs font-semibold text-blue-800">
+                                            <p className="text-xs font-semibold text-brand">
                                                 Current Enrollment
                                             </p>
 
-                                            <p className="mt-1 text-sm text-blue-700">
+                                            <p className="mt-1 text-sm text-brand">
                                                 {student.enrollment
                                                         ?.academicYearName ??
                                                     activeAcademicYear?.name ??
@@ -824,9 +824,9 @@ export default function StudentEnrollmentModal({
                                             text-slate-700
                                             outline-none
                                             transition
-                                            focus:border-blue-500
+                                            focus:border-brand
                                             focus:ring-2
-                                            focus:ring-blue-100
+                                            focus:ring-brand/20
                                             disabled:cursor-not-allowed
                                             disabled:bg-slate-50
                                         "
@@ -915,9 +915,9 @@ export default function StudentEnrollmentModal({
                                             text-slate-700
                                             outline-none
                                             transition
-                                            focus:border-blue-500
+                                            focus:border-brand
                                             focus:ring-2
-                                            focus:ring-blue-100
+                                            focus:ring-brand/20
                                             disabled:cursor-not-allowed
                                             disabled:bg-slate-50
                                         "
@@ -1001,9 +1001,9 @@ export default function StudentEnrollmentModal({
                                             text-slate-700
                                             outline-none
                                             transition
-                                            focus:border-blue-500
+                                            focus:border-brand
                                             focus:ring-2
-                                            focus:ring-blue-100
+                                            focus:ring-brand/20
                                             disabled:cursor-not-allowed
                                             disabled:bg-slate-50
                                         "
@@ -1164,7 +1164,7 @@ export default function StudentEnrollmentModal({
                                 items-center
                                 gap-2
                                 rounded-xl
-                                bg-blue-600
+                                bg-brand
                                 px-5
                                 py-2.5
                                 text-sm
@@ -1172,7 +1172,7 @@ export default function StudentEnrollmentModal({
                                 text-white
                                 shadow-sm
                                 transition
-                                hover:bg-blue-700
+                                hover:bg-brand-hover
                                 disabled:cursor-not-allowed
                                 disabled:opacity-60
                             "
