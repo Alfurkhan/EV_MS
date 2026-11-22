@@ -171,10 +171,10 @@ export default function FacultyDetailsModal({
                                 items-center
                                 justify-center
                                 rounded-full
-                                bg-blue-50
+                                bg-brand-soft
                                 text-lg
                                 font-semibold
-                                text-blue-600
+                                text-brand
                             "
                         >
                             {getInitials(faculty.fullName)}
@@ -235,8 +235,8 @@ export default function FacultyDetailsModal({
                                             items-center
                                             justify-center
                                             rounded-lg
-                                            bg-blue-50
-                                            text-blue-600
+                                            bg-brand-soft
+                                            text-brand
                                         "
                                     >
                                         <Mail size={17} />
@@ -272,8 +272,8 @@ export default function FacultyDetailsModal({
                                             items-center
                                             justify-center
                                             rounded-lg
-                                            bg-blue-50
-                                            text-blue-600
+                                            bg-brand-soft
+                                            text-brand
                                         "
                                     >
                                         <Phone size={17} />
@@ -463,12 +463,12 @@ export default function FacultyDetailsModal({
                             <span
                                 className="
                                     rounded-full
-                                    bg-blue-50
+                                    bg-brand-soft
                                     px-3
                                     py-1
                                     text-xs
                                     font-medium
-                                    text-blue-700
+                                    text-brand
                                 "
                             >
                                 ROLE_FACULTY
@@ -495,14 +495,14 @@ export default function FacultyDetailsModal({
                         onClick={onClose}
                         className="
                             rounded-xl
-                            bg-blue-600
+                            bg-brand
                             px-5
                             py-2.5
                             text-sm
                             font-medium
                             text-white
                             transition
-                            hover:bg-blue-700
+                            hover:bg-brand-hover
                         "
                     >
                         Close
