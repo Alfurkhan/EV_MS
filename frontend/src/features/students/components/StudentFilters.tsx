@@ -61,9 +61,9 @@ export default function StudentFilters({
                             text-slate-700
                             outline-none
                             transition
-                            focus:border-blue-400
+                            focus:border-brand
                             focus:ring-2
-                            focus:ring-blue-100
+                            focus:ring-brand/20
                         "
                     >
                         <option value="">All Grades</option>
@@ -102,9 +102,9 @@ export default function StudentFilters({
                             text-slate-700
                             outline-none
                             transition
-                            focus:border-blue-400
+                            focus:border-brand
                             focus:ring-2
-                            focus:ring-blue-100
+                            focus:ring-brand/20
                         "
                     >
                         <option value="">All Sections</option>
@@ -143,9 +143,9 @@ export default function StudentFilters({
                             text-slate-700
                             outline-none
                             transition
-                            focus:border-blue-400
+                            focus:border-brand
                             focus:ring-2
-                            focus:ring-blue-100
+                            focus:ring-brand/20
                         "
                     >
                         <option value="">All Enrollment Status</option>
@@ -180,9 +180,9 @@ export default function StudentFilters({
                             text-slate-700
                             outline-none
                             transition
-                            focus:border-blue-400
+                            focus:border-brand
                             focus:ring-2
-                            focus:ring-blue-100
+                            focus:ring-brand/20
                         "
                     >
                         <option value="">All Account Status</option>
