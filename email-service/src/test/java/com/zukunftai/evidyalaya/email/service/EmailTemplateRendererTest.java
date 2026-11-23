@@ -190,6 +190,7 @@ class EmailTemplateRendererTest {
         request.setTemplateData(Map.ofEntries(
                 Map.entry("title", "Holiday Notice"),
                 Map.entry("message", "School will remain closed tomorrow."),
+                Map.entry("targetUrl", "https://school.example/announcements"),
                 Map.entry("schoolName", "Green Valley School"),
                 Map.entry("schoolTagline", "Learning for life"),
                 Map.entry("schoolLogoUrl", "/public/school-branding/logo/123e4567-e89b-12d3-a456-426614174000.png"),
