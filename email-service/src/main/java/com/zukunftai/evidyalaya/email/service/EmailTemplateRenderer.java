@@ -203,7 +203,7 @@ public class EmailTemplateRenderer {
     }
 
     private SchoolBranding schoolBranding(String brandingType, Map<String, Object> data) {
-        if (!"SCHOOL".equalsIgnoreCase(safe(brandingType).trim()) || data == null) {
+        if (brandingType != com.zukunftai.evidyalaya.email.model.EmailBrandingType.SCHOOL || data == null) {
             return SchoolBranding.disabled();
         }
         String name = value(data, "schoolName", null).trim();
