@@ -86,6 +86,7 @@ public class EmailNotificationDispatcher {
             request.put("to", outbox.getRecipientEmail());
             request.put("emailType", outbox.getTemplateType());
             request.put("brandingType", outbox.getPayload().getOrDefault("brandingType", "PLATFORM"));
+            request.put("brandingType", outbox.getPayload().getOrDefault("brandingType", "PLATFORM"));
             request.put("userName", outbox.getPayload().getOrDefault("userName", "eVidyalaya user"));
             List<EmailNotificationAttachmentSnapshot> attachments = resolveAttachments(outbox);
             Map<String, Object> templateData = new LinkedHashMap<>(outbox.getPayload());
@@ -103,6 +104,8 @@ public class EmailNotificationDispatcher {
                 templateData.put("schoolPhone", settings.getOrDefault("school.phone", ""));
                 templateData.put("schoolEmail", settings.getOrDefault("school.email", ""));
                 templateData.put("schoolWebsite", settings.getOrDefault("school.website", ""));
+                templateData.put("schoolPrimaryColor", settings.getOrDefault("theme.primaryColor", "#2563EB"));
+                templateData.put("schoolAccentColor", settings.getOrDefault("theme.accentColor", "#0D9488"));
                 templateData.put("schoolPrimaryColor", settings.getOrDefault("theme.primaryColor", "#2563EB"));
                 templateData.put("schoolAccentColor", settings.getOrDefault("theme.accentColor", "#0D9488"));
             }
