@@ -207,7 +207,15 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("Green Valley School"));
         assertTrue(rendered.html().contains("background-color:#7C3AED"));
         assertTrue(rendered.html().contains("color:#7C3AED"));
+        assertTrue(rendered.html().contains("background-color:#7C3AED;border-radius:8px"));
         assertTrue(rendered.html().contains("border-left:3px solid #D97706"));
+        assertTrue(rendered.html().contains("background-color:#FBF1E6;color:#AE5F05"));
+        assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
+        assertTrue(rendered.html().contains("href=\\\"mailto:office@greenvalley.example\\\" style=\\\"color:#7C3AED;text-decoration:none;\\\""));
+        assertTrue(rendered.html().contains("href=\\\"https://greenvalley.example\\\" style=\\\"color:#7C3AED;text-decoration:none;\\\""));
+        assertFalse(rendered.html().contains("#315784"));
+        assertFalse(rendered.html().contains("#edf3fb"));
+        assertFalse(rendered.html().contains("#e3eaf4"));
         assertTrue(rendered.html().contains("Learning for life"));
         assertTrue(rendered.html().contains("Powered by eVidyalaya"));
         assertEquals(1, rendered.html().split("Powered by eVidyalaya", -1).length - 1);
