@@ -230,6 +230,31 @@ class EmailTemplateRendererTest {
     }
 
     @Test
+    void appliesTealPrimaryAndAmberAccentConsistentlyAcrossSchoolEmailElements() {
+        EmailRequest request = new EmailRequest(
+                "New announcement", null, "student@example.com", "ANNOUNCEMENT", "A Student", null);
+        request.setBrandingType(EmailBrandingType.SCHOOL);
+        request.setTemplateData(Map.of(
+                "title", "School update",
+                "message", "Please read the update.",
+                "schoolName", "Sri Nagarjuna High School",
+                "schoolPrimaryColor", "#0D9488",
+                "schoolAccentColor", "#D97706",
+                "schoolEmail", "office@school.example"
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains("background-color:#0D9488;color:#ffffff"));
+        assertTrue(rendered.html().contains("color:#0D9488;font-weight:700"));
+        assertTrue(rendered.html().contains("border-left:3px solid #D97706"));
+        assertTrue(rendered.html().contains("background-color:#FBF1E6;color:#AE5F05"));
+        assertTrue(rendered.html().contains("color:#0D9488;text-decoration:none;"));
+        assertFalse(rendered.html().contains("#315784"));
+        assertFalse(rendered.html().contains("#245da8"));
+    }
+
+    @Test
     void formatsIsoDueDatesForSchoolNotifications() {
         EmailRequest request = new EmailRequest(
                 "New assignment", null, "student@example.com", "ASSIGNMENT", "A Student", null);
