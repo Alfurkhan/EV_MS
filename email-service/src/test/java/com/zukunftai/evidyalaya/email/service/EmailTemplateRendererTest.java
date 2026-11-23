@@ -17,7 +17,7 @@ class EmailTemplateRendererTest {
     void rendersBrandedAnnouncementWithEscapedContentAndSafeActionLink() {
         EmailRequest request = new EmailRequest(
                 "New announcement", null, "student@example.com", "ANNOUNCEMENT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Tomorrow's <exam>",
                 "message", "Please check the updated schedule.",
@@ -37,7 +37,7 @@ class EmailTemplateRendererTest {
         EmailRequest request = new EmailRequest(
                 "Email Attachment Testing", null, "student@example.com",
                 "ANNOUNCEMENT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Email Attachment Testing",
                 "message", "Published by Admin for Grade 10 (2026-2027). Please review the attached documents carefully.",
@@ -72,7 +72,7 @@ class EmailTemplateRendererTest {
         String longFileName = "very-long-school-document-name-".repeat(8) + ".pdf";
         EmailRequest request = new EmailRequest(
                 longTitle, null, "student@example.com", "ANNOUNCEMENT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", longTitle,
                 "message", longMessage,
@@ -94,7 +94,7 @@ class EmailTemplateRendererTest {
     void doesNotRenderUnsafeActionUrl() {
         EmailRequest request = new EmailRequest(
                 "Notice", "Read this", "student@example.com", "ANNOUNCEMENT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Notice",
                 "message", "Read this",
@@ -112,7 +112,7 @@ class EmailTemplateRendererTest {
         EmailRequest request = new EmailRequest(
                 "Assessment results published", "Your assessment results are now available.",
                 "student@example.com", "RESULT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Assessment results published",
                 "message", "Your assessment results are now available.",
@@ -140,7 +140,7 @@ class EmailTemplateRendererTest {
         EmailRequest request = new EmailRequest(
                 "Assessment results published", "Your result is available.",
                 "student@example.com", "RESULT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Assessment results published",
                 "message", "Your result is available.",
@@ -186,7 +186,7 @@ class EmailTemplateRendererTest {
     void rendersSchoolIdentityLogoAndContactDetailsForSchoolNotifications() {
         EmailRequest request = new EmailRequest(
                 "New announcement", null, "student@example.com", "ANNOUNCEMENT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Holiday Notice",
                 "message", "School will remain closed tomorrow.",
@@ -226,7 +226,7 @@ class EmailTemplateRendererTest {
     void formatsIsoDueDatesForSchoolNotifications() {
         EmailRequest request = new EmailRequest(
                 "New assignment", null, "student@example.com", "ASSIGNMENT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "New assignment: Assignment Test",
                 "message", "A new Probability & Statistics assignment was published by Faculty Name for Grade 10 - A. Due: 2026-11-30T23:59."
@@ -244,7 +244,7 @@ class EmailTemplateRendererTest {
     void escapesSchoolBrandingValuesBeforeRenderingHtml() {
         EmailRequest request = new EmailRequest(
                 "Result", null, "student@example.com", "RESULT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Term result",
                 "message", "Your result is ready.",
@@ -265,7 +265,7 @@ class EmailTemplateRendererTest {
     void rejectsUnsafeLogoAndWebsiteUrls() {
         EmailRequest request = new EmailRequest(
                 "Assignment", null, "student@example.com", "ASSIGNMENT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of(
                 "title", "Assignment",
                 "message", "New assignment available.",
@@ -309,7 +309,7 @@ class EmailTemplateRendererTest {
         EmailRequest request = new EmailRequest(
                 "Assessment results", "Your result is available.",
                 "student@example.com", "RESULT", "A Student", null);
-        request.setBrandingType("SCHOOL");
+        request.setBrandingType(EmailBrandingType.SCHOOL);
         request.setTemplateData(Map.of("title", "Assessment results", "message", "Your result is available."));
 
         EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
