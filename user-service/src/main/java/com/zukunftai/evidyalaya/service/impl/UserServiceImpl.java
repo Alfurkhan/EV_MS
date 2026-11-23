@@ -248,7 +248,6 @@ public class UserServiceImpl implements UserService {
 
         emailServiceRequest.setEmailType(emailType);
         emailServiceRequest.setBrandingType("PLATFORM");
-        emailServiceRequest.setBrandingType("PLATFORM");
         emailServiceRequest.setOtp(otp);
 
         HttpEntity<EmailServiceRequest> entity =
@@ -286,7 +285,6 @@ public class UserServiceImpl implements UserService {
         emailServiceRequest.setTo(email);
         emailServiceRequest.setSubject("Email Verification OTP");
         emailServiceRequest.setEmailType(EmailType.VERIFY);
-        emailServiceRequest.setBrandingType("PLATFORM");
         emailServiceRequest.setBrandingType("PLATFORM");
         emailServiceRequest.setOtp(otp);
 
@@ -336,7 +334,6 @@ public class UserServiceImpl implements UserService {
         emailServiceRequest.setEmailType(
                 EmailType.FORGOT_PASSWORD
         );
-        emailServiceRequest.setBrandingType("PLATFORM");
         emailServiceRequest.setBrandingType("PLATFORM");
 
         emailServiceRequest.setOtp(otp);
