@@ -196,9 +196,11 @@ public class EmailTemplateRenderer {
         String renderedHtml = html.toString();
         if (branding.enabled()) {
             renderedHtml = renderedHtml.replace("#173b70", branding.primaryColor())
-                    .replace("#245da8", branding.primaryColor())
+                    .replace("#245da8", branding.primaryActionColor())
                     .replace("#2b63a8", branding.accentColor())
-                    .replace("#315784", branding.accentColor());
+                    .replace("#315784", branding.accentTextColor())
+                    .replace("#edf3fb", branding.accentSoftColor())
+                    .replace("#e3eaf4", branding.accentBorderColor());
         }
         return renderedHtml;
     }
@@ -215,7 +217,52 @@ public class EmailTemplateRenderer {
                 safeLogoUrl(value(data, "schoolLogoUrl", null)),
                 value(data, "schoolAddress", null).trim(), value(data, "schoolPhone", null).trim(),
                 value(data, "schoolEmail", null).trim(),
-                safeContactUrl(value(data, "schoolWebsite", null)), primaryColor, accentColor);
+                safeContactUrl(value(data, "schoolWebsite", null)), primaryColor, accentColor,
+                contrastSafeColor(primaryColor), contrastSafeColor(accentColor),
+                mixWithWhite(accentColor, 0.90), mixWithWhite(accentColor, 0.72));
+    }
+
+    private String contrastSafeColor(String color) {
+        int red = Integer.parseInt(color.substring(1, 3), 16);
+        int green = Integer.parseInt(color.substring(3, 5), 16);
+        int blue = Integer.parseInt(color.substring(5, 7), 16);
+        for (double amount = 0.0; amount <= 0.80; amount += 0.05) {
+            int r = (int) Math.round(red * (1.0 - amount));
+            int g = (int) Math.round(green * (1.0 - amount));
+            int b = (int) Math.round(blue * (1.0 - amount));
+            String candidate = String.format(Locale.ROOT, "#%02X%02X%02X", r, g, b);
+            if (contrastRatio(candidate, "#FFFFFF") >= 4.5) return candidate;
+        }
+        return "#1F2937";
+    }
+
+    private double contrastRatio(String first, String second) {
+        double firstLuminance = relativeLuminance(first);
+        double secondLuminance = relativeLuminance(second);
+        double lighter = Math.max(firstLuminance, secondLuminance);
+        double darker = Math.min(firstLuminance, secondLuminance);
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    private double relativeLuminance(String color) {
+        double red = Integer.parseInt(color.substring(1, 3), 16) / 255.0;
+        double green = Integer.parseInt(color.substring(3, 5), 16) / 255.0;
+        double blue = Integer.parseInt(color.substring(5, 7), 16) / 255.0;
+        return 0.2126 * linearize(red) + 0.7152 * linearize(green) + 0.0722 * linearize(blue);
+    }
+
+    private double linearize(double channel) {
+        return channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+    }
+
+    private String mixWithWhite(String color, double whiteAmount) {
+        int red = Integer.parseInt(color.substring(1, 3), 16);
+        int green = Integer.parseInt(color.substring(3, 5), 16);
+        int blue = Integer.parseInt(color.substring(5, 7), 16);
+        int r = (int) Math.round(red * (1.0 - whiteAmount) + 255 * whiteAmount);
+        int g = (int) Math.round(green * (1.0 - whiteAmount) + 255 * whiteAmount);
+        int b = (int) Math.round(blue * (1.0 - whiteAmount) + 255 * whiteAmount);
+        return String.format(Locale.ROOT, "#%02X%02X%02X", r, g, b);
     }
 
     private String validHexColor(String raw, String fallback) {
@@ -269,7 +316,7 @@ public class EmailTemplateRenderer {
         if (branding.enabled()) {
             if (hasText(branding.address())) html.append("<br>").append(escape(branding.address()));
             if (hasText(branding.phone())) html.append("<br>").append(escape(branding.phone()));
-            if (hasText(branding.email())) html.append("<br><a href=\"mailto:").append(escape(branding.email())).append("\" style=\"color:#315784;text-decoration:none;\">").append(escape(branding.email())).append("</a>");
+            if (hasText(branding.email())) html.append("<br><a href=\"mailto:").append(escape(branding.email())).append("\" style=\"color:#173b70;text-decoration:none;\">").append(escape(branding.email())).append("</a>");
             if (hasText(branding.website())) html.append("<br><a href=\"").append(escape(branding.website())).append("\" style=\"color:#315784;text-decoration:none;\">").append(escape(branding.website())).append("</a>");
         }
         html.append("</td></tr></table>");
@@ -414,9 +461,11 @@ public class EmailTemplateRenderer {
 
     private record SchoolBranding(boolean enabled, String name, String tagline, String logoUrl,
             String address, String phone, String email, String website,
-            String primaryColor, String accentColor) {
+            String primaryColor, String accentColor, String primaryActionColor,
+            String accentTextColor, String accentSoftColor, String accentBorderColor) {
         private static SchoolBranding disabled() {
-            return new SchoolBranding(false, "", "", null, "", "", "", null, "#173B70", "#2B63A8");
+            return new SchoolBranding(false, "", "", null, "", "", "", null,
+                    "#173B70", "#2B63A8", "#245DA8", "#315784", "#EDF3FB", "#E3EAF4");
         }
     }
     private record AnnouncementContent(String message, String publicationDetails) {}
