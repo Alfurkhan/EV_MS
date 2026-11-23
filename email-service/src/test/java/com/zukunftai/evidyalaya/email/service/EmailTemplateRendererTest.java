@@ -187,18 +187,18 @@ class EmailTemplateRendererTest {
         EmailRequest request = new EmailRequest(
                 "New announcement", null, "student@example.com", "ANNOUNCEMENT", "A Student", null);
         request.setBrandingType(EmailBrandingType.SCHOOL);
-        request.setTemplateData(Map.of(
-                "title", "Holiday Notice",
-                "message", "School will remain closed tomorrow.",
-                "schoolName", "Green Valley School",
-                "schoolTagline", "Learning for life",
-                "schoolLogoUrl", "/public/school-branding/logo/123e4567-e89b-12d3-a456-426614174000.png",
-                "schoolAddress", "12 Lake Road",
-                "schoolPhone", "+91 9876543210",
-                "schoolEmail", "office@greenvalley.example",
-                "schoolWebsite", "https://greenvalley.example",
-                "schoolPrimaryColor", "#7C3AED",
-                "schoolAccentColor", "#D97706"
+        request.setTemplateData(Map.ofEntries(
+                Map.entry("title", "Holiday Notice"),
+                Map.entry("message", "School will remain closed tomorrow."),
+                Map.entry("schoolName", "Green Valley School"),
+                Map.entry("schoolTagline", "Learning for life"),
+                Map.entry("schoolLogoUrl", "/public/school-branding/logo/123e4567-e89b-12d3-a456-426614174000.png"),
+                Map.entry("schoolAddress", "12 Lake Road"),
+                Map.entry("schoolPhone", "+91 9876543210"),
+                Map.entry("schoolEmail", "office@greenvalley.example"),
+                Map.entry("schoolWebsite", "https://greenvalley.example"),
+                Map.entry("schoolPrimaryColor", "#7C3AED"),
+                Map.entry("schoolAccentColor", "#D97706")
         ));
         ReflectionTestUtils.setField(renderer, "appBaseUrl", "https://school.example");
 
