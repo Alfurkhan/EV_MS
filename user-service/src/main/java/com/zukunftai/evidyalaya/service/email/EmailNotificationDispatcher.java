@@ -105,8 +105,6 @@ public class EmailNotificationDispatcher {
                 templateData.put("schoolWebsite", settings.getOrDefault("school.website", ""));
                 templateData.put("schoolPrimaryColor", settings.getOrDefault("theme.primaryColor", "#2563EB"));
                 templateData.put("schoolAccentColor", settings.getOrDefault("theme.accentColor", "#0D9488"));
-                templateData.put("schoolPrimaryColor", settings.getOrDefault("theme.primaryColor", "#2563EB"));
-                templateData.put("schoolAccentColor", settings.getOrDefault("theme.accentColor", "#0D9488"));
             }
             request.put("templateData", templateData);
             HttpHeaders headers = new HttpHeaders();
