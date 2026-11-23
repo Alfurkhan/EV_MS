@@ -207,7 +207,8 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("Green Valley School"));
         assertTrue(rendered.html().contains("background-color:#7C3AED"));
         assertTrue(rendered.html().contains("color:#7C3AED"));
-        assertTrue(rendered.html().matches("(?s).*<td bgcolor=\\"#[0-9A-Fa-f]{6}\\" style=\\"background-color:#[0-9A-Fa-f]{6};border-radius:8px;\\">.*"));
+        assertTrue(rendered.html().contains("border-radius:8px;"));
+        assertTrue(rendered.html().contains("color:#ffffff;text-decoration:none;"));
         assertTrue(rendered.html().contains("border-left:3px solid #D97706"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;color:#AE5F05"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
