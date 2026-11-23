@@ -13,6 +13,8 @@ public class EmailRequest {
     private String bodyText;
     private String to;
     private String emailType;
+    /** Explicit sender identity; absent or unknown values are treated as PLATFORM. */
+    private String brandingType = "PLATFORM";
     private String userName;
     private String otp;
     private Map<String, Object> templateData;
