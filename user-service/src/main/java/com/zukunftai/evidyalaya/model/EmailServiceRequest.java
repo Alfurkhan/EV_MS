@@ -19,7 +19,6 @@ public class EmailServiceRequest {
     private EmailType emailType;
     @lombok.Builder.Default
     private EmailBrandingType brandingType = EmailBrandingType.PLATFORM;
-    private String brandingType = "PLATFORM";
     private String userName;
     private String otp;
 }
