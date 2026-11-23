@@ -105,7 +105,7 @@ export default function AnnouncementAttachments({
     >
       <input ref={inputRef} type="file" multiple accept={ACCEPTED_EXTENSIONS.join(",")} className="hidden" onChange={event=>event.target.files&&addFiles(event.target.files)}/>
       <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-white text-brand shadow-sm"><UploadCloud size={21}/></span>
-      <p className="mt-2 text-sm font-semibold text-slate-800">Drop files here, or <button type="button" disabled={remaining===0} onClick={()=>inputRef.current?.click()} className="text-brand underline underline-offset-2 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-40">browse files</button></p>
+      <p className="mt-2 text-sm font-semibold text-slate-800">Drop files here, or <button type="button" disabled={remaining===0} onClick={()=>inputRef.current?.click()} className="text-brand underline underline-offset-2 hover:text-brand-hover disabled:cursor-not-allowed disabled:opacity-40">browse files</button></p>
       <p className="mt-1 text-xs text-slate-500">{ACCEPTED_LABEL} · 25 MB maximum per file · {remaining} {remaining===1?"slot":"slots"} remaining</p>
       <p className="mt-1 text-[11px] text-slate-400">Files are uploaded securely when you save the announcement.</p>
     </div>}
