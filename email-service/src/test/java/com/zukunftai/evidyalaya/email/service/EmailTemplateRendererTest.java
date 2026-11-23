@@ -1,6 +1,7 @@
 package com.zukunftai.evidyalaya.email.service;
 
 import com.zukunftai.evidyalaya.email.model.EmailRequest;
+import com.zukunftai.evidyalaya.email.model.EmailBrandingType;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
