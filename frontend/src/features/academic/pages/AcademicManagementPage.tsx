@@ -785,7 +785,7 @@ export default function AcademicManagementPage() {
                                 rounded-full
                                 border-2
                                 border-slate-200
-                                border-t-blue-600
+                                border-t-brand
                             "
                                 />
 
@@ -985,7 +985,7 @@ export default function AcademicManagementPage() {
                                 rounded-full
                                 border-2
                                 border-slate-200
-                                border-t-blue-600
+                                border-t-brand
                             "
                                     />
 
@@ -1285,7 +1285,7 @@ export default function AcademicManagementPage() {
                                                                     rounded-full
                                                                     border-2
                                                                     border-slate-200
-                                                                    border-t-blue-600
+                                                                    border-t-brand
                                                                 "
                                                             />
 
@@ -1432,7 +1432,7 @@ export default function AcademicManagementPage() {
                                 rounded-full
                                 border-2
                                 border-slate-200
-                                border-t-blue-600
+                                border-t-brand
                             "
                                 />
 
