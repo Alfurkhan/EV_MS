@@ -150,10 +150,11 @@ public class EmailTemplateRenderer {
                 <tr><td class="email-content" style="padding:28px 32px 30px;">
                 """);
         if (hasText(type)) {
-            html.append("<p style=\"margin:0 0 18px;\"><span style=\"display:inline-block;padding:6px 10px;background-color:")
+            html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:0 0 18px;\"><tr><td bgcolor=\"")
+                    .append(branding.accentSoftColor()).append("\" style=\"padding:6px 10px;background-color:")
                     .append(branding.accentSoftColor()).append(";color:").append(branding.accentTextColor())
                     .append(";font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
-                    .append(escape(type.replace('_', ' '))).append("</span></p>");
+                    .append(escape(type.replace('_', ' '))).append("</td></tr></table>");
         }
         html.append("<p style=\"margin:0 0 16px;font-size:15px;line-height:23px;color:#243047;\">Hello ")
                 .append(escape(name)).append(",</p>");
@@ -163,8 +164,11 @@ public class EmailTemplateRenderer {
         html.append("<p style=\"margin:0 0 10px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:.7px;color:#64748b;\">")
                 .append("ANNOUNCEMENT".equals(type) ? "MESSAGE" : "DETAILS")
                 .append("</p>");
-        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border:1px solid #e8edf4;border-left:3px solid ")
-                .append(branding.accentColor()).append(";border-radius:10px;font-size:15px;line-height:25px;color:#34445b;word-break:break-word;overflow-wrap:anywhere;\">")
+        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr>")
+                .append("<td width=\"3\" bgcolor=\"").append(branding.accentColor())
+                .append("\" style=\"width:3px;background-color:").append(branding.accentColor())
+                .append(";border-radius:10px 0 0 10px;\"></td>")
+                .append("<td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border:1px solid #e8edf4;border-left:0;border-radius:0 10px 10px 0;font-size:15px;line-height:25px;color:#34445b;word-break:break-word;overflow-wrap:anywhere;\">")
                 .append(paragraphs(content)).append("</td></tr></table>");
 
         if (hasText(publicationDetails)) {
