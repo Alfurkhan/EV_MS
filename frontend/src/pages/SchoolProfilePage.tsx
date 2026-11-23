@@ -105,7 +105,7 @@ export default function SchoolProfilePage() {
             </div>
 
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="h-2 bg-gradient-to-r from-brand via-brand to-sky-400" />
+                <div className="h-2 bg-gradient-to-r from-brand via-brand to-accent" />
                 <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-9">
                     <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3">
                         {resolvedLogo ? (
