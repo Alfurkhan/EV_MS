@@ -51,7 +51,7 @@ function Field({
     icon?: LucideIcon;
     multiline?: boolean;
 }) {
-    const controlClass = "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-50";
+    const controlClass = "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-brand-soft";
     return (
         <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
@@ -211,7 +211,7 @@ export default function SchoolProfileSettings() {
     if (loading) {
         return (
             <div className="flex min-h-72 items-center justify-center">
-                <Loader2 className="animate-spin text-blue-600" size={25} />
+                <Loader2 className="animate-spin text-brand" size={25} />
                 <span className="ml-3 text-sm text-slate-500">Loading school profile...</span>
             </div>
         );
@@ -250,7 +250,7 @@ export default function SchoolProfileSettings() {
                     <div className="flex items-center gap-2">
                         <h3 className="text-base font-semibold text-slate-900">School logo</h3>
                         <div className="relative" onMouseEnter={() => setLogoTipOpen(true)} onMouseLeave={() => setLogoTipOpen(false)}>
-                            <button type="button" aria-label="Logo upload requirements" aria-expanded={logoTipOpen} onClick={() => setLogoTipOpen(true)} className="inline-flex size-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-200">
+                            <button type="button" aria-label="Logo upload requirements" aria-expanded={logoTipOpen} onClick={() => setLogoTipOpen(true)} className="inline-flex size-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-brand-soft hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand-soft">
                                 <Info size={15} />
                             </button>
                             <div className={"absolute left-0 top-8 z-20 w-80 max-w-[calc(100vw-3rem)] rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900 shadow-md transition-all duration-200 ease-out " + (logoTipOpen ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0")}>
@@ -267,7 +267,7 @@ export default function SchoolProfileSettings() {
                             <img src={logoPreview} alt="School logo preview" className="max-h-32 max-w-full object-contain" />
                         ) : (
                             <div className="text-center">
-                                <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><ImagePlus size={22} /></div>
+                                <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-brand-soft text-brand"><ImagePlus size={22} /></div>
                                 <p className="text-sm font-medium text-slate-700">No logo uploaded</p>
                                 <p className="mt-1 text-xs text-slate-400">Your school logo will appear here</p>
                             </div>
@@ -282,7 +282,7 @@ export default function SchoolProfileSettings() {
                         </button>
                         {selectedFile ? (
                             <>
-                                <button type="button" onClick={uploadLogo} disabled={logoBusy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-50">
+                                <button type="button" onClick={uploadLogo} disabled={logoBusy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:opacity-50">
                                     {logoBusy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} Upload
                                 </button>
                                 <button type="button" onClick={() => setSelectedFile(null)} disabled={logoBusy} aria-label="Cancel selected logo" className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-500 transition hover:bg-slate-100 disabled:opacity-50">
@@ -320,7 +320,7 @@ export default function SchoolProfileSettings() {
                                 <p className="mt-0.5 truncate text-sm text-slate-500">{profile.tagline.trim() || "Your school tagline"}</p>
                             </div>
                             <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">EV</div>
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-brand text-xs font-bold text-white">EV</div>
                                 <div><p className="text-sm font-semibold text-slate-700">eVidyalaya</p><p className="text-xs text-slate-400">School ERP</p></div>
                             </div>
                         </div>
@@ -330,7 +330,7 @@ export default function SchoolProfileSettings() {
             </section>
 
             <div className="flex justify-end border-t border-slate-100 pt-5">
-                <button type="button" onClick={saveProfile} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="button" onClick={saveProfile} disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-60">
                     {saving ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
                     {saving ? "Saving..." : "Save school profile"}
                 </button>
