@@ -85,6 +85,7 @@ public class EmailNotificationDispatcher {
             request.put("bodyText", outbox.getPayload().getOrDefault("message", ""));
             request.put("to", outbox.getRecipientEmail());
             request.put("emailType", outbox.getTemplateType());
+            request.put("brandingType", outbox.getPayload().getOrDefault("brandingType", "PLATFORM"));
             request.put("userName", outbox.getPayload().getOrDefault("userName", "eVidyalaya user"));
             List<EmailNotificationAttachmentSnapshot> attachments = resolveAttachments(outbox);
             Map<String, Object> templateData = new LinkedHashMap<>(outbox.getPayload());
@@ -93,7 +94,7 @@ public class EmailNotificationDispatcher {
                         .map(EmailNotificationAttachmentSnapshot::getFileName)
                         .toList());
             }
-            if (usesSchoolBranding(outbox.getTemplateType())) {
+            if ("SCHOOL".equalsIgnoreCase(String.valueOf(request.get("brandingType")))) {
                 Map<String, String> settings = schoolSettingsService.getSettings();
                 templateData.put("schoolName", settings.getOrDefault("school.name", ""));
                 templateData.put("schoolTagline", settings.getOrDefault("school.tagline", ""));
@@ -102,6 +103,8 @@ public class EmailNotificationDispatcher {
                 templateData.put("schoolPhone", settings.getOrDefault("school.phone", ""));
                 templateData.put("schoolEmail", settings.getOrDefault("school.email", ""));
                 templateData.put("schoolWebsite", settings.getOrDefault("school.website", ""));
+                templateData.put("schoolPrimaryColor", settings.getOrDefault("theme.primaryColor", "#2563EB"));
+                templateData.put("schoolAccentColor", settings.getOrDefault("theme.accentColor", "#0D9488"));
             }
             request.put("templateData", templateData);
             HttpHeaders headers = new HttpHeaders();
@@ -149,13 +152,6 @@ public class EmailNotificationDispatcher {
         }
     }
 
-    private boolean usesSchoolBranding(String templateType) {
-        if (templateType == null) return false;
-        return switch (templateType.trim().toUpperCase()) {
-            case "ANNOUNCEMENT", "ASSIGNMENT", "ASSESSMENT", "TIMETABLE", "RESULT" -> true;
-            default -> false;
-        };
-    }
 
     private List<EmailNotificationAttachmentSnapshot> resolveAttachments(EmailNotificationOutbox outbox) {
         Object rawIds = outbox.getPayload().get("attachmentSnapshotIds");
