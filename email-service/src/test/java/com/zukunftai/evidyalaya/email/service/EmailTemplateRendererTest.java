@@ -240,10 +240,13 @@ class EmailTemplateRendererTest {
         request.setTemplateData(Map.of(
                 "title", "School update",
                 "message", "Please read the update.",
+                "targetUrl", "https://school.example/announcements",
+                "attachmentNames", java.util.List.of("notice.pdf"),
                 "schoolName", "Sri Nagarjuna High School",
                 "schoolPrimaryColor", "#0D9488",
                 "schoolAccentColor", "#D97706",
-                "schoolEmail", "office@school.example"
+                "schoolEmail", "office@school.example",
+                "schoolWebsite", "https://school.example"
         ));
 
         EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
@@ -252,6 +255,10 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("color:#0D9488;font-weight:700"));
         assertTrue(rendered.html().contains("border-left:3px solid #D97706"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;color:#AE5F05"));
+        assertTrue(rendered.html().contains("border-left:3px solid #D97706"));
+        assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
+        assertTrue(rendered.html().contains("color:#AE5F05;">PDF</td>"));
+        assertTrue(rendered.html().contains("href=\"https://school.example\" style=\"color:#0D9488;text-decoration:none;\""));
         assertTrue(rendered.html().contains("color:#0D9488;text-decoration:none;"));
         assertFalse(rendered.html().contains("#315784"));
         assertFalse(rendered.html().contains("#245da8"));
