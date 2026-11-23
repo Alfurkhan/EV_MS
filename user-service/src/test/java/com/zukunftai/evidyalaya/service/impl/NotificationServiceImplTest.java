@@ -190,6 +190,7 @@ class NotificationServiceImplTest {
         assertEquals(EmailNotificationOutboxStatus.PENDING, queued.getStatus());
         assertEquals("The school will reopen on Monday.", queued.getPayload().get("message"));
         assertEquals("/announcements", queued.getPayload().get("targetUrl"));
+        assertEquals(EmailBrandingType.SCHOOL.name(), queued.getPayload().get("brandingType"));
     }
 
     @Test
