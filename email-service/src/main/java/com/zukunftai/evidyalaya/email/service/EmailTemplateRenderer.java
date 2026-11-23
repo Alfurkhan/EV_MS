@@ -202,7 +202,7 @@ public class EmailTemplateRenderer {
         return renderedHtml;
     }
 
-    private SchoolBranding schoolBranding(String brandingType, Map<String, Object> data) {
+    private SchoolBranding schoolBranding(com.zukunftai.evidyalaya.email.model.EmailBrandingType brandingType, Map<String, Object> data) {
         if (brandingType != com.zukunftai.evidyalaya.email.model.EmailBrandingType.SCHOOL || data == null) {
             return SchoolBranding.disabled();
         }
