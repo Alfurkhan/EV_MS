@@ -198,6 +198,7 @@ class EmailTemplateRendererTest {
                 Map.entry("schoolPhone", "+91 9876543210"),
                 Map.entry("schoolEmail", "office@greenvalley.example"),
                 Map.entry("schoolWebsite", "https://greenvalley.example"),
+                Map.entry("attachmentNames", java.util.List.of("holiday-notice.pdf")),
                 Map.entry("schoolPrimaryColor", "#7C3AED"),
                 Map.entry("schoolAccentColor", "#D97706")
         ));
