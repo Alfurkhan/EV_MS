@@ -1,6 +1,7 @@
 package com.zukunftai.evidyalaya.email.service;
 
 import com.zukunftai.evidyalaya.email.model.EmailRequest;
+import com.zukunftai.evidyalaya.email.model.EmailBrandingType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -202,8 +203,8 @@ public class EmailTemplateRenderer {
         return renderedHtml;
     }
 
-    private SchoolBranding schoolBranding(com.zukunftai.evidyalaya.email.model.EmailBrandingType brandingType, Map<String, Object> data) {
-        if (brandingType != com.zukunftai.evidyalaya.email.model.EmailBrandingType.SCHOOL || data == null) {
+    private SchoolBranding schoolBranding(EmailBrandingType brandingType, Map<String, Object> data) {
+        if (brandingType != EmailBrandingType.SCHOOL || data == null) {
             return SchoolBranding.disabled();
         }
         String name = value(data, "schoolName", null).trim();
