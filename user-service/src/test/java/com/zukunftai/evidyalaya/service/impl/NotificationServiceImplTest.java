@@ -7,6 +7,7 @@ import com.zukunftai.evidyalaya.database.Notification;
 import com.zukunftai.evidyalaya.database.Role;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
+import com.zukunftai.evidyalaya.model.EmailBrandingType;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
 import com.zukunftai.evidyalaya.model.EmailAttachmentSource;
 import com.zukunftai.evidyalaya.service.email.EmailAttachmentSnapshotService;
