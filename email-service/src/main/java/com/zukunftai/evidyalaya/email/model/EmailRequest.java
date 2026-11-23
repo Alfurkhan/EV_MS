@@ -14,7 +14,7 @@ public class EmailRequest {
     private String to;
     private String emailType;
     /** Explicit sender identity; absent or unknown values are treated as PLATFORM. */
-    private String brandingType = "PLATFORM";
+    private EmailBrandingType brandingType = EmailBrandingType.PLATFORM;
     /** Explicit sender identity; absent or unknown values are treated as PLATFORM. */
     private String brandingType = "PLATFORM";
     private String userName;
