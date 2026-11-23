@@ -6,6 +6,7 @@ import com.zukunftai.evidyalaya.database.EmailNotificationOutboxStatus;
 import com.zukunftai.evidyalaya.database.Notification;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
+import com.zukunftai.evidyalaya.model.EmailBrandingType;
 import com.zukunftai.evidyalaya.model.ManualNotificationRequest;
 import com.zukunftai.evidyalaya.model.EmailAttachmentSource;
 import com.zukunftai.evidyalaya.model.NotificationCommand;
