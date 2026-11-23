@@ -18,7 +18,7 @@ public class EmailServiceRequest {
     @Enumerated(EnumType.STRING)
     private EmailType emailType;
     @lombok.Builder.Default
-    private String brandingType = "PLATFORM";
+    private EmailBrandingType brandingType = EmailBrandingType.PLATFORM;
     private String brandingType = "PLATFORM";
     private String userName;
     private String otp;
