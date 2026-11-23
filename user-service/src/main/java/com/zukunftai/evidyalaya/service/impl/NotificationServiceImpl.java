@@ -271,6 +271,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("sourceType", sourceType);
+        payload.put("brandingType", "SCHOOL");
         payload.put("userName", recipient.getFullName() == null || recipient.getFullName().isBlank()
                 ? "eVidyalaya user" : recipient.getFullName());
         payload.put("sourceId", notification.getSourceId());
@@ -380,6 +381,7 @@ public class NotificationServiceImpl implements NotificationService {
             boolean testEmailAddress = emailNotificationProperties.isTestEmailAddress(recipient.getEmail());
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("sourceType", "ANNOUNCEMENT");
+            payload.put("brandingType", "SCHOOL");
             payload.put("userName", recipient.getFullName() == null || recipient.getFullName().isBlank()
                     ? "eVidyalaya user" : recipient.getFullName());
             payload.put("sourceId", sourceId);
