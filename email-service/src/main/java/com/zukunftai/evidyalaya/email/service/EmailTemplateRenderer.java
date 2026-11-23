@@ -140,25 +140,31 @@ public class EmailTemplateRenderer {
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#f3f6fb">
                 <tr><td align="center" class="email-outer-pad" style="padding:24px 12px;">
                 <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid #e7edf5;border-radius:14px;overflow:hidden;">
-                <tr><td bgcolor="#173b70" class="email-header" style="padding:26px 32px;background-color:#173b70;color:#ffffff;">
                 """);
+        html.append("<tr><td bgcolor=\"").append(branding.primaryColor())
+                .append("\" class=\"email-header\" style=\"padding:26px 32px;background-color:")
+                .append(branding.primaryColor()).append(";color:#ffffff;\">");
         appendEmailBrandingHeader(html, branding);
         html.append("""
                 </td></tr>
                 <tr><td class="email-content" style="padding:28px 32px 30px;">
                 """);
         if (hasText(type)) {
-            html.append("<p style=\"margin:0 0 18px;\"><span style=\"display:inline-block;padding:6px 10px;background-color:#edf3fb;color:#315784;font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
+            html.append("<p style=\"margin:0 0 18px;\"><span style=\"display:inline-block;padding:6px 10px;background-color:")
+                    .append(branding.accentSoftColor()).append(";color:").append(branding.accentTextColor())
+                    .append(";font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
                     .append(escape(type.replace('_', ' '))).append("</span></p>");
         }
         html.append("<p style=\"margin:0 0 16px;font-size:15px;line-height:23px;color:#243047;\">Hello ")
                 .append(escape(name)).append(",</p>");
-        html.append("<h1 style=\"margin:0 0 22px;font-size:24px;line-height:31px;color:#173b70;font-weight:700;word-break:break-word;overflow-wrap:anywhere;\">")
+        html.append("<h1 style=\"margin:0 0 22px;font-size:24px;line-height:31px;color:")
+                .append(branding.primaryColor()).append(";font-weight:700;word-break:break-word;overflow-wrap:anywhere;\">")
                 .append(escape(heading)).append("</h1>");
         html.append("<p style=\"margin:0 0 10px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:.7px;color:#64748b;\">")
                 .append("ANNOUNCEMENT".equals(type) ? "MESSAGE" : "DETAILS")
                 .append("</p>");
-        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border:1px solid #e8edf4;border-left:3px solid #2b63a8;border-radius:10px;font-size:15px;line-height:25px;color:#34445b;word-break:break-word;overflow-wrap:anywhere;\">")
+        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border:1px solid #e8edf4;border-left:3px solid ")
+                .append(branding.accentColor()).append(";border-radius:10px;font-size:15px;line-height:25px;color:#34445b;word-break:break-word;overflow-wrap:anywhere;\">")
                 .append(paragraphs(content)).append("</td></tr></table>");
 
         if (hasText(publicationDetails)) {
@@ -170,15 +176,22 @@ public class EmailTemplateRenderer {
             html.append("<p style=\"margin:24px 0 9px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:.7px;color:#64748b;\">ATTACHMENTS</p>");
             for (String file : attachmentNames) {
                 html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr>")
-                        .append("<td width=\"48\" valign=\"middle\" bgcolor=\"#edf3fb\" style=\"width:48px;padding:10px 8px;background-color:#edf3fb;border:1px solid #e3eaf4;border-right:0;border-radius:9px 0 0 9px;text-align:center;font-size:10px;line-height:14px;font-weight:700;color:#315784;\">")
+                        .append("<td width=\"48\" valign=\"middle\" bgcolor=\"").append(branding.accentSoftColor())
+                        .append("\" style=\"width:48px;padding:10px 8px;background-color:").append(branding.accentSoftColor())
+                        .append(";border:1px solid ").append(branding.accentBorderColor())
+                        .append(";border-right:0;border-radius:9px 0 0 9px;text-align:center;font-size:10px;line-height:14px;font-weight:700;color:")
+                        .append(branding.accentTextColor()).append(";\">")
                         .append(escape(fileTypeLabel(file))).append("</td>")
-                        .append("<td valign=\"middle\" bgcolor=\"#fbfcfe\" style=\"padding:10px 12px;background-color:#fbfcfe;border:1px solid #e3eaf4;border-left:0;border-radius:0 9px 9px 0;font-size:13px;line-height:19px;color:#40516a;word-break:break-word;overflow-wrap:anywhere;\">")
+                        .append("<td valign=\"middle\" bgcolor=\"#fbfcfe\" style=\"padding:10px 12px;background-color:#fbfcfe;border:1px solid ")
+                        .append(branding.accentBorderColor()).append(";border-left:0;border-radius:0 9px 9px 0;font-size:13px;line-height:19px;color:#40516a;word-break:break-word;overflow-wrap:anywhere;\">")
                         .append(escape(file)).append("</td></tr></table>")
                         .append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"><tr><td height=\"7\" style=\"height:7px;font-size:1px;line-height:1px;\">&nbsp;</td></tr></table>");
             }
         }
         if (isSafeHttpUrl(actionUrl)) {
-            html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:26px 0 4px;\"><tr><td bgcolor=\"#245da8\" style=\"background-color:#245da8;border-radius:8px;\"><a href=\"")
+            html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:26px 0 4px;\"><tr><td bgcolor=\"")
+                    .append(branding.primaryActionColor()).append("\" style=\"background-color:")
+                    .append(branding.primaryActionColor()).append(";border-radius:8px;\"><a href=\"")
                     .append(escape(actionUrl))
                     .append("\" style=\"display:inline-block;padding:13px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:18px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:8px;\">")
                     .append(escape(actionLabel)).append("</a></td></tr></table>");
@@ -193,16 +206,7 @@ public class EmailTemplateRenderer {
                 """).append(escape(automatedFooter)).append("""
                 </td></tr></table></td></tr></table></body></html>
                 """);
-        String renderedHtml = html.toString();
-        if (branding.enabled()) {
-            renderedHtml = renderedHtml.replace("#173b70", branding.primaryColor())
-                    .replace("#245da8", branding.primaryActionColor())
-                    .replace("#2b63a8", branding.accentColor())
-                    .replace("#315784", branding.accentTextColor())
-                    .replace("#edf3fb", branding.accentSoftColor())
-                    .replace("#e3eaf4", branding.accentBorderColor());
-        }
-        return renderedHtml;
+        return html.toString();
     }
 
     private SchoolBranding schoolBranding(EmailBrandingType brandingType, Map<String, Object> data) {
@@ -316,8 +320,8 @@ public class EmailTemplateRenderer {
         if (branding.enabled()) {
             if (hasText(branding.address())) html.append("<br>").append(escape(branding.address()));
             if (hasText(branding.phone())) html.append("<br>").append(escape(branding.phone()));
-            if (hasText(branding.email())) html.append("<br><a href=\"mailto:").append(escape(branding.email())).append("\" style=\"color:#173b70;text-decoration:none;\">").append(escape(branding.email())).append("</a>");
-            if (hasText(branding.website())) html.append("<br><a href=\"").append(escape(branding.website())).append("\" style=\"color:#315784;text-decoration:none;\">").append(escape(branding.website())).append("</a>");
+            if (hasText(branding.email())) html.append("<br><a href=\"mailto:").append(escape(branding.email())).append("\" style=\"color:").append(branding.primaryColor()).append(";text-decoration:none;\">").append(escape(branding.email())).append("</a>");
+            if (hasText(branding.website())) html.append("<br><a href=\"").append(escape(branding.website())).append("\" style=\"color:").append(branding.primaryColor()).append(";text-decoration:none;\">").append(escape(branding.website())).append("</a>");
         }
         html.append("</td></tr></table>");
     }
@@ -465,7 +469,7 @@ public class EmailTemplateRenderer {
             String accentTextColor, String accentSoftColor, String accentBorderColor) {
         private static SchoolBranding disabled() {
             return new SchoolBranding(false, "", "", null, "", "", "", null,
-                    "#173B70", "#2B63A8", "#245DA8", "#315784", "#EDF3FB", "#E3EAF4");
+                    "#173b70", "#2b63a8", "#245da8", "#315784", "#edf3fb", "#e3eaf4");
         }
     }
     private record AnnouncementContent(String message, String publicationDetails) {}
