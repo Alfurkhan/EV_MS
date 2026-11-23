@@ -133,7 +133,7 @@ export default function FacultyClassAttendanceModal({
                                         {/* Day */}
                                         <div className="mb-3 flex items-center gap-2">
 
-                                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-soft text-brand">
                                                 <CalendarDays size={18} />
                                             </div>
 
