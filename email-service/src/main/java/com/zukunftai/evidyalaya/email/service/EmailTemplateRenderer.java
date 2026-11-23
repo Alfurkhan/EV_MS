@@ -29,7 +29,7 @@ public class EmailTemplateRenderer {
         String content;
         String actionUrl = null;
         String actionLabel = actionLabel(type);
-        SchoolBranding branding = schoolBranding(type, data);
+        SchoolBranding branding = schoolBranding(request.getBrandingType(), data);
         String publicationDetails = null;
 
         switch (type) {
@@ -192,22 +192,34 @@ public class EmailTemplateRenderer {
                 """).append(escape(automatedFooter)).append("""
                 </td></tr></table></td></tr></table></body></html>
                 """);
-        return html.toString();
+        String renderedHtml = html.toString();
+        if (branding.enabled()) {
+            renderedHtml = renderedHtml.replace("#173b70", branding.primaryColor())
+                    .replace("#245da8", branding.primaryColor())
+                    .replace("#2b63a8", branding.accentColor())
+                    .replace("#315784", branding.accentColor());
+        }
+        return renderedHtml;
     }
 
-    private SchoolBranding schoolBranding(String type, Map<String, Object> data) {
-        boolean enabled = switch (type) {
-            case "ANNOUNCEMENT", "ASSIGNMENT", "ASSESSMENT", "TIMETABLE", "RESULT" -> true;
-            default -> false;
-        };
-        if (!enabled || data == null) return SchoolBranding.disabled();
+    private SchoolBranding schoolBranding(String brandingType, Map<String, Object> data) {
+        if (!"SCHOOL".equalsIgnoreCase(safe(brandingType).trim()) || data == null) {
+            return SchoolBranding.disabled();
+        }
         String name = value(data, "schoolName", null).trim();
         if (!hasText(name)) return SchoolBranding.disabled();
+        String primaryColor = validHexColor(value(data, "schoolPrimaryColor", null), "#2563EB");
+        String accentColor = validHexColor(value(data, "schoolAccentColor", null), "#0D9488");
         return new SchoolBranding(true, name, value(data, "schoolTagline", null).trim(),
                 safeLogoUrl(value(data, "schoolLogoUrl", null)),
                 value(data, "schoolAddress", null).trim(), value(data, "schoolPhone", null).trim(),
                 value(data, "schoolEmail", null).trim(),
-                safeContactUrl(value(data, "schoolWebsite", null)));
+                safeContactUrl(value(data, "schoolWebsite", null)), primaryColor, accentColor);
+    }
+
+    private String validHexColor(String raw, String fallback) {
+        return raw != null && raw.trim().matches("^#[0-9A-Fa-f]{6}$")
+                ? raw.trim().toUpperCase(Locale.ROOT) : fallback;
     }
 
     private String safeLogoUrl(String raw) {
@@ -400,9 +412,10 @@ public class EmailTemplateRenderer {
     private boolean hasText(String value) { return value != null && !value.isBlank(); }
 
     private record SchoolBranding(boolean enabled, String name, String tagline, String logoUrl,
-            String address, String phone, String email, String website) {
+            String address, String phone, String email, String website,
+            String primaryColor, String accentColor) {
         private static SchoolBranding disabled() {
-            return new SchoolBranding(false, "", "", null, "", "", "", null);
+            return new SchoolBranding(false, "", "", null, "", "", "", null, "#173B70", "#2B63A8");
         }
     }
     private record AnnouncementContent(String message, String publicationDetails) {}
