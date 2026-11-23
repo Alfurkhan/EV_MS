@@ -17,6 +17,7 @@ public class EmailServiceRequest {
     private String to;
     @Enumerated(EnumType.STRING)
     private EmailType emailType;
+    private String brandingType = "PLATFORM";
     private String userName;
     private String otp;
 }
