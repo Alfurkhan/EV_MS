@@ -381,7 +381,7 @@ public class NotificationServiceImpl implements NotificationService {
             boolean testEmailAddress = emailNotificationProperties.isTestEmailAddress(recipient.getEmail());
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("sourceType", "ANNOUNCEMENT");
-            payload.put("brandingType", "SCHOOL");
+            payload.put("brandingType", EmailBrandingType.SCHOOL.name());
             payload.put("userName", recipient.getFullName() == null || recipient.getFullName().isBlank()
                     ? "eVidyalaya user" : recipient.getFullName());
             payload.put("sourceId", sourceId);
