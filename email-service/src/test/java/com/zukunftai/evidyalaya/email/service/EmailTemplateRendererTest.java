@@ -253,11 +253,10 @@ class EmailTemplateRendererTest {
 
         assertTrue(rendered.html().contains("background-color:#0D9488;color:#ffffff"));
         assertTrue(rendered.html().contains("color:#0D9488;font-weight:700"));
-        assertTrue(rendered.html().contains("border-left:3px solid #D97706"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;color:#AE5F05"));
         assertTrue(rendered.html().contains("border-left:3px solid #D97706"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
-        assertTrue(rendered.html().contains("color:#AE5F05;">PDF</td>"));
+        assertTrue(rendered.html().contains("color:#AE5F05;\\\">PDF</td>"));
         assertTrue(rendered.html().contains("href=\"https://school.example\" style=\"color:#0D9488;text-decoration:none;\""));
         assertTrue(rendered.html().contains("color:#0D9488;text-decoration:none;"));
         assertFalse(rendered.html().contains("#315784"));
