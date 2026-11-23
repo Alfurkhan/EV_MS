@@ -291,6 +291,10 @@ class EmailTemplateRendererTest {
                 "schoolEmail", "office@greenvalley.example"
         ));
 
+        assertEquals(EmailBrandingType.PLATFORM, request.getBrandingType());
+        assertEquals(EmailBrandingType.PLATFORM, EmailBrandingType.from("unknown"));
+        assertEquals(EmailBrandingType.PLATFORM, EmailBrandingType.from(null));
+
         EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
 
         assertTrue(rendered.html().contains("eVidyalaya"));
