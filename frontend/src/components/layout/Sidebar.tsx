@@ -1,5 +1,6 @@
 import { useLayout } from "../../contexts/LayoutContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { NavLink } from "react-router-dom";
 
 import {
@@ -190,6 +191,7 @@ const menu: MenuSection[] = [
 export default function Sidebar() {
     const { sidebarOpen } = useLayout();
     const { logout, hasRole } = useAuth();
+    const { theme } = useTheme();
 
     return (
         <aside
@@ -311,6 +313,11 @@ export default function Sidebar() {
                                         <NavLink
                                             key={item.label}
                                             to={item.path}
+                                            style={({ isActive }) =>
+                                                isActive
+                                                    ? { backgroundColor: theme.primaryColor }
+                                                    : undefined
+                                            }
                                             className={({ isActive }) =>
                                                 `
                                                     w-full
