@@ -86,7 +86,6 @@ public class EmailNotificationDispatcher {
             request.put("to", outbox.getRecipientEmail());
             request.put("emailType", outbox.getTemplateType());
             request.put("brandingType", outbox.getPayload().getOrDefault("brandingType", "PLATFORM"));
-            request.put("brandingType", outbox.getPayload().getOrDefault("brandingType", "PLATFORM"));
             request.put("userName", outbox.getPayload().getOrDefault("userName", "eVidyalaya user"));
             List<EmailNotificationAttachmentSnapshot> attachments = resolveAttachments(outbox);
             Map<String, Object> templateData = new LinkedHashMap<>(outbox.getPayload());
