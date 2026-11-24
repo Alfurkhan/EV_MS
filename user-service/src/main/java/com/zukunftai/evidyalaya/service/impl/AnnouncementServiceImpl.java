@@ -337,7 +337,11 @@ public class AnnouncementServiceImpl {
                         .map(file -> new EmailAttachmentSource(
                                 attachmentStorage.resolve(file.getStoredPath()).toString(),
                                 file.getOriginalName(), file.getContentType()))
-                        .toList());
+                        .toList(),
+                hasRole(announcement.getCreatedBy(), RoleName.ROLE_FACULTY)
+                        ? Map.of("facultyName", announcement.getCreatedBy().getFullName(),
+                                "facultyDesignation", "Faculty")
+                        : Map.of());
         if (includeAdminOversight) {
             notificationService.createForUsersAndAdmins(targets, command);
         } else {
