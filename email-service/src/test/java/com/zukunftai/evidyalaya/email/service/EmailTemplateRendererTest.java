@@ -343,6 +343,7 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("eVidyalaya"));
         assertTrue(rendered.html().contains("Smarter school management"));
         assertTrue(rendered.html().contains("background-color:#173b70"));
+        assertTrue(rendered.html().contains("bgcolor=\"#edf3fb\" style=\"padding:6px 10px;background-color:#edf3fb;color:#315784"));
         assertFalse(rendered.html().contains("background-color:#2563EB"));
         assertFalse(rendered.html().contains("Green Valley School"));
         assertFalse(rendered.html().contains("office@greenvalley.example"));
