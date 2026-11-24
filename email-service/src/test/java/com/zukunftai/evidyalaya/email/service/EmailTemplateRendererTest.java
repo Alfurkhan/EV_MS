@@ -285,7 +285,7 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("Ananya Sharma"));
         assertTrue(rendered.html().contains("Faculty · Mathematics"));
         assertTrue(rendered.html().indexOf("Ananya Sharma") < rendered.html().indexOf("Green Valley School"));
-        assertTrue(rendered.plainText().contains("Regards,\\nAnanya Sharma\\nFaculty · Mathematics\\nGreen Valley School"));
+        assertTrue(rendered.plainText().contains("Regards,\nAnanya Sharma\nFaculty · Mathematics\nGreen Valley School"));
     }
 
     @Test
