@@ -82,16 +82,17 @@ public class EmailTemplateRenderer {
 
         actionUrl = resolveActionUrl(actionUrl);
         List<String> attachmentNames = attachmentNames(data);
+        FacultySignature facultySignature = facultySignature(data, branding);
         String plainText = buildPlainText(name, heading, content, publicationDetails,
-                attachmentNames, actionUrl, actionLabel, branding);
+                attachmentNames, actionUrl, actionLabel, branding, facultySignature);
         String html = buildHtml(name, heading, content, publicationDetails,
-                attachmentNames, actionUrl, actionLabel, type, branding);
+                attachmentNames, actionUrl, actionLabel, type, branding, facultySignature);
         return new RenderedEmail(plainText, html);
     }
 
     private String buildPlainText(String name, String heading, String content,
             String publicationDetails, List<String> attachmentNames,
-            String actionUrl, String actionLabel, SchoolBranding branding) {
+            String actionUrl, String actionLabel, SchoolBranding branding, FacultySignature facultySignature) {
         StringBuilder text = new StringBuilder("Hello ").append(name).append(",\n\n")
                 .append(heading).append("\n\n")
                 .append(safe(content));
@@ -104,8 +105,12 @@ public class EmailTemplateRenderer {
         }
         if (isSafeHttpUrl(actionUrl)) text.append("\n\n").append(actionLabel).append(": ").append(actionUrl);
         if (branding.enabled()) {
-            text.append("\n\nRegards,\n").append(branding.name())
-                    .append("\nPowered by eVidyalaya");
+            text.append("\n\nRegards,");
+            if (facultySignature.enabled()) {
+                text.append("\n").append(facultySignature.name());
+                if (hasText(facultySignature.designation())) text.append("\n").append(facultySignature.designation());
+            }
+            text.append("\n").append(branding.name()).append("\nPowered by eVidyalaya");
             appendPlainContact(text, branding);
         } else {
             text.append("\n\nRegards,\neVidyalaya Team");
@@ -117,7 +122,7 @@ public class EmailTemplateRenderer {
     }
 
     private String buildHtml(String name, String heading, String content, String publicationDetails,
-            List<String> attachmentNames, String actionUrl, String actionLabel, String type, SchoolBranding branding) {
+            List<String> attachmentNames, String actionUrl, String actionLabel, String type, SchoolBranding branding, FacultySignature facultySignature) {
         StringBuilder html = new StringBuilder(2600);
         html.append("""
                 <!doctype html><html lang="en"><head><meta charset="UTF-8">
@@ -168,8 +173,8 @@ public class EmailTemplateRenderer {
                 .append("ANNOUNCEMENT".equals(type) ? "MESSAGE" : "DETAILS")
                 .append("</p>");
         html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr>")
-                .append("<td width=\"4\" bgcolor=\"").append(branding.accentColor())
-                .append("\" style=\"width:4px;min-width:4px;background-color:").append(branding.accentColor())
+                .append("<td width=\"4\" bgcolor=\"").append(branding.enabled() ? branding.primaryColor() : branding.accentColor())
+                .append("\" style=\"width:4px;min-width:4px;background-color:").append(branding.enabled() ? branding.primaryColor() : branding.accentColor())
                 .append(";font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>")
                 .append("<td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border:1px solid #e8edf4;border-left:0;border-radius:0 10px 10px 0;font-size:15px;line-height:25px;color:#34445b;word-break:break-word;overflow-wrap:anywhere;\">")
                 .append(paragraphs(content)).append("</td></tr></table>");
@@ -203,7 +208,7 @@ public class EmailTemplateRenderer {
                     .append("\" style=\"display:inline-block;padding:13px 22px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:18px;color:#ffffff;text-decoration:none;font-weight:700;border-radius:8px;\">")
                     .append(escape(actionLabel)).append("</a></td></tr></table>");
         }
-        appendEmailBrandingFooter(html, branding);
+        appendEmailBrandingFooter(html, branding, facultySignature);
         String automatedFooter = branding.enabled()
                 ? "This is an automated message. Please do not reply to this email."
                 : "This is an automated message from eVidyalaya. Please do not reply to this email.";
@@ -302,28 +307,41 @@ public class EmailTemplateRenderer {
         return isSafeHttpUrl(value) ? value : null;
     }
 
+    private FacultySignature facultySignature(Map<String, Object> data, SchoolBranding branding) {
+        if (!branding.enabled() || data == null) return FacultySignature.disabled();
+        String name = value(data, "facultyName", null).trim();
+        if (!hasText(name)) return FacultySignature.disabled();
+        return new FacultySignature(true, name, value(data, "facultyDesignation", null).trim());
+    }
+
     private void appendEmailBrandingHeader(StringBuilder html, SchoolBranding branding) {
         if (!branding.enabled()) {
             html.append("<div style=\"font-size:22px;line-height:28px;font-weight:700;letter-spacing:.2px;color:#ffffff;\">eVidyalaya</div>")
                     .append("<div style=\"padding-top:5px;font-size:12px;line-height:18px;color:#dce8f8;\">Smarter school management</div>");
             return;
         }
-        html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr>");
+        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr><td align=\"center\" style=\"text-align:center;\">");
         if (hasText(branding.logoUrl())) {
-            html.append("<td valign=\"middle\" style=\"padding-right:14px;\"><img src=\"")
-                    .append(escape(branding.logoUrl())).append("\" alt=\"").append(escape(branding.name()))
-                    .append("\" width=\"52\" height=\"52\" style=\"display:block;width:52px;height:52px;object-fit:contain;background:#ffffff;border-radius:8px;\"></td>");
+            html.append("<img src=\"").append(escape(branding.logoUrl()))
+                    .append("\" alt=\"").append(escape(branding.name()))
+                    .append("\" width=\"64\" height=\"64\" style=\"display:block;width:64px;height:64px;object-fit:contain;background:#ffffff;border-radius:12px;margin:0 auto 12px;\">");
         }
-        html.append("<td valign=\"middle\"><div style=\"font-size:22px;line-height:28px;font-weight:700;color:#ffffff;\">")
+        html.append("<div style=\"font-size:23px;line-height:30px;font-weight:700;color:#ffffff;text-align:center;\">")
                 .append(escape(branding.name())).append("</div>");
-        if (hasText(branding.tagline())) html.append("<div style=\"padding-top:4px;font-size:12px;line-height:18px;color:#dce8f8;\">")
+        if (hasText(branding.tagline())) html.append("<div style=\"padding-top:4px;font-size:12px;line-height:18px;color:#e7eefb;text-align:center;\">")
                 .append(escape(branding.tagline())).append("</div>");
-        html.append("<div style=\"padding-top:5px;font-size:11px;line-height:16px;color:#dce8f8;\">Powered by eVidyalaya</div></td></tr></table>");
+        html.append("<div style=\"padding-top:6px;font-size:11px;line-height:16px;color:#e7eefb;text-align:center;\">Powered by eVidyalaya</div>")
+                .append("</td></tr></table>");
     }
 
-    private void appendEmailBrandingFooter(StringBuilder html, SchoolBranding branding) {
-        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin-top:28px;\"><tr><td style=\"padding-top:18px;border-top:1px solid #e8edf4;font-size:13px;line-height:21px;color:#718096;\">Regards,<br><strong style=\"color:#40516a;\">");
-        html.append(branding.enabled() ? escape(branding.name()) : "eVidyalaya Team").append("</strong>");
+    private void appendEmailBrandingFooter(StringBuilder html, SchoolBranding branding, FacultySignature facultySignature) {
+        html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin-top:28px;\"><tr><td style=\"padding-top:18px;border-top:1px solid #e8edf4;font-size:13px;line-height:21px;color:#718096;\">Regards,");
+        if (facultySignature.enabled()) {
+            html.append("<br><strong style=\"color:#40516a;\">").append(escape(facultySignature.name())).append("</strong>");
+            if (hasText(facultySignature.designation())) html.append("<br><span style=\"color:#718096;\">").append(escape(facultySignature.designation())).append("</span>");
+        }
+        html.append("<br><strong style=\"color:#40516a;\">")
+                .append(branding.enabled() ? escape(branding.name()) : "eVidyalaya Team").append("</strong>");
         if (branding.enabled()) {
             if (hasText(branding.address())) html.append("<br>").append(escape(branding.address()));
             if (hasText(branding.phone())) html.append("<br>").append(escape(branding.phone()));
@@ -479,6 +497,7 @@ public class EmailTemplateRenderer {
                     "#173b70", "#2b63a8", "#245da8", "#315784", "#edf3fb", "#e3eaf4");
         }
     }
+    private record FacultySignature(boolean enabled, String name, String designation) { private static FacultySignature disabled() { return new FacultySignature(false, "", ""); } }
     private record AnnouncementContent(String message, String publicationDetails) {}
     public record RenderedEmail(String plainText, String html) {}
 }
