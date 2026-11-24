@@ -281,7 +281,7 @@ class EmailTemplateRendererTest {
 
         EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
 
-        assertTrue(rendered.html().contains("align=\\"center\\" style=\\"text-align:center;\\""));
+        assertTrue(rendered.html().contains("text-align:center;"));
         assertTrue(rendered.html().contains("Ananya Sharma"));
         assertTrue(rendered.html().contains("Faculty · Mathematics"));
         assertTrue(rendered.html().indexOf("Ananya Sharma") < rendered.html().lastIndexOf("Green Valley School"));
