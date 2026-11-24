@@ -211,9 +211,9 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("color:#7C3AED"));
         assertTrue(rendered.html().contains("border-radius:8px;"));
         assertTrue(rendered.html().contains("color:#ffffff;text-decoration:none;"));
-        assertTrue(rendered.html().contains("bgcolor=\"#D97706\" style=\"width:3px;background-color:#D97706;border-radius:10px 0 0 10px;\""));
-        assertTrue(rendered.html().contains("background-color:#FBF1E6;color:#AE5F05"));
-        assertTrue(rendered.html().contains("bgcolor=\"#FBF1E6\""));
+        assertTrue(rendered.html().contains("bgcolor=\"#D97706\" style=\"width:4px;min-width:4px;background-color:#D97706;font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>"));
+        assertTrue(rendered.html().contains("bgcolor=\"#0D9488\" style=\"padding:6px 10px;background-color:#0D9488;color:#ffffff"));
+        assertTrue(rendered.html().contains("color:#AE5F05;"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
         assertTrue(rendered.html().contains("color:#7C3AED;text-decoration:none;"));
         assertFalse(rendered.html().contains("#315784"));
