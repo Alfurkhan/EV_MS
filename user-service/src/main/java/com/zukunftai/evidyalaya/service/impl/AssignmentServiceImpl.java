@@ -151,7 +151,9 @@ public class AssignmentServiceImpl implements AssignmentService {
                         : List.of(new EmailAttachmentSource(
                                 resolveStoredAttachment(assignment.getAttachmentPath()).toString(),
                                 assignment.getAttachmentName(),
-                                assignment.getAttachmentContentType()))));
+                                assignment.getAttachmentContentType())),
+                Map.of("facultyName", assignment.getFaculty().getFullName(),
+                        "facultyDesignation", "Faculty · " + assignment.getSubject().getName()));
         return published;
     }
 
