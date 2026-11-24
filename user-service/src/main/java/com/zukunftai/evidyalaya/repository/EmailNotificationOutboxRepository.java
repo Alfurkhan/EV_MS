@@ -16,6 +16,8 @@ public interface EmailNotificationOutboxRepository extends JpaRepository<EmailNo
 
     Optional<EmailNotificationOutbox> findByDeduplicationKey(String deduplicationKey);
 
+    Optional<EmailNotificationOutbox> findFirstByNotificationIdOrderByCreatedAtDesc(Long notificationId);
+
     boolean existsByDeduplicationKey(String deduplicationKey);
 
     List<EmailNotificationOutbox> findByStatusAndLockedUntil(
