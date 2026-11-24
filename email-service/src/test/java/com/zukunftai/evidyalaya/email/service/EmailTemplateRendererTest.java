@@ -211,7 +211,7 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("color:#7C3AED"));
         assertTrue(rendered.html().contains("border-radius:8px;"));
         assertTrue(rendered.html().contains("color:#ffffff;text-decoration:none;"));
-        assertTrue(rendered.html().contains("bgcolor=\"#D97706\" style=\"width:4px;min-width:4px;background-color:#D97706;font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>"));
+        assertTrue(rendered.html().contains("bgcolor=\"#7C3AED\" style=\"width:4px;min-width:4px;background-color:#7C3AED;font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>"));
         assertTrue(rendered.html().contains("bgcolor=\"#7C3AED\" style=\"padding:6px 10px;background-color:#7C3AED;color:#ffffff"));
         assertTrue(rendered.html().contains("color:#AE5F05;"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
@@ -255,7 +255,7 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("background-color:#0D9488;color:#ffffff"));
         assertTrue(rendered.html().contains("color:#0D9488;font-weight:700"));
         assertTrue(rendered.html().contains("bgcolor=\"#0D9488\" style=\"padding:6px 10px;background-color:#0D9488;color:#ffffff"));
-        assertTrue(rendered.html().contains("bgcolor=\"#D97706\" style=\"width:4px;min-width:4px;background-color:#D97706;font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>"));
+        assertTrue(rendered.html().contains("bgcolor=\"#0D9488\" style=\"width:4px;min-width:4px;background-color:#0D9488;font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
         assertTrue(rendered.html().contains("color:#AE5F05;"));
         assertTrue(rendered.html().contains("PDF</td>"));
@@ -263,6 +263,29 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("color:#0D9488;text-decoration:none;"));
         assertFalse(rendered.html().contains("#315784"));
         assertFalse(rendered.html().contains("#245da8"));
+    }
+
+    @Test
+    void centersSchoolIdentityAndRendersFacultyProfessionalSignOff() {
+        EmailRequest request = new EmailRequest(
+                "New assignment", null, "student@example.com", "ASSIGNMENT", "A Student", null);
+        request.setBrandingType(EmailBrandingType.SCHOOL);
+        request.setTemplateData(Map.of(
+                "title", "New Mathematics assignment",
+                "message", "Please complete the assignment.",
+                "schoolName", "Green Valley School",
+                "schoolLogoUrl", "https://school.example/logo.png",
+                "facultyName", "Ananya Sharma",
+                "facultyDesignation", "Faculty · Mathematics"
+        ));
+
+        EmailTemplateRenderer.RenderedEmail rendered = renderer.render(request);
+
+        assertTrue(rendered.html().contains("align=\\"center\\" style=\\"text-align:center;\\""));
+        assertTrue(rendered.html().contains("Ananya Sharma"));
+        assertTrue(rendered.html().contains("Faculty · Mathematics"));
+        assertTrue(rendered.html().indexOf("Ananya Sharma") < rendered.html().indexOf("Green Valley School"));
+        assertTrue(rendered.plainText().contains("Regards,\\nAnanya Sharma\\nFaculty · Mathematics\\nGreen Valley School"));
     }
 
     @Test
