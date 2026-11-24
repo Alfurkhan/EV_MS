@@ -395,6 +395,12 @@ public class NotificationServiceImpl implements NotificationService {
             payload.put("priority", safePriority);
             payload.put("targetUrl", notification.getTargetUrl());
             payload.put("createdAt", now.toString());
+            emailOutbox.findFirstByNotificationIdOrderByCreatedAtDesc(notification.getId()).ifPresent(previous -> {
+                Object facultyName = previous.getPayload().get("facultyName");
+                Object facultyDesignation = previous.getPayload().get("facultyDesignation");
+                if (facultyName != null) payload.put("facultyName", facultyName);
+                if (facultyDesignation != null) payload.put("facultyDesignation", facultyDesignation);
+            });
             payload.put("isUpdate", true);
             if (attachmentSnapshotIds != null && !attachmentSnapshotIds.isEmpty()) {
                 payload.put("attachmentSnapshotIds", attachmentSnapshotIds);
