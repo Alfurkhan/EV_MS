@@ -151,9 +151,8 @@ public class EmailTemplateRenderer {
                 """);
         if (hasText(type)) {
             html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:0 0 18px;\"><tr><td bgcolor=\"")
-                    .append(branding.accentSoftColor()).append("\" style=\"padding:6px 10px;background-color:")
-                    .append(branding.accentSoftColor()).append(";color:").append(branding.accentTextColor())
-                    .append(";font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
+                    .append(branding.primaryColor()).append("\" style=\"padding:6px 10px;background-color:")
+                    .append(branding.primaryColor()).append(";color:#ffffff;font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
                     .append(escape(type.replace('_', ' '))).append("</td></tr></table>");
         }
         html.append("<p style=\"margin:0 0 16px;font-size:15px;line-height:23px;color:#243047;\">Hello ")
@@ -165,9 +164,9 @@ public class EmailTemplateRenderer {
                 .append("ANNOUNCEMENT".equals(type) ? "MESSAGE" : "DETAILS")
                 .append("</p>");
         html.append("<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\"><tr>")
-                .append("<td width=\"3\" bgcolor=\"").append(branding.accentColor())
-                .append("\" style=\"width:3px;background-color:").append(branding.accentColor())
-                .append(";border-radius:10px 0 0 10px;\"></td>")
+                .append("<td width=\"4\" bgcolor=\"").append(branding.accentColor())
+                .append("\" style=\"width:4px;min-width:4px;background-color:").append(branding.accentColor())
+                .append(";font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>")
                 .append("<td bgcolor=\"#f7f9fc\" style=\"padding:18px 20px;background-color:#f7f9fc;border:1px solid #e8edf4;border-left:0;border-radius:0 10px 10px 0;font-size:15px;line-height:25px;color:#34445b;word-break:break-word;overflow-wrap:anywhere;\">")
                 .append(paragraphs(content)).append("</td></tr></table>");
 
