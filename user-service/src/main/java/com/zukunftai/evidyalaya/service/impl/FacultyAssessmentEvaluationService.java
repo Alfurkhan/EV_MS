@@ -191,7 +191,10 @@ public class FacultyAssessmentEvaluationService {
                             "RESULT:ASSESSMENT:" + assessment.getId()
                                     + ":REVISION:" + assessment.getResultsRevision(),
                             true,
-                            recipientEmailData
+                            recipientEmailData,
+                            List.of(),
+                            Map.of("facultyName", currentUser().getFullName(),
+                                    "facultyDesignation", "Faculty · " + assessment.getSubject().getName())
                     )
             );
         }
