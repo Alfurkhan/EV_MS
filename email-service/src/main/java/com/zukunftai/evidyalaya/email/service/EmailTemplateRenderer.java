@@ -150,9 +150,13 @@ public class EmailTemplateRenderer {
                 <tr><td class="email-content" style="padding:28px 32px 30px;">
                 """);
         if (hasText(type)) {
+            String badgeBackground = branding.enabled()
+                    ? branding.primaryColor() : branding.accentSoftColor();
+            String badgeTextColor = branding.enabled() ? "#ffffff" : branding.accentTextColor();
             html.append("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"margin:0 0 18px;\"><tr><td bgcolor=\"")
-                    .append(branding.primaryColor()).append("\" style=\"padding:6px 10px;background-color:")
-                    .append(branding.primaryColor()).append(";color:#ffffff;font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
+                    .append(badgeBackground).append("\" style=\"padding:6px 10px;background-color:")
+                    .append(badgeBackground).append(";color:").append(badgeTextColor)
+                    .append(";font-size:11px;line-height:14px;font-weight:700;letter-spacing:.5px;border-radius:999px;\">")
                     .append(escape(type.replace('_', ' '))).append("</td></tr></table>");
         }
         html.append("<p style=\"margin:0 0 16px;font-size:15px;line-height:23px;color:#243047;\">Hello ")
