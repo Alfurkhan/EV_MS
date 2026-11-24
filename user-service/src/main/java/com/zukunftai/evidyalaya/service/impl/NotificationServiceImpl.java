@@ -284,6 +284,9 @@ public class NotificationServiceImpl implements NotificationService {
         payload.put("createdAt", notification.getCreatedAt() == null
                 ? Instant.now().toString()
                 : notification.getCreatedAt().toString());
+        if (command.emailTemplateData() != null && !command.emailTemplateData().isEmpty()) {
+            payload.putAll(command.emailTemplateData());
+        }
 
         if (attachmentSnapshotIds != null && !attachmentSnapshotIds.isEmpty()) {
             payload.put("attachmentSnapshotIds", attachmentSnapshotIds);
