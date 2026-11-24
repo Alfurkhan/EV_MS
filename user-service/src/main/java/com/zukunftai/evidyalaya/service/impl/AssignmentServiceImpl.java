@@ -153,7 +153,7 @@ public class AssignmentServiceImpl implements AssignmentService {
                                 assignment.getAttachmentName(),
                                 assignment.getAttachmentContentType())),
                 Map.of("facultyName", assignment.getFaculty().getFullName(),
-                        "facultyDesignation", "Faculty · " + assignment.getSubject().getName()));
+                        "facultyDesignation", "Faculty · " + assignment.getSubject().getName())));
         return published;
     }
 
