@@ -26,6 +26,18 @@ public record NotificationCommand(
             String sourceType, Long sourceId, String title, String message,
             String category, String priority, String targetUrl,
             String deduplicationKeyPrefix, boolean emailEligible,
+            Map<Long, Map<String, Object>> recipientEmailData,
+            List<EmailAttachmentSource> attachmentSources
+    ) {
+        this(sourceType, sourceId, title, message, category, priority,
+                targetUrl, deduplicationKeyPrefix, emailEligible,
+                recipientEmailData, attachmentSources, Map.of());
+    }
+
+    public NotificationCommand(
+            String sourceType, Long sourceId, String title, String message,
+            String category, String priority, String targetUrl,
+            String deduplicationKeyPrefix, boolean emailEligible,
             Map<Long, Map<String, Object>> recipientEmailData
     ) {
         this(sourceType, sourceId, title, message, category, priority,
