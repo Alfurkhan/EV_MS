@@ -422,7 +422,10 @@ public class AssessmentServiceImpl implements AssessmentService {
                         : List.of(new EmailAttachmentSource(
                                 resolveStoredAttachment(assessment.getAttachmentPath()).toString(),
                                 assessment.getAttachmentName(),
-                                assessment.getAttachmentContentType())));
+                                assessment.getAttachmentContentType())),
+                publishedByAdmin ? Map.of() : Map.of(
+                        "facultyName", assessment.getFaculty().getFullName(),
+                        "facultyDesignation", "Faculty · " + assessment.getSubject().getName()));
 
         if (publishedByAdmin) {
             List<User> affectedUsers = new ArrayList<>(students);
