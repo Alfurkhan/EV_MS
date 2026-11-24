@@ -255,7 +255,7 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("background-color:#0D9488;color:#ffffff"));
         assertTrue(rendered.html().contains("color:#0D9488;font-weight:700"));
         assertTrue(rendered.html().contains("bgcolor=\"#7C3AED\" style=\"padding:6px 10px;background-color:#7C3AED;color:#ffffff"));
-        assertTrue(rendered.html().contains("bgcolor=\"#D97706\" style=\"width:3px;background-color:#D97706;border-radius:10px 0 0 10px;\""));
+        assertTrue(rendered.html().contains("bgcolor=\"#D97706\" style=\"width:4px;min-width:4px;background-color:#D97706;font-size:1px;line-height:1px;mso-line-height-rule:exactly;border-radius:10px 0 0 10px;\">&nbsp;</td>"));
         assertTrue(rendered.html().contains("background-color:#FBF1E6;border:1px solid #F4D9B9"));
         assertTrue(rendered.html().contains("color:#AE5F05;"));
         assertTrue(rendered.html().contains("PDF</td>"));
