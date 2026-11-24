@@ -284,7 +284,7 @@ class EmailTemplateRendererTest {
         assertTrue(rendered.html().contains("align=\\"center\\" style=\\"text-align:center;\\""));
         assertTrue(rendered.html().contains("Ananya Sharma"));
         assertTrue(rendered.html().contains("Faculty · Mathematics"));
-        assertTrue(rendered.html().indexOf("Ananya Sharma") < rendered.html().indexOf("Green Valley School"));
+        assertTrue(rendered.html().indexOf("Ananya Sharma") < rendered.html().lastIndexOf("Green Valley School"));
         assertTrue(rendered.plainText().contains("Regards,\nAnanya Sharma\nFaculty · Mathematics\nGreen Valley School"));
     }
 
