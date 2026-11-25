@@ -330,7 +330,8 @@ public class ReportService {
                             String.valueOf(counts.absent),
                             String.valueOf(counts.excused),
                             String.valueOf(counts.unmarked),
-                            counts.attendancePercent()
+                            counts.attendancePercent(),
+                            counts.attendanceFlag()
                     );
                 }).toList();
 
@@ -375,6 +376,10 @@ public class ReportService {
             unmarkedTotal += counts.unmarked;
         }
         int recordedTotal = expectedTotal - unmarkedTotal;
+        long lowAttendanceStudents = studentCounts.values().stream()
+                .filter(counts -> counts.attendancePercentValue() != null && counts.attendancePercentValue() < 75.0)
+                .count();
+        long incompleteStudents = studentCounts.values().stream().filter(counts -> counts.unmarked > 0).count();
         List<ReportData.SummaryMetric> metrics = List.of(
                 metric("Completed Sessions", String.valueOf(sessions.size())),
                 metric("Enrolled Students", String.valueOf(enrollments.size())),
@@ -385,7 +390,9 @@ public class ReportService {
                 metric("Late", String.valueOf(totals.late)),
                 metric("Absent", String.valueOf(totals.absent)),
                 metric("Excused", String.valueOf(totals.excused)),
-                metric("Attendance Rate", totals.attendancePercent())
+                metric("Attendance Rate", totals.attendancePercent()),
+                metric("Students Below 75%", String.valueOf(lowAttendanceStudents)),
+                metric("Students With Unmarked Sessions", String.valueOf(incompleteStudents))
         );
 
         String filterText = dateRangeWithinYear ? "Date: " + effectiveStart + " to " + effectiveEnd
@@ -397,7 +404,7 @@ public class ReportService {
         if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
 
         return buildReport("Attendance Report", year.getName(),
-                List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance %"),
+                List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance %", "Attendance Flag"),
                 studentRows, filterText, metrics,
                 List.of(ReportData.ReportSection.builder()
                         .title("Session-wise Attendance Audit")
@@ -438,10 +445,22 @@ public class ReportService {
             };
         }
 
-        String attendancePercent() {
+        Double attendancePercentValue() {
             int denominator = present + late + absent;
-            if (denominator == 0) return "—";
-            return String.format(Locale.ROOT, "%.2f%%", ((present + late) * 100.0) / denominator);
+            return denominator == 0 ? null : ((present + late) * 100.0) / denominator;
+        }
+
+        String attendancePercent() {
+            Double percentage = attendancePercentValue();
+            return percentage == null ? "—" : String.format(Locale.ROOT, "%.2f%%", percentage);
+        }
+
+        String attendanceFlag() {
+            Double percentage = attendancePercentValue();
+            if (percentage != null && percentage < 75.0) return "Low Attendance";
+            if (unmarked > 0) return "Incomplete";
+            if (percentage == null) return "No Sessions";
+            return "Good";
         }
     }
 
@@ -625,8 +644,13 @@ public class ReportService {
                     int end = Math.min(data.getRows().size(), start + mainRowsPerPage);
                     for (int rowIndex = start; rowIndex < end; rowIndex++) {
                         List<String> row = data.getRows().get(rowIndex);
-                        if (rowIndex % 2 == 1) {
-                            stream.setNonStrokingColor(new Color(245, 247, 250));
+                        String attendanceFlag = data.getColumns().contains("Attendance Flag") && row.size() > data.getColumns().indexOf("Attendance Flag")
+                                ? row.get(data.getColumns().indexOf("Attendance Flag")) : "";
+                        Color rowBackground = attendanceFlag.equals("Low Attendance") ? new Color(255, 235, 235)
+                                : attendanceFlag.equals("Incomplete") ? new Color(255, 247, 220)
+                                : rowIndex % 2 == 1 ? new Color(245, 247, 250) : null;
+                        if (rowBackground != null) {
+                            stream.setNonStrokingColor(rowBackground);
                             stream.addRect(margin, y - rowHeight + 3, usableWidth, rowHeight);
                             stream.fill();
                         }
@@ -807,6 +831,12 @@ public class ReportService {
             CellStyle alternateRowStyle = workbook.createCellStyle();
             alternateRowStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             alternateRowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            CellStyle lowAttendanceStyle = workbook.createCellStyle();
+            lowAttendanceStyle.setFillForegroundColor(IndexedColors.ROSE.getIndex());
+            lowAttendanceStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            CellStyle incompleteStyle = workbook.createCellStyle();
+            incompleteStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+            incompleteStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             int mainDataStart = mainHeaderRow + 1;
             for (int rowIndex = 0; rowIndex < data.getRows().size(); rowIndex++) {
                 Row row = sheet.createRow(mainDataStart + rowIndex);
@@ -814,14 +844,18 @@ public class ReportService {
                 for (int column = 0; column < data.getColumns().size(); column++) {
                     Cell cell = row.createCell(column);
                     cell.setCellValue(column < values.size() ? values.get(column) : "");
-                    if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
+                    String flag = data.getColumns().contains("Attendance Flag") && values.size() > data.getColumns().indexOf("Attendance Flag")
+                            ? values.get(data.getColumns().indexOf("Attendance Flag")) : "";
+                    if (flag.equals("Low Attendance")) cell.setCellStyle(lowAttendanceStyle);
+                    else if (flag.equals("Incomplete")) cell.setCellStyle(incompleteStyle);
+                    else if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
                 }
             }
             for (int column = 0; column < data.getColumns().size(); column++) {
                 String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
                 int width = heading.contains("email") ? 36 : heading.contains("student") || heading.contains("faculty name") ? 30
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
-                        : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 18;
+                        : heading.contains("attendance flag") ? 22 : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 18;
                 sheet.setColumnWidth(column, width * 256);
             }
             int mainDataEnd = mainDataStart + data.getRows().size() - 1;
