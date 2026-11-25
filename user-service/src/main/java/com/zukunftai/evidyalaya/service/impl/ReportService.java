@@ -492,7 +492,7 @@ public class ReportService {
             float topInset = (availableHeight + 12f - displayHeight) / 2f;
 
             int pictureIndex = workbook.addPicture(Files.readAllBytes(path), pictureType);
-            XSSFDrawing drawing = xssf.createSheetDrawingPatriarch(sheet);
+            XSSFDrawing drawing = (XSSFDrawing) sheet.createDrawingPatriarch();
             XSSFClientAnchor anchor = new XSSFClientAnchor(
                     Units.pixelToEMU(leftInset), Units.pixelToEMU(topInset),
                     Units.pixelToEMU(displayWidth - sheet.getColumnWidthInPixels(0)),
