@@ -272,7 +272,7 @@ public class ReportService {
                     float rowHeight = 18;
                     float columnWidth = usableWidth / Math.max(1, data.getColumns().size());
                     stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
-                    stream.addRect(margin, y - headerHeight + 4, usableWidth, headerHeight, PDPageContentStream.AppendMode.APPEND);
+                    stream.addRect(margin, y - headerHeight + 4, usableWidth, headerHeight);
                     stream.fill();
                     for (int col = 0; col < data.getColumns().size(); col++) {
                         drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 8,
@@ -284,7 +284,7 @@ public class ReportService {
                         List<String> row = data.getRows().get(rowIndex);
                         if (rowIndex % 2 == 1) {
                             stream.setNonStrokingColor(new Color(245, 247, 250));
-                            stream.addRect(margin, y - rowHeight + 4, usableWidth, rowHeight, PDPageContentStream.AppendMode.APPEND);
+                            stream.addRect(margin, y - rowHeight + 4, usableWidth, rowHeight);
                             stream.fill();
                         }
                         for (int col = 0; col < data.getColumns().size(); col++) {
