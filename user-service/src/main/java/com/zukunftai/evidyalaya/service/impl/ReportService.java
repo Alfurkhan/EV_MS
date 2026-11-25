@@ -71,6 +71,9 @@ public class ReportService {
         if (sectionId != null) {
             Section section = sectionRepository.findById(sectionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found."));
+            if (!section.getGrade().getAcademicYear().getId().equals(year.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected academic year.");
+            }
             if (gradeId != null && !section.getGrade().getId().equals(gradeId)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected grade.");
             }
