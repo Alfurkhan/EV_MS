@@ -586,7 +586,7 @@ public class ReportService {
             int pageNumber = 0;
 
             for (int pageIndex = 0; pageIndex < mainPages; pageIndex++) {
-                PDRectangle pageSize = data.getColumns().size() >= 8 ? PDRectangle.A4.rotate() : PDRectangle.A4;
+                PDRectangle pageSize = data.getColumns().size() >= 8 ? new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()) : PDRectangle.A4;
                 PDPage page = new PDPage(pageSize);
                 document.addPage(page);
                 pageNumber++;
