@@ -114,9 +114,9 @@ class ReportServiceTest {
 
         assertEquals("Attendance Report · Date: 2026-06-01 to 2027-03-31 · All grades and sections", report.getReportTitle());
         assertEquals("2026-2027", report.getAcademicYear());
-        assertEquals(11, report.getColumns().size());
+        assertEquals(12, report.getColumns().size());
         assertTrue(report.getRows().isEmpty());
-        assertEquals(10, report.getSummary().size());
+        assertEquals(12, report.getSummary().size());
         assertEquals("Completed Sessions", report.getSummary().get(0).getLabel());
         assertEquals("0", report.getSummary().get(0).getValue());
         assertEquals("Session-wise Attendance Audit", report.getSections().get(0).getTitle());
@@ -195,6 +195,7 @@ class ReportServiceTest {
         assertEquals("100.00%", report.getRows().get(0).get(10));
         assertEquals("1", report.getRows().get(1).get(7));
         assertEquals("0.00%", report.getRows().get(1).get(10));
+        assertEquals("Low Attendance", report.getRows().get(1).get(11));
         assertEquals("50.00%", report.getSummary().get(9).getValue());
         assertEquals("Complete", report.getSections().get(0).getRows().get(0).get(11));
 
