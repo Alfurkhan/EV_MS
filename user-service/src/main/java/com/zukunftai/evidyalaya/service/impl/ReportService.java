@@ -388,7 +388,8 @@ public class ReportService {
                 metric("Attendance Rate", totals.attendancePercent())
         );
 
-        String filterText = "Date: " + effectiveStart + " to " + effectiveEnd;
+        String filterText = dateRangeWithinYear ? "Date: " + effectiveStart + " to " + effectiveEnd
+                : "Date: No overlap with the selected academic year";
         if (selectedSection != null) filterText += " · Grade: " + selectedSection.getGrade().getName() + " · Section: " + selectedSection.getName();
         else if (selectedGrade != null) filterText += " · Grade: " + selectedGrade.getName() + " · All sections";
         else filterText += " · All grades and sections";
