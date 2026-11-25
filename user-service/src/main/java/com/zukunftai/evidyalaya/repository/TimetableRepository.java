@@ -20,8 +20,6 @@ public interface TimetableRepository extends JpaRepository<Timetable, Long> {
 
     List<Timetable> findByAcademicYear(AcademicYear academicYear);
 
-    List<Timetable> findByAcademicYearAndStatus(AcademicYear academicYear, TimetableStatus status);
-
     List<Timetable> findByGrade(Grade grade);
 
     List<Timetable> findBySection(Section section);
