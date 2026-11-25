@@ -38,10 +38,9 @@ export async function previewStudentRoster(filters: ReportFilters): Promise<Repo
     return data;
 }
 
-export async function previewFacultyDirectory(): Promise<ReportData> {
-    const { data } = await api.get<ReportData>("/reports/faculty-directory");
-    return data;
-}
+export async function previewFacultyDirectory(filters: ReportFilters = {}): Promise<ReportData> {
+    const { data } = await api.get<ReportData>("/reports/faculty-directory", { params: queryParams(filters) });
+    return data;}
 
 export async function previewMyClassStrength(academicYearId?: number): Promise<ReportData> {
     const { data } = await api.get<ReportData>("/reports/my-class-strength", {
