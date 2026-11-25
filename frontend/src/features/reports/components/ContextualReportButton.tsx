@@ -35,6 +35,7 @@ export default function ContextualReportButton({ report }: Props) {
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [filters, setFilters] = useState<ReportFilters>({ accountStatus: "all" });
     const [data, setData] = useState<ReportData | null>(null);
+    const [previewStale, setPreviewStale] = useState(false);
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
     const previewRequestRef = useRef(0);
@@ -42,6 +43,7 @@ export default function ContextualReportButton({ report }: Props) {
     const updateReportFilters = (updater: (current: ReportFilters) => ReportFilters) => {
         previewRequestRef.current += 1;
         setData(null);
+        setPreviewStale(true);
         setLoading(false);
         setFilters(updater);
     };
@@ -99,7 +101,10 @@ export default function ContextualReportButton({ report }: Props) {
                 : report === "faculty-directory"
                     ? await previewFacultyDirectory(filters)
                     : await previewMyClassStrength(filters.academicYearId);
-            if (requestId === previewRequestRef.current) setData(result);
+            if (requestId === previewRequestRef.current) {
+                setData(result);
+                setPreviewStale(false);
+            }
         } catch (error: any) {
             if (requestId === previewRequestRef.current) {
                 setData(null);
@@ -200,6 +205,7 @@ export default function ContextualReportButton({ report }: Props) {
                                 </button>
                             </div>
 
+                            {previewStale && !data && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Filters changed. Generate a new preview to view the updated report.</div>}
                             {data && <div className="overflow-hidden rounded-xl border border-slate-200">
                                 <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="flex min-w-0 items-center gap-3">
