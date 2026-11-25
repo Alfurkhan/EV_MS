@@ -3,7 +3,6 @@ package com.zukunftai.evidyalaya.service.impl;
 import com.zukunftai.evidyalaya.database.*;
 import com.zukunftai.evidyalaya.model.ReportData;
 import com.zukunftai.evidyalaya.repository.*;
-import com.zukunftai.evidyalaya.service.AcademicYearService;
 import com.zukunftai.evidyalaya.service.SchoolSettingsService;
 import com.zukunftai.evidyalaya.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +15,11 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
+import org.apache.poi.xssf.usermodel.XSSFPicture;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,11 +28,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -146,19 +151,14 @@ public class ReportService {
         AcademicYear year = resolveAcademicYear(academicYearId);
         Set<SectionScope> scope = getFacultyScope(actor, year);
         List<List<String>> rows = scope.stream()
-                .map(sectionScope -> enrollmentRepository.findByAcademicYearAndActiveTrue(year).stream()
-                        .filter(enrollment -> enrollment.getGrade().getId().equals(sectionScope.gradeId()))
-                        .filter(enrollment -> enrollment.getSection().getId().equals(sectionScope.sectionId()))
-                        .findFirst()
-                        .map(enrollment -> List.of(
-                                enrollment.getGrade().getName(),
-                                enrollment.getSection().getName(),
-                                String.valueOf(enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(
-                                        year, enrollment.getGrade(), enrollment.getSection()))
-                        ))
-                        .orElse(null))
-                .filter(Objects::nonNull)
-                .distinct()
+                .map(sectionScope -> {
+                    Grade grade = gradeRepository.findById(sectionScope.gradeId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned grade not found."));
+                    Section section = sectionRepository.findById(sectionScope.sectionId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned section not found."));
+                    long count = enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(year, grade, section);
+                    return List.of(grade.getName(), section.getName(), String.valueOf(count));
+                })
                 .sorted(Comparator.comparing(row -> row.get(0) + " " + row.get(1)))
                 .toList();
         return buildReport("My Class Strength", year.getName(), List.of("Grade", "Section", "Active Students"), rows, "Assigned classes only");
@@ -250,6 +250,7 @@ public class ReportService {
                     float usableWidth = pageWidth - margin * 2;
                     float y = page.getMediaBox().getHeight() - margin;
 
+                    drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageWidth - margin - 42, y - 34);
                     drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 15,
                             margin, y, data.getSchool().getName(), color(data.getSchool().getPrimaryColor()));
                     y -= 18;
@@ -360,6 +361,7 @@ public class ReportService {
             contactRow.createCell(0).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
 
+            embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl());
             Row headerRow = sheet.createRow(6);
             for (int column = 0; column < data.getColumns().size(); column++) {
                 Cell cell = headerRow.createCell(column);
@@ -380,6 +382,37 @@ public class ReportService {
             sheet.createFreezePane(0, 7);
             workbook.write(output);
             return output.toByteArray();
+        }
+    }
+
+    private void drawSchoolLogo(PDDocument document, PDPageContentStream stream, String logoUrl, float x, float y) {
+        if (blank(logoUrl) || !logoUrl.startsWith("/public/school-branding/logo/")) return;
+        try {
+            String fileName = logoUrl.substring("/public/school-branding/logo/".length());
+            Path path = brandingStorageService.resolve(fileName);
+            PDImageXObject image = PDImageXObject.createFromFileByContent(path.toFile(), document);
+            float scale = Math.min(42f / image.getWidth(), 42f / image.getHeight());
+            stream.drawImage(image, x, y, image.getWidth() * scale, image.getHeight() * scale);
+        } catch (Exception ignored) {
+            // Unsupported image formats or missing optional logo should not block report generation.
+        }
+    }
+
+    private void embedExcelLogo(Workbook workbook, Sheet sheet, String logoUrl) {
+        if (blank(logoUrl) || !logoUrl.startsWith("/public/school-branding/logo/") || !(workbook instanceof XSSFWorkbook xssf)) return;
+        try {
+            String fileName = logoUrl.substring("/public/school-branding/logo/".length());
+            Path path = brandingStorageService.resolve(fileName);
+            String extension = path.getFileName().toString().toLowerCase(Locale.ROOT);
+            int pictureType = extension.endsWith(".png") ? Workbook.PICTURE_TYPE_PNG : Workbook.PICTURE_TYPE_JPEG;
+            if (extension.endsWith(".webp")) return;
+            int pictureIndex = workbook.addPicture(Files.readAllBytes(path), pictureType);
+            XSSFDrawing drawing = xssf.getSheetAt(0).createDrawingPatriarch();
+            XSSFClientAnchor anchor = new XSSFClientAnchor(0, 0, 0, 0, 5, 0, 7, 4);
+            anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_DONT_RESIZE);
+            drawing.createPicture(anchor, pictureIndex);
+        } catch (Exception ignored) {
+            // Optional logo embedding must not prevent exporting a report.
         }
     }
 
