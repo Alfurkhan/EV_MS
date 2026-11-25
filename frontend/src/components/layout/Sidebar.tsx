@@ -16,6 +16,7 @@ import {
     Megaphone,
     Settings,
     LogOut,
+    FileText,
 } from "lucide-react";
 
 type Role =
@@ -151,6 +152,18 @@ const menu: MenuSection[] = [
                 label: "Academic Management",
                 path: "/academic-management",
                 allowedRoles: ["ROLE_ADMIN"],
+            },
+        ],
+    },
+
+    {
+        section: "REPORTS",
+        items: [
+            {
+                icon: FileText,
+                label: "Reports",
+                path: "/reports",
+                allowedRoles: ["ROLE_ADMIN", "ROLE_FACULTY"],
             },
         ],
     },
