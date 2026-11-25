@@ -3,6 +3,9 @@ package com.zukunftai.evidyalaya.service.impl;
 import com.zukunftai.evidyalaya.database.Role;
 import com.zukunftai.evidyalaya.database.RoleName;
 import com.zukunftai.evidyalaya.database.User;
+import com.zukunftai.evidyalaya.database.AcademicYear;
+import com.zukunftai.evidyalaya.repository.AttendanceRepository;
+import com.zukunftai.evidyalaya.repository.ClassSessionRepository;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.SchoolSettingsService;
 import com.zukunftai.evidyalaya.service.UserService;
@@ -14,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +34,8 @@ class ReportServiceTest {
     @Mock private SectionRepository sectionRepository;
     @Mock private SubjectRepository subjectRepository;
     @Mock private TimetableRepository timetableRepository;
+    @Mock private AttendanceRepository attendanceRepository;
+    @Mock private ClassSessionRepository classSessionRepository;
     @Mock private SchoolSettingsService schoolSettingsService;
     @Mock private UserService userService;
     @Mock private SchoolBrandingStorageService brandingStorageService;
@@ -85,6 +92,66 @@ class ReportServiceTest {
         assertNotNull(excel);
         assertTrue(excel.length > 4);
         assertEquals("PK", new String(excel, 0, 2));
+    }
+
+
+    @Test
+    void attendanceReportPreviewIncludesSummaryAndSessionAuditSection() {
+        AcademicYear year = AcademicYear.builder()
+                .id(7L)
+                .name("2026-2027")
+                .startDate(LocalDate.of(2026, 6, 1))
+                .endDate(LocalDate.of(2027, 3, 31))
+                .active(true)
+                .build();
+        when(academicYearRepository.findById(7L)).thenReturn(Optional.of(year));
+        when(enrollmentRepository.findByAcademicYearAndActiveTrue(year)).thenReturn(List.of());
+        when(classSessionRepository.findBySessionDateBetweenAndStatus(
+                LocalDate.of(2026, 6, 1), LocalDate.of(2027, 3, 31),
+                com.zukunftai.evidyalaya.model.ClassSessionStatus.COMPLETED)).thenReturn(List.of());
+
+        var report = reportService.getAttendanceReport(7L, null, null, null, null, "ALL");
+
+        assertEquals("Attendance Report · Date: 2026-06-01 to 2027-03-31 · All grades and sections", report.getReportTitle());
+        assertEquals("2026-2027", report.getAcademicYear());
+        assertEquals(11, report.getColumns().size());
+        assertTrue(report.getRows().isEmpty());
+        assertEquals(10, report.getSummary().size());
+        assertEquals("Completed Sessions", report.getSummary().get(0).getLabel());
+        assertEquals("0", report.getSummary().get(0).getValue());
+        assertEquals("Session-wise Attendance Audit", report.getSections().get(0).getTitle());
+        assertTrue(report.getSections().get(0).getRows().isEmpty());
+    }
+
+    @Test
+    void attendanceReportRejectsReversedDateRange() {
+        AcademicYear year = AcademicYear.builder()
+                .id(7L)
+                .name("2026-2027")
+                .startDate(LocalDate.of(2026, 6, 1))
+                .endDate(LocalDate.of(2027, 3, 31))
+                .active(true)
+                .build();
+        when(academicYearRepository.findById(7L)).thenReturn(Optional.of(year));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> reportService.getAttendanceReport(7L, null, null,
+                        LocalDate.of(2026, 8, 10), LocalDate.of(2026, 8, 1), "ALL"));
+    }
+
+    @Test
+    void attendanceReportRejectsUnknownStatusFilter() {
+        AcademicYear year = AcademicYear.builder()
+                .id(7L)
+                .name("2026-2027")
+                .startDate(LocalDate.of(2026, 6, 1))
+                .endDate(LocalDate.of(2027, 3, 31))
+                .active(true)
+                .build();
+        when(academicYearRepository.findById(7L)).thenReturn(Optional.of(year));
+
+        assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> reportService.getAttendanceReport(7L, null, null, null, null, "SUSPENDED"));
     }
 
     @Test
