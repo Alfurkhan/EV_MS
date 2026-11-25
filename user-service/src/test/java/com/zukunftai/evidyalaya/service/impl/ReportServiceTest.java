@@ -105,7 +105,7 @@ class ReportServiceTest {
                 .active(true)
                 .build();
         when(academicYearRepository.findById(7L)).thenReturn(Optional.of(year));
-        when(enrollmentRepository.findByAcademicYearAndActiveTrue(year)).thenReturn(List.of());
+        when(enrollmentRepository.findByAcademicYear(year)).thenReturn(List.of());
         when(classSessionRepository.findBySessionDateBetweenAndStatus(
                 LocalDate.of(2026, 6, 1), LocalDate.of(2027, 3, 31),
                 com.zukunftai.evidyalaya.model.ClassSessionStatus.COMPLETED)).thenReturn(List.of());
