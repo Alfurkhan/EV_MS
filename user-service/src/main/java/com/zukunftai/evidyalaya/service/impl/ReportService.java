@@ -390,7 +390,7 @@ public class ReportService {
                 metric("Late", String.valueOf(totals.late)),
                 metric("Absent", String.valueOf(totals.absent)),
                 metric("Excused", String.valueOf(totals.excused)),
-                metric("Attendance Rate", totals.attendancePercent()),
+                metric("Marked Attendance Rate", totals.attendancePercent()),
                 metric("Students Below 75%", String.valueOf(lowAttendanceStudents)),
                 metric("Students With Unmarked Sessions", String.valueOf(incompleteStudents))
         );
@@ -404,7 +404,7 @@ public class ReportService {
         if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
 
         return buildReport("Attendance Report", year.getName(),
-                List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance %", "Attendance Flag"),
+                List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Marked Attendance %", "Attendance Flag"),
                 studentRows, filterText, metrics,
                 List.of(ReportData.ReportSection.builder()
                         .title("Session-wise Attendance Audit")
