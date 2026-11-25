@@ -16,10 +16,9 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFColor;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
-import org.apache.poi.xssf.usermodel.XSSFPicture;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,8 +27,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
-import java.io.File;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -329,7 +326,7 @@ public class ReportService {
             titleFont.setFontHeightInPoints((short) 16);
             titleFont.setColor(IndexedColors.WHITE.getIndex());
             titleStyle.setFont(titleFont);
-            titleStyle.setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
+            ((XSSFCellStyle) titleStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
             titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             CellStyle headerStyle = workbook.createCellStyle();
@@ -337,10 +334,10 @@ public class ReportService {
             headerFont.setBold(true);
             headerFont.setColor(IndexedColors.WHITE.getIndex());
             headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
+            ((XSSFCellStyle) headerStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyle.setBorderBottom(BorderStyle.MEDIUM);
-            headerStyle.setBottomBorderColor(toXssfColor(workbook, data.getSchool().getAccentColor()));
+            ((XSSFCellStyle) headerStyle).setBottomBorderColor(toXssfColor(workbook, data.getSchool().getAccentColor()));
 
             Row schoolRow = sheet.createRow(0);
             schoolRow.createCell(0).setCellValue(data.getSchool().getName());
