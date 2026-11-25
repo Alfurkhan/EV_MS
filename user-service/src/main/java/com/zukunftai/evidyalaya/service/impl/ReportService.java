@@ -265,6 +265,7 @@ public class ReportService {
                 .filter(session -> sectionId == null || session.getTimetable().getSection().getId().equals(sectionId))
                 .filter(session -> !isFaculty || facultyScope.contains(new SectionScope(
                         session.getTimetable().getGrade().getId(), session.getTimetable().getSection().getId())))
+                .filter(session -> !isFaculty || session.getTimetable().getFaculty().getId().equals(actor.getId()))
                 .sorted(Comparator.comparing(ClassSession::getSessionDate)
                         .thenComparing(session -> session.getTimetable().getGrade().getName())
                         .thenComparing(session -> session.getTimetable().getSection().getName())
