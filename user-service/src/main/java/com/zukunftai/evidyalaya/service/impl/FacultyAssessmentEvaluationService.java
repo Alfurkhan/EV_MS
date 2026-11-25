@@ -178,6 +178,13 @@ public class FacultyAssessmentEvaluationService {
                 recipientEmailData.put(student.getId(), resultData);
             }
 
+            Map<String, Object> facultyTemplateData = new LinkedHashMap<>();
+            String facultyName = currentUser().getFullName();
+            if (facultyName != null && !facultyName.isBlank()) {
+                facultyTemplateData.put("facultyName", facultyName);
+                facultyTemplateData.put("facultyDesignation", "Faculty · " + assessment.getSubject().getName());
+            }
+
             notificationService.createForUsers(
                     recipients,
                     new NotificationCommand(
@@ -193,8 +200,7 @@ public class FacultyAssessmentEvaluationService {
                             true,
                             recipientEmailData,
                             List.of(),
-                            Map.of("facultyName", currentUser().getFullName(),
-                                    "facultyDesignation", "Faculty · " + assessment.getSubject().getName())
+                            facultyTemplateData
                     )
             );
         }
