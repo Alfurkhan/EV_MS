@@ -62,7 +62,7 @@ export async function downloadReport(
     const blobUrl = URL.createObjectURL(data);
     const anchor = document.createElement("a");
     anchor.href = blobUrl;
-    anchor.download = `${filenameStem || report}-report.${format}`;
+    anchor.download = filenameStem ? `${filenameStem}.${format}` : `${report}-report.${format}`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
