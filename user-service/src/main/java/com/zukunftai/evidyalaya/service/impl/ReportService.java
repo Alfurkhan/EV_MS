@@ -68,13 +68,14 @@ public class ReportService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected grade does not belong to the selected academic year.");
             }
         }
+        Section selectedSection = null;
         if (sectionId != null) {
-            Section section = sectionRepository.findById(sectionId)
+            selectedSection = sectionRepository.findById(sectionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found."));
-            if (!section.getGrade().getAcademicYear().getId().equals(year.getId())) {
+            if (!selectedSection.getGrade().getAcademicYear().getId().equals(year.getId())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected academic year.");
             }
-            if (gradeId != null && !section.getGrade().getId().equals(gradeId)) {
+            if (gradeId != null && !selectedSection.getGrade().getId().equals(gradeId)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected grade.");
             }
         }
@@ -99,7 +100,15 @@ public class ReportService {
                 .toList();
 
         String title = isFaculty ? "Assigned Class Student Roster" : "Student Enrollment Report";
-        String filterDescription = sectionId != null ? "Section-filtered" : gradeId != null ? "Grade-filtered" : "All classes";
+        String filterDescription;
+        if (selectedSection != null) {
+            filterDescription = "Grade: " + selectedSection.getGrade().getName() + " · Section: " + selectedSection.getName();
+        } else if (gradeId != null) {
+            Grade selectedGrade = gradeRepository.findById(gradeId).orElseThrow();
+            filterDescription = "Grade: " + selectedGrade.getName() + " · All sections";
+        } else {
+            filterDescription = "All grades and sections";
+        }
         return buildReport(title, year.getName(), List.of("Student", "Email", "Phone", "Grade", "Section", "Enrollment"), rows,
                 isFaculty ? "Faculty access · " + filterDescription : filterDescription);
     }
@@ -367,18 +376,22 @@ public class ReportService {
             headerStyle.setBorderBottom(BorderStyle.MEDIUM);
             ((XSSFCellStyle) headerStyle).setBottomBorderColor(toXssfColor(workbook, data.getSchool().getAccentColor()));
 
-            Row schoolRow = sheet.createRow(0);
-            schoolRow.createCell(0).setCellValue(data.getSchool().getName());
-            schoolRow.getCell(0).setCellStyle(titleStyle);
-            Row taglineRow = sheet.createRow(1);
-            taglineRow.createCell(0).setCellValue(data.getSchool().getTagline());
-            Row titleRow = sheet.createRow(2);
-            titleRow.createCell(0).setCellValue(data.getReportTitle());
-            Row metadataRow = sheet.createRow(3);
-            metadataRow.createCell(0).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
+            int lastColumn = Math.max(1, data.getColumns().size() - 1);
+            for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
+                Row headerRow = sheet.createRow(rowIndex);
+                headerRow.setHeightInPoints(rowIndex == 0 ? 32 : 22);
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowIndex, rowIndex, 1, lastColumn));
+            }
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 0, 0));
+            sheet.setColumnWidth(0, 16 * 256);
+            Row schoolRow = sheet.getRow(0);
+            schoolRow.createCell(1).setCellValue(data.getSchool().getName());
+            schoolRow.getCell(1).setCellStyle(titleStyle);
+            sheet.getRow(1).createCell(1).setCellValue(data.getSchool().getTagline());
+            sheet.getRow(2).createCell(1).setCellValue(data.getReportTitle());
+            sheet.getRow(3).createCell(1).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
                     + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size());
-            Row contactRow = sheet.createRow(4);
-            contactRow.createCell(0).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+            sheet.getRow(4).createCell(1).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
 
             embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl());
@@ -457,9 +470,10 @@ public class ReportService {
             if (extension.endsWith(".webp")) return;
             int pictureIndex = workbook.addPicture(Files.readAllBytes(path), pictureType);
             XSSFDrawing drawing = xssf.getSheetAt(0).createDrawingPatriarch();
-            XSSFClientAnchor anchor = new XSSFClientAnchor(0, 0, 0, 0, 5, 0, 7, 4);
+            XSSFClientAnchor anchor = new XSSFClientAnchor(2, 2, 2, 2, 0, 0, 1, 5);
             anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_DONT_RESIZE);
-            drawing.createPicture(anchor, pictureIndex);
+            var picture = drawing.createPicture(anchor, pictureIndex);
+            picture.resize(0.85);
         } catch (Exception ignored) {
             // Optional logo embedding must not prevent exporting a report.
         }
