@@ -248,6 +248,7 @@ public class ReportService {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             int rowIndex = 0;
             int pageNumber = 0;
+            int totalPages = Math.max(1, (int) Math.ceil(data.getRows().size() / 34.0));
             do {
                 PDPage page = new PDPage(PDRectangle.A4);
                 document.addPage(page);
@@ -283,13 +284,15 @@ public class ReportService {
 
                     float headerHeight = 22;
                     float rowHeight = 18;
-                    float columnWidth = usableWidth / Math.max(1, data.getColumns().size());
+                    float[] columnRatios = pdfColumnRatios(data.getColumns());
+                    float[] columnWidths = new float[data.getColumns().size()];
+                    for (int col = 0; col < columnWidths.length; col++) columnWidths[col] = usableWidth * columnRatios[col];
                     stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
                     stream.addRect(margin, y - headerHeight + 4, usableWidth, headerHeight);
                     stream.fill();
                     for (int col = 0; col < data.getColumns().size(); col++) {
                         drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 8,
-                                margin + col * columnWidth + 4, y - 11, truncate(data.getColumns().get(col), 20), Color.WHITE);
+                                margin + pdfColumnOffset(columnWidths, col) + 4, y - 11, truncate(data.getColumns().get(col), 20), Color.WHITE);
                     }
                     y -= headerHeight;
                     int rowsOnPage = 0;
@@ -303,7 +306,7 @@ public class ReportService {
                         for (int col = 0; col < data.getColumns().size(); col++) {
                             String value = col < row.size() ? row.get(col) : "";
                             drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7.5f,
-                                    margin + col * columnWidth + 4, y - 10, truncate(value, 27), Color.BLACK);
+                                    margin + pdfColumnOffset(columnWidths, col) + 4, y - 10, truncate(value, pdfTextLimit(columnWidths[col])), Color.BLACK);
                         }
                         y -= rowHeight;
                         rowIndex++;
@@ -316,7 +319,7 @@ public class ReportService {
                     drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, margin, 18,
                             data.getSchool().getName() + " · Generated " + data.getGeneratedAt(), Color.DARK_GRAY);
                     drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, pageWidth - margin - 40, 18,
-                            "Page " + pageNumber, Color.DARK_GRAY);
+                            "Page " + pageNumber + " of " + totalPages, Color.DARK_GRAY);
                 }
             } while (rowIndex < data.getRows().size());
             document.save(output);
@@ -385,12 +388,33 @@ public class ReportService {
             }
             for (int column = 0; column < data.getColumns().size(); column++) {
                 sheet.autoSizeColumn(column);
-                sheet.setColumnWidth(column, Math.min(sheet.getColumnWidth(column), 11000));
+                sheet.setColumnWidth(column, Math.min(sheet.getColumnWidth(column), 14000));
             }
+            int dataEndRow = 7 + data.getRows().size();
+            if (!data.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(6, dataEndRow - 1, 0, data.getColumns().size() - 1));
             sheet.createFreezePane(0, 7);
             workbook.write(output);
             return output.toByteArray();
         }
+    }
+
+    private float pdfColumnOffset(float[] widths, int column) {
+        float offset = 0;
+        for (int i = 0; i < column; i++) offset += widths[i];
+        return offset;
+    }
+
+    private int pdfTextLimit(float width) {
+        return Math.max(8, (int) (width / 4.2f));
+    }
+
+    private float[] pdfColumnRatios(List<String> columns) {
+        if (columns.size() == 6 && columns.get(0).equalsIgnoreCase("Student")) return new float[]{0.24f, 0.25f, 0.14f, 0.12f, 0.10f, 0.15f};
+        if (columns.size() == 6 && columns.get(0).toLowerCase(Locale.ROOT).contains("faculty")) return new float[]{0.22f, 0.24f, 0.14f, 0.22f, 0.09f, 0.09f};
+        float ratio = 1f / Math.max(1, columns.size());
+        float[] widths = new float[columns.size()];
+        Arrays.fill(widths, ratio);
+        return widths;
     }
 
     private void drawSchoolLogo(PDDocument document, PDPageContentStream stream, String logoUrl, float x, float y) {
