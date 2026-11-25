@@ -380,16 +380,24 @@ public class ReportService {
                 cell.setCellValue(data.getColumns().get(column));
                 cell.setCellStyle(headerStyle);
             }
+            CellStyle alternateRowStyle = workbook.createCellStyle();
+            alternateRowStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            alternateRowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             for (int rowIndex = 0; rowIndex < data.getRows().size(); rowIndex++) {
                 Row row = sheet.createRow(7 + rowIndex);
                 List<String> values = data.getRows().get(rowIndex);
                 for (int column = 0; column < data.getColumns().size(); column++) {
-                    row.createCell(column).setCellValue(column < values.size() ? values.get(column) : "");
+                    Cell cell = row.createCell(column);
+                    cell.setCellValue(column < values.size() ? values.get(column) : "");
+                    if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
                 }
             }
             for (int column = 0; column < data.getColumns().size(); column++) {
-                sheet.autoSizeColumn(column);
-                sheet.setColumnWidth(column, Math.min(sheet.getColumnWidth(column), 14000));
+                String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
+                int width = heading.contains("email") ? 36 : heading.contains("student") || heading.contains("faculty name") ? 30
+                        : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
+                        : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 18;
+                sheet.setColumnWidth(column, width * 256);
             }
             int dataEndRow = 7 + data.getRows().size();
             if (!data.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(6, dataEndRow - 1, 0, data.getColumns().size() - 1));
