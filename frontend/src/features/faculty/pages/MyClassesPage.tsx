@@ -19,6 +19,7 @@ import {
 } from "../services/facultyService";
 
 import type { FacultyClass } from "../types/facultyClass";
+import ContextualReportButton from "../../reports/components/ContextualReportButton";
 
 export default function MyClassesPage() {
     const {
@@ -399,6 +400,7 @@ export default function MyClassesPage() {
                     </span>
                 </div>
             )}
+                <ContextualReportButton report="my-class-strength" />
             </> : <FacultyTimetableDraftPage view={activeView} onViewChange={setActiveView} />}
         </div>
     );
