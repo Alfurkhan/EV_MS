@@ -14,6 +14,23 @@ public class ReportData {
     private SchoolIdentity school;
     private List<String> columns;
     private List<List<String>> rows;
+    private List<SummaryMetric> summary;
+    private List<ReportSection> sections;
+
+    @Data
+    @Builder
+    public static class SummaryMetric {
+        private String label;
+        private String value;
+    }
+
+    @Data
+    @Builder
+    public static class ReportSection {
+        private String title;
+        private List<String> columns;
+        private List<List<String>> rows;
+    }
 
     @Data
     @Builder
