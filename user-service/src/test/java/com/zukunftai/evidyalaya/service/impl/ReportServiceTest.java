@@ -203,6 +203,11 @@ class ReportServiceTest {
         assertEquals(1, filtered.getRows().size());
         assertEquals("A Student", filtered.getRows().get(0).get(0));
         assertEquals(1, filtered.getSections().get(0).getRows().size());
+
+        byte[] pdf = reportService.exportAttendanceReport(7L, null, null, null, null, "ALL", "pdf");
+        byte[] xlsx = reportService.exportAttendanceReport(7L, null, null, null, null, "ALL", "xlsx");
+        assertEquals("%PDF", new String(pdf, 0, 4));
+        assertEquals("PK", new String(xlsx, 0, 2));
     }
 
     @Test
