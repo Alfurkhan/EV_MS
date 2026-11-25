@@ -23,6 +23,8 @@ export type ReportFilters = {
     academicYearId?: number;
     gradeId?: number;
     sectionId?: number;
+    subjectId?: number;
+    accountStatus?: string;
 };
 
 function queryParams(filters: ReportFilters) {
@@ -52,6 +54,7 @@ export async function downloadReport(
     report: "student-roster" | "faculty-directory" | "my-class-strength",
     format: "pdf" | "xlsx",
     filters: ReportFilters = {},
+    filenameStem?: string,
 ): Promise<void> {
     const { data } = await api.get<Blob>(`/reports/${report}/export`, {
         params: { ...queryParams(filters), format },
@@ -60,7 +63,7 @@ export async function downloadReport(
     const blobUrl = URL.createObjectURL(data);
     const anchor = document.createElement("a");
     anchor.href = blobUrl;
-    anchor.download = `${report}-report.${format}`;
+    anchor.download = `${filenameStem || report}-report.${format}`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
