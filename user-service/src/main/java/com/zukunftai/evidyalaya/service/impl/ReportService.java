@@ -551,85 +551,164 @@ public class ReportService {
 
     private byte[] createPdf(ReportData data) throws Exception {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            int rowIndex = 0;
+            int mainRowsPerPage = data.getColumns().size() >= 8 ? 24 : 32;
+            int mainPages = Math.max(1, (int) Math.ceil(data.getRows().size() / (double) mainRowsPerPage));
+            int sectionPages = data.getSections() == null ? 0 : data.getSections().stream()
+                    .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 28.0))).sum();
+            int totalPages = mainPages + sectionPages;
             int pageNumber = 0;
-            int totalPages = Math.max(1, (int) Math.ceil(data.getRows().size() / 34.0));
-            do {
-                PDPage page = new PDPage(PDRectangle.A4);
+
+            for (int pageIndex = 0; pageIndex < mainPages; pageIndex++) {
+                PDRectangle pageSize = data.getColumns().size() >= 8 ? PDRectangle.A4.rotate() : PDRectangle.A4;
+                PDPage page = new PDPage(pageSize);
                 document.addPage(page);
                 pageNumber++;
                 try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
-                    float margin = 36;
+                    float margin = 32;
                     float pageWidth = page.getMediaBox().getWidth();
                     float usableWidth = pageWidth - margin * 2;
                     float y = page.getMediaBox().getHeight() - margin;
-
                     drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageWidth - margin - 42, y - 34);
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 15,
+                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14,
                             margin, y, data.getSchool().getName(), color(data.getSchool().getPrimaryColor()));
-                    y -= 18;
-                    if (!blank(data.getSchool().getTagline())) {
-                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9, margin, y,
-                                data.getSchool().getTagline(), Color.DARK_GRAY);
-                        y -= 14;
-                    }
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 13, margin, y,
-                            data.getReportTitle(), Color.BLACK);
                     y -= 17;
-                    String metadata = (blank(data.getAcademicYear()) ? "" : "Academic Year: " + data.getAcademicYear() + "  ·  ")
-                            + "Generated: " + data.getGeneratedAt() + "  ·  Records: " + data.getRows().size();
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, margin, y, metadata, Color.DARK_GRAY);
-                    y -= 12;
-                    String contact = String.join("  ·  ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+                    if (!blank(data.getSchool().getTagline())) {
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, margin, y,
+                                data.getSchool().getTagline(), Color.DARK_GRAY);
+                        y -= 12;
+                    }
+                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11,
+                            margin, y, data.getReportTitle(), Color.BLACK);
+                    y -= 15;
+                    String metadata = (blank(data.getAcademicYear()) ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
+                            + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size();
+                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, margin, y, metadata, Color.DARK_GRAY);
+                    y -= 11;
+                    String contact = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                             data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
                     if (!contact.isEmpty()) {
-                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7.5f, margin, y, contact, Color.DARK_GRAY);
-                        y -= 16;
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6.5f, margin, y, contact, Color.DARK_GRAY);
+                        y -= 12;
                     }
-
-                    float headerHeight = 22;
-                    float rowHeight = 18;
+                    if (pageIndex == 0 && data.getSummary() != null && !data.getSummary().isEmpty()) {
+                        for (int i = 0; i < data.getSummary().size(); i += 3) {
+                            String line = data.getSummary().subList(i, Math.min(i + 3, data.getSummary().size())).stream()
+                                    .map(metric -> metric.getLabel() + ": " + metric.getValue()).collect(java.util.stream.Collectors.joining("   ·   "));
+                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 6.5f, margin, y, line, Color.DARK_GRAY);
+                            y -= 10;
+                        }
+                    }
+                    float headerHeight = 20;
+                    float rowHeight = data.getColumns().size() >= 8 ? 15 : 17;
                     float[] columnRatios = pdfColumnRatios(data.getColumns());
                     float[] columnWidths = new float[data.getColumns().size()];
                     for (int col = 0; col < columnWidths.length; col++) columnWidths[col] = usableWidth * columnRatios[col];
                     stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
-                    stream.addRect(margin, y - headerHeight + 4, usableWidth, headerHeight);
+                    stream.addRect(margin, y - headerHeight + 3, usableWidth, headerHeight);
                     stream.fill();
+                    float headerFontSize = data.getColumns().size() >= 8 ? 6.5f : 7.5f;
                     for (int col = 0; col < data.getColumns().size(); col++) {
-                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 8,
-                                margin + pdfColumnOffset(columnWidths, col) + 4, y - 11, truncate(data.getColumns().get(col), 20), Color.WHITE);
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), headerFontSize,
+                                margin + pdfColumnOffset(columnWidths, col) + 3, y - 10,
+                                truncate(data.getColumns().get(col), data.getColumns().size() >= 8 ? 14 : 20), Color.WHITE);
                     }
                     y -= headerHeight;
-                    int rowsOnPage = 0;
-                    while (rowIndex < data.getRows().size() && rowsOnPage < 34) {
+                    int start = pageIndex * mainRowsPerPage;
+                    int end = Math.min(data.getRows().size(), start + mainRowsPerPage);
+                    for (int rowIndex = start; rowIndex < end; rowIndex++) {
                         List<String> row = data.getRows().get(rowIndex);
                         if (rowIndex % 2 == 1) {
                             stream.setNonStrokingColor(new Color(245, 247, 250));
-                            stream.addRect(margin, y - rowHeight + 4, usableWidth, rowHeight);
+                            stream.addRect(margin, y - rowHeight + 3, usableWidth, rowHeight);
                             stream.fill();
                         }
                         for (int col = 0; col < data.getColumns().size(); col++) {
                             String value = col < row.size() ? row.get(col) : "";
-                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7.5f,
-                                    margin + pdfColumnOffset(columnWidths, col) + 4, y - 10, truncate(value, pdfTextLimit(columnWidths[col])), Color.BLACK);
+                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), data.getColumns().size() >= 8 ? 6 : 7,
+                                    margin + pdfColumnOffset(columnWidths, col) + 3, y - 9,
+                                    truncate(value, pdfTextLimit(columnWidths[col])), Color.BLACK);
                         }
                         y -= rowHeight;
-                        rowIndex++;
-                        rowsOnPage++;
                     }
-                    stream.setStrokingColor(color(data.getSchool().getAccentColor()));
-                    stream.moveTo(margin, 30);
-                    stream.lineTo(pageWidth - margin, 30);
-                    stream.stroke();
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, margin, 18,
-                            data.getSchool().getName() + " · Generated " + data.getGeneratedAt(), Color.DARK_GRAY);
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, pageWidth - margin - 40, 18,
-                            "Page " + pageNumber + " of " + totalPages, Color.DARK_GRAY);
+                    drawPdfFooter(stream, pageWidth, margin, pageNumber, totalPages, data);
                 }
-            } while (rowIndex < data.getRows().size());
+            }
+
+            if (data.getSections() != null) {
+                for (ReportData.ReportSection section : data.getSections()) {
+                    int rowsPerPage = 28;
+                    int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
+                    for (int pageIndex = 0; pageIndex < pages; pageIndex++) {
+                        PDRectangle pageSize = section.getColumns().size() >= 8 ? PDRectangle.A4.rotate() : PDRectangle.A4;
+                        PDPage page = new PDPage(pageSize);
+                        document.addPage(page);
+                        pageNumber++;
+                        try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
+                            float margin = 32;
+                            float pageWidth = page.getMediaBox().getWidth();
+                            float usableWidth = pageWidth - margin * 2;
+                            float y = page.getMediaBox().getHeight() - margin;
+                            drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageWidth - margin - 42, y - 34);
+                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 13,
+                                    margin, y, data.getSchool().getName(), color(data.getSchool().getPrimaryColor()));
+                            y -= 18;
+                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11,
+                                    margin, y, section.getTitle(), Color.BLACK);
+                            y -= 15;
+                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7,
+                                    margin, y, "Academic Year: " + safe(data.getAcademicYear()) + " · " + data.getReportTitle(), Color.DARK_GRAY);
+                            y -= 16;
+                            float headerHeight = 20;
+                            float rowHeight = section.getColumns().size() >= 8 ? 15 : 17;
+                            float[] ratios = pdfColumnRatios(section.getColumns());
+                            float[] widths = new float[ratios.length];
+                            for (int col = 0; col < widths.length; col++) widths[col] = usableWidth * ratios[col];
+                            stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
+                            stream.addRect(margin, y - headerHeight + 3, usableWidth, headerHeight);
+                            stream.fill();
+                            float headerSize = section.getColumns().size() >= 8 ? 6.5f : 7.5f;
+                            for (int col = 0; col < section.getColumns().size(); col++) {
+                                drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), headerSize,
+                                        margin + pdfColumnOffset(widths, col) + 3, y - 10,
+                                        truncate(section.getColumns().get(col), section.getColumns().size() >= 8 ? 14 : 20), Color.WHITE);
+                            }
+                            y -= headerHeight;
+                            int start = pageIndex * rowsPerPage;
+                            int end = Math.min(section.getRows().size(), start + rowsPerPage);
+                            for (int rowIndex = start; rowIndex < end; rowIndex++) {
+                                List<String> row = section.getRows().get(rowIndex);
+                                if (rowIndex % 2 == 1) {
+                                    stream.setNonStrokingColor(new Color(245, 247, 250));
+                                    stream.addRect(margin, y - rowHeight + 3, usableWidth, rowHeight);
+                                    stream.fill();
+                                }
+                                for (int col = 0; col < section.getColumns().size(); col++) {
+                                    String value = col < row.size() ? row.get(col) : "";
+                                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), section.getColumns().size() >= 8 ? 6 : 7,
+                                            margin + pdfColumnOffset(widths, col) + 3, y - 9,
+                                            truncate(value, pdfTextLimit(widths[col])), Color.BLACK);
+                                }
+                                y -= rowHeight;
+                            }
+                            drawPdfFooter(stream, pageWidth, margin, pageNumber, totalPages, data);
+                        }
+                    }
+                }
+            }
             document.save(output);
             return output.toByteArray();
         }
+    }
+
+    private void drawPdfFooter(PDPageContentStream stream, float pageWidth, float margin, int pageNumber, int totalPages, ReportData data) throws Exception {
+        stream.setStrokingColor(color(data.getSchool().getAccentColor()));
+        stream.moveTo(margin, 30);
+        stream.lineTo(pageWidth - margin, 30);
+        stream.stroke();
+        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, margin, 18,
+                data.getSchool().getName() + " · Generated " + data.getGeneratedAt(), Color.DARK_GRAY);
+        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, pageWidth - margin - 40, 18,
+                "Page " + pageNumber + " of " + totalPages, Color.DARK_GRAY);
     }
 
     private void drawText(PDPageContentStream stream, PDType1Font font, float size, float x, float y, String text, Color color) throws Exception {
@@ -663,6 +742,20 @@ public class ReportService {
             headerStyle.setBorderBottom(BorderStyle.MEDIUM);
             ((XSSFCellStyle) headerStyle).setBottomBorderColor(toXssfColor(workbook, data.getSchool().getAccentColor()));
 
+            CellStyle sectionStyle = workbook.createCellStyle();
+            Font sectionFont = workbook.createFont();
+            sectionFont.setBold(true);
+            sectionFont.setFontHeightInPoints((short) 12);
+            sectionFont.setColor(IndexedColors.WHITE.getIndex());
+            sectionStyle.setFont(sectionFont);
+            ((XSSFCellStyle) sectionStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
+            sectionStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle metricLabelStyle = workbook.createCellStyle();
+            Font metricFont = workbook.createFont();
+            metricFont.setBold(true);
+            metricLabelStyle.setFont(metricFont);
+
             int lastColumn = Math.max(1, data.getColumns().size() - 1);
             for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
                 Row headerRow = sheet.createRow(rowIndex);
@@ -681,7 +774,23 @@ public class ReportService {
             sheet.getRow(4).createCell(1).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
 
-            Row headerRow = sheet.createRow(6);
+            int rowCursor = 6;
+            if (data.getSummary() != null && !data.getSummary().isEmpty()) {
+                for (int i = 0; i < data.getSummary().size(); i += 3) {
+                    Row summaryRow = sheet.createRow(rowCursor++);
+                    for (int metricIndex = i; metricIndex < Math.min(i + 3, data.getSummary().size()); metricIndex++) {
+                        int cellIndex = (metricIndex - i) * 2;
+                        var metric = data.getSummary().get(metricIndex);
+                        Cell label = summaryRow.createCell(cellIndex);
+                        label.setCellValue(metric.getLabel());
+                        label.setCellStyle(metricLabelStyle);
+                        summaryRow.createCell(cellIndex + 1).setCellValue(metric.getValue());
+                    }
+                }
+                rowCursor++;
+            }
+            int mainHeaderRow = rowCursor;
+            Row headerRow = sheet.createRow(mainHeaderRow);
             for (int column = 0; column < data.getColumns().size(); column++) {
                 Cell cell = headerRow.createCell(column);
                 cell.setCellValue(data.getColumns().get(column));
@@ -690,8 +799,9 @@ public class ReportService {
             CellStyle alternateRowStyle = workbook.createCellStyle();
             alternateRowStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             alternateRowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            int mainDataStart = mainHeaderRow + 1;
             for (int rowIndex = 0; rowIndex < data.getRows().size(); rowIndex++) {
-                Row row = sheet.createRow(7 + rowIndex);
+                Row row = sheet.createRow(mainDataStart + rowIndex);
                 List<String> values = data.getRows().get(rowIndex);
                 for (int column = 0; column < data.getColumns().size(); column++) {
                     Cell cell = row.createCell(column);
@@ -706,10 +816,35 @@ public class ReportService {
                         : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 18;
                 sheet.setColumnWidth(column, width * 256);
             }
+            int mainDataEnd = mainDataStart + data.getRows().size() - 1;
+            if (!data.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(mainHeaderRow, mainDataEnd, 0, data.getColumns().size() - 1));
+            int sectionCursor = mainDataStart + data.getRows().size() + 2;
+            if (data.getSections() != null) {
+                for (ReportData.ReportSection section : data.getSections()) {
+                    Row sectionTitleRow = sheet.createRow(sectionCursor++);
+                    sectionTitleRow.createCell(0).setCellValue(section.getTitle());
+                    sectionTitleRow.getCell(0).setCellStyle(sectionStyle);
+                    sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(sectionTitleRow.getRowNum(), sectionTitleRow.getRowNum(), 0, Math.max(0, section.getColumns().size() - 1)));
+                    Row sectionHeader = sheet.createRow(sectionCursor++);
+                    for (int column = 0; column < section.getColumns().size(); column++) {
+                        Cell cell = sectionHeader.createCell(column);
+                        cell.setCellValue(section.getColumns().get(column));
+                        cell.setCellStyle(headerStyle);
+                    }
+                    for (int rowIndex = 0; rowIndex < section.getRows().size(); rowIndex++) {
+                        Row row = sheet.createRow(sectionCursor++);
+                        List<String> values = section.getRows().get(rowIndex);
+                        for (int column = 0; column < section.getColumns().size(); column++) {
+                            Cell cell = row.createCell(column);
+                            cell.setCellValue(column < values.size() ? values.get(column) : "");
+                            if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
+                        }
+                    }
+                    sectionCursor += 1;
+                }
+            }
             embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl());
-            int dataEndRow = 7 + data.getRows().size();
-            if (!data.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(6, dataEndRow - 1, 0, data.getColumns().size() - 1));
-            sheet.createFreezePane(0, 7);
+            sheet.createFreezePane(0, mainHeaderRow + 1);
             workbook.write(output);
             return output.toByteArray();
         }
