@@ -181,7 +181,7 @@ export default function ContextualReportButton({ report }: Props) {
                                 <div className={"grid gap-3 sm:grid-cols-2 " + (report === "student-roster" ? "lg:grid-cols-3" : "")}>
                                     <label className="block">
                                         <span className="mb-1.5 block text-sm font-medium text-slate-700">Academic Year</span>
-                                        <select value={filters.academicYearId ?? ""} onChange={(event) => updateReportFilters((current) => ({ ...current, academicYearId: event.target.value ? Number(event.target.value) : undefined, gradeId: undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
+                                        <select value={filters.academicYearId ?? ""} onChange={(event) => { const selectedYear = academicYears.find(year => year.id === Number(event.target.value)); updateReportFilters((current) => ({ ...current, academicYearId: event.target.value ? Number(event.target.value) : undefined, gradeId: undefined, sectionId: undefined, ...(report === "attendance" ? { startDate: selectedYear?.startDate, endDate: selectedYear?.endDate } : {}) })); }} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
                                             <option value="">Active / default academic year</option>
                                             {academicYears.map((year) => <option key={year.id} value={year.id}>{year.name}{year.active ? " (Active)" : ""}</option>)}
                                         </select>
@@ -248,7 +248,6 @@ export default function ContextualReportButton({ report }: Props) {
                                             {data.rows.length === 0 && <tr><td colSpan={data.columns.length} className="px-6 py-12 text-center text-slate-500">No records match the selected filters.</td></tr>}
                                         </tbody>
                                     </table>
-                                </div>
                                 </div>
                                 {data.sections?.map(section => <div key={section.title} className="mt-4 overflow-hidden rounded-xl border border-slate-200">
                                     <div className="border-b border-slate-200 bg-slate-50 px-4 py-3"><h4 className="font-semibold text-slate-800">{section.title}</h4><p className="text-xs text-slate-500">{section.rows.length} record{section.rows.length === 1 ? "" : "s"}</p></div>
