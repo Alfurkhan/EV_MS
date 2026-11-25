@@ -104,6 +104,10 @@ public class ReportService {
                 isFaculty ? "Faculty access · " + filterDescription : filterDescription);
     }
 
+    public ReportData getFacultyDirectory() {
+        return getFacultyDirectory(null, "all");
+    }
+
     public ReportData getFacultyDirectory(Long subjectId, String accountStatus) {
         User actor = userService.getPrincipal();
         if (!hasRole(actor, RoleName.ROLE_ADMIN)) {
@@ -151,6 +155,10 @@ public class ReportService {
 
     public byte[] exportStudentRoster(Long academicYearId, Long gradeId, Long sectionId, String format) {
         return export(getStudentRoster(academicYearId, gradeId, sectionId), format);
+    }
+
+    public byte[] exportFacultyDirectory(String format) {
+        return exportFacultyDirectory(null, "all", format);
     }
 
     public byte[] exportFacultyDirectory(Long subjectId, String accountStatus, String format) {
