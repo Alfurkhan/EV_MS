@@ -494,9 +494,9 @@ public class ReportService {
             int pictureIndex = workbook.addPicture(Files.readAllBytes(path), pictureType);
             XSSFDrawing drawing = (XSSFDrawing) sheet.createDrawingPatriarch();
             XSSFClientAnchor anchor = new XSSFClientAnchor(
-                    Units.pixelToEMU(leftInset), Units.pixelToEMU(topInset),
-                    Units.pixelToEMU(displayWidth - sheet.getColumnWidthInPixels(0)),
-                    Units.pixelToEMU(displayHeight - (availableHeight + 12f)),
+                    Units.pixelToEMU(Math.round(leftInset)), Units.pixelToEMU(Math.round(topInset)),
+                    Units.pixelToEMU(Math.round(displayWidth - sheet.getColumnWidthInPixels(0))),
+                    Units.pixelToEMU(Math.round(displayHeight - (availableHeight + 12f))),
                     0, 0, 1, 5);
             anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_DONT_RESIZE);
             drawing.createPicture(anchor, pictureIndex);
