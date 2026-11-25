@@ -2,6 +2,8 @@ package com.zukunftai.evidyalaya.service.impl;
 
 import com.zukunftai.evidyalaya.database.*;
 import com.zukunftai.evidyalaya.model.ReportData;
+import com.zukunftai.evidyalaya.model.AttendanceStatus;
+import com.zukunftai.evidyalaya.model.ClassSessionStatus;
 import com.zukunftai.evidyalaya.repository.*;
 import com.zukunftai.evidyalaya.service.SchoolSettingsService;
 import com.zukunftai.evidyalaya.service.UserService;
@@ -49,6 +51,8 @@ public class ReportService {
     private final SectionRepository sectionRepository;
     private final SubjectRepository subjectRepository;
     private final TimetableRepository timetableRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final ClassSessionRepository classSessionRepository;
     private final SchoolSettingsService schoolSettingsService;
     private final UserService userService;
     private final SchoolBrandingStorageService brandingStorageService;
@@ -176,6 +180,274 @@ public class ReportService {
         return export(getFacultyDirectory(subjectId, accountStatus), format);
     }
 
+
+    public ReportData getAttendanceReport(
+            Long academicYearId,
+            Long gradeId,
+            Long sectionId,
+            java.time.LocalDate fromDate,
+            java.time.LocalDate toDate,
+            String attendanceStatus
+    ) {
+        User actor = userService.getPrincipal();
+        boolean isAdmin = hasRole(actor, RoleName.ROLE_ADMIN);
+        boolean isFaculty = hasRole(actor, RoleName.ROLE_FACULTY);
+        if (!isAdmin && !isFaculty) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Attendance reports are available to administrators and faculty.");
+        }
+
+        AcademicYear year = resolveAcademicYear(academicYearId);
+        Set<SectionScope> facultyScope = isFaculty ? getFacultyScope(actor, year) : Set.of();
+        if (isFaculty && facultyScope.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have assigned classes for this academic year.");
+        }
+
+        Grade selectedGrade = null;
+        if (gradeId != null) {
+            selectedGrade = gradeRepository.findById(gradeId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grade not found."));
+            if (!selectedGrade.getAcademicYear().getId().equals(year.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected grade does not belong to the selected academic year.");
+            }
+            if (isFaculty && facultyScope.stream().noneMatch(scope -> scope.gradeId().equals(gradeId))) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not assigned to the selected grade.");
+            }
+        }
+
+        Section selectedSection = null;
+        if (sectionId != null) {
+            selectedSection = sectionRepository.findById(sectionId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found."));
+            if (!selectedSection.getGrade().getAcademicYear().getId().equals(year.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected academic year.");
+            }
+            if (gradeId != null && !selectedSection.getGrade().getId().equals(gradeId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected grade.");
+            }
+            SectionScope selectedScope = new SectionScope(selectedSection.getGrade().getId(), selectedSection.getId());
+            if (isFaculty && !facultyScope.contains(selectedScope)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not assigned to the selected section.");
+            }
+        }
+
+        java.time.LocalDate requestedStart = fromDate == null ? year.getStartDate() : fromDate;
+        java.time.LocalDate requestedEnd = toDate == null ? year.getEndDate() : toDate;
+        if (requestedStart.isAfter(requestedEnd)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The start date must be on or before the end date.");
+        }
+        java.time.LocalDate effectiveStart = requestedStart.isBefore(year.getStartDate()) ? year.getStartDate() : requestedStart;
+        java.time.LocalDate effectiveEnd = requestedEnd.isAfter(year.getEndDate()) ? year.getEndDate() : requestedEnd;
+        boolean dateRangeWithinYear = !effectiveStart.isAfter(effectiveEnd);
+
+        String status = attendanceStatus == null || attendanceStatus.isBlank()
+                ? "ALL" : attendanceStatus.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("ALL", "PRESENT", "ABSENT", "LATE", "EXCUSED", "UNMARKED").contains(status)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid attendance status filter.");
+        }
+
+        List<StudentEnrollment> enrollments = enrollmentRepository.findByAcademicYearAndActiveTrue(year).stream()
+                .filter(enrollment -> gradeId == null || enrollment.getGrade().getId().equals(gradeId))
+                .filter(enrollment -> sectionId == null || enrollment.getSection().getId().equals(sectionId))
+                .filter(enrollment -> !isFaculty || facultyScope.contains(new SectionScope(
+                        enrollment.getGrade().getId(), enrollment.getSection().getId())))
+                .sorted(Comparator.comparing((StudentEnrollment e) -> e.getGrade().getName())
+                        .thenComparing(e -> e.getSection().getName())
+                        .thenComparing(e -> Optional.ofNullable(e.getStudent().getFullName()).orElse("").toLowerCase(Locale.ROOT)))
+                .toList();
+
+        List<ClassSession> sessions = dateRangeWithinYear
+                ? classSessionRepository.findBySessionDateBetweenAndStatus(effectiveStart, effectiveEnd, ClassSessionStatus.COMPLETED)
+                : List.of();
+        sessions = sessions.stream()
+                .filter(session -> session.getTimetable().getAcademicYear().getId().equals(year.getId()))
+                .filter(session -> session.getTimetable().getStatus() == TimetableStatus.APPROVED)
+                .filter(session -> gradeId == null || session.getTimetable().getGrade().getId().equals(gradeId))
+                .filter(session -> sectionId == null || session.getTimetable().getSection().getId().equals(sectionId))
+                .filter(session -> !isFaculty || facultyScope.contains(new SectionScope(
+                        session.getTimetable().getGrade().getId(), session.getTimetable().getSection().getId())))
+                .sorted(Comparator.comparing(ClassSession::getSessionDate)
+                        .thenComparing(session -> session.getTimetable().getGrade().getName())
+                        .thenComparing(session -> session.getTimetable().getSection().getName())
+                        .thenComparing(session -> session.getTimetable().getstartTimeSafe()))
+                .toList();
+
+        Map<StudentAttendanceKey, AttendanceReportCounts> studentCounts = new LinkedHashMap<>();
+        Map<StudentAttendanceKey, StudentEnrollment> enrollmentByKey = new HashMap<>();
+        for (StudentEnrollment enrollment : enrollments) {
+            StudentAttendanceKey key = new StudentAttendanceKey(enrollment.getStudent().getId(),
+                    enrollment.getGrade().getId(), enrollment.getSection().getId());
+            studentCounts.put(key, new AttendanceReportCounts());
+            enrollmentByKey.put(key, enrollment);
+        }
+
+        Map<Long, Map<StudentAttendanceKey, AttendanceStatus>> statusBySession = new HashMap<>();
+        List<Attendance> records = sessions.isEmpty() ? List.of() : attendanceRepository.findByClassSessionIn(sessions);
+        for (Attendance record : records) {
+            ClassSession session = record.getClassSession();
+            StudentAttendanceKey key = new StudentAttendanceKey(record.getStudent().getId(),
+                    session.getTimetable().getGrade().getId(), session.getTimetable().getSection().getId());
+            if (!studentCounts.containsKey(key)) continue;
+            statusBySession.computeIfAbsent(session.getId(), ignored -> new HashMap<>()).put(key, record.getStatus());
+        }
+
+        for (ClassSession session : sessions) {
+            Timetable timetable = session.getTimetable();
+            List<StudentEnrollment> sessionEnrollments = enrollments.stream()
+                    .filter(enrollment -> enrollment.getGrade().getId().equals(timetable.getGrade().getId())
+                            && enrollment.getSection().getId().equals(timetable.getSection().getId()))
+                    .toList();
+            Map<StudentAttendanceKey, AttendanceStatus> sessionRecords =
+                    statusBySession.getOrDefault(session.getId(), Map.of());
+            for (StudentEnrollment enrollment : sessionEnrollments) {
+                StudentAttendanceKey key = new StudentAttendanceKey(enrollment.getStudent().getId(),
+                        enrollment.getGrade().getId(), enrollment.getSection().getId());
+                AttendanceReportCounts counts = studentCounts.get(key);
+                if (counts == null) continue;
+                counts.sessions++;
+                AttendanceStatus recordStatus = sessionRecords.get(key);
+                if (recordStatus != null) counts.increment(recordStatus);
+                else counts.unmarked++;
+            }
+        }
+
+        List<List<String>> studentRows = enrollments.stream()
+                .filter(enrollment -> {
+                    StudentAttendanceKey key = new StudentAttendanceKey(enrollment.getStudent().getId(),
+                            enrollment.getGrade().getId(), enrollment.getSection().getId());
+                    AttendanceReportCounts counts = studentCounts.get(key);
+                    return status.equals("ALL") || counts.has(status);
+                })
+                .map(enrollment -> {
+                    StudentAttendanceKey key = new StudentAttendanceKey(enrollment.getStudent().getId(),
+                            enrollment.getGrade().getId(), enrollment.getSection().getId());
+                    AttendanceReportCounts counts = studentCounts.get(key);
+                    return List.of(
+                            safe(enrollment.getStudent().getFullName()),
+                            safe(enrollment.getStudent().getEmail()),
+                            enrollment.getGrade().getName(),
+                            enrollment.getSection().getName(),
+                            String.valueOf(counts.sessions),
+                            String.valueOf(counts.present),
+                            String.valueOf(counts.late),
+                            String.valueOf(counts.absent),
+                            String.valueOf(counts.excused),
+                            String.valueOf(counts.unmarked),
+                            counts.attendancePercent()
+                    );
+                }).toList();
+
+        List<List<String>> sessionRows = sessions.stream().map(session -> {
+            Timetable timetable = session.getTimetable();
+            List<StudentEnrollment> sessionEnrollments = enrollments.stream()
+                    .filter(enrollment -> enrollment.getGrade().getId().equals(timetable.getGrade().getId())
+                            && enrollment.getSection().getId().equals(timetable.getSection().getId()))
+                    .toList();
+            Map<StudentAttendanceKey, AttendanceStatus> sessionRecords =
+                    statusBySession.getOrDefault(session.getId(), Map.of());
+            AttendanceReportCounts sessionCounts = new AttendanceReportCounts();
+            for (AttendanceStatus recordStatus : sessionRecords.values()) sessionCounts.increment(recordStatus);
+            int expected = sessionEnrollments.size();
+            int unmarked = Math.max(0, expected - sessionRecords.size());
+            return List.of(
+                    session.getSessionDate().toString(),
+                    timetable.getGrade().getName(),
+                    timetable.getSection().getName(),
+                    safe(timetable.getSubject().getName()),
+                    safe(timetable.getFaculty().getFullName()),
+                    String.valueOf(expected),
+                    String.valueOf(sessionCounts.present),
+                    String.valueOf(sessionCounts.late),
+                    String.valueOf(sessionCounts.absent),
+                    String.valueOf(sessionCounts.excused),
+                    String.valueOf(unmarked),
+                    unmarked == 0 ? "Complete" : "Incomplete"
+            );
+        }).toList();
+
+        AttendanceReportCounts totals = new AttendanceReportCounts();
+        int expectedTotal = 0;
+        int unmarkedTotal = 0;
+        for (AttendanceReportCounts counts : studentCounts.values()) {
+            totals.present += counts.present;
+            totals.late += counts.late;
+            totals.absent += counts.absent;
+            totals.excused += counts.excused;
+            totals.unmarked += counts.unmarked;
+            expectedTotal += counts.sessions;
+            unmarkedTotal += counts.unmarked;
+        }
+        int recordedTotal = expectedTotal - unmarkedTotal;
+        List<ReportData.SummaryMetric> metrics = List.of(
+                metric("Completed Sessions", String.valueOf(sessions.size())),
+                metric("Enrolled Students", String.valueOf(enrollments.size())),
+                metric("Expected Attendance Entries", String.valueOf(expectedTotal)),
+                metric("Recorded Entries", String.valueOf(recordedTotal)),
+                metric("Unmarked Entries", String.valueOf(unmarkedTotal)),
+                metric("Present", String.valueOf(totals.present)),
+                metric("Late", String.valueOf(totals.late)),
+                metric("Absent", String.valueOf(totals.absent)),
+                metric("Excused", String.valueOf(totals.excused)),
+                metric("Attendance Rate", totals.attendancePercent())
+        );
+
+        String filterText = "Date: " + effectiveStart + " to " + effectiveEnd;
+        if (selectedSection != null) filterText += " · Grade: " + selectedSection.getGrade().getName() + " · Section: " + selectedSection.getName();
+        else if (selectedGrade != null) filterText += " · Grade: " + selectedGrade.getName() + " · All sections";
+        else filterText += " · All grades and sections";
+        if (!status.equals("ALL")) filterText += " · Status: " + status;
+        if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
+
+        return buildReport("Attendance Report", year.getName(),
+                List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance %"),
+                studentRows, filterText, metrics,
+                List.of(ReportData.ReportSection.builder()
+                        .title("Session-wise Attendance Audit")
+                        .columns(List.of("Date", "Grade", "Section", "Subject", "Faculty", "Enrolled", "Present", "Late", "Absent", "Excused", "Unmarked", "Marking"))
+                        .rows(sessionRows)
+                        .build()));
+    }
+
+    private ReportData.SummaryMetric metric(String label, String value) {
+        return ReportData.SummaryMetric.builder().label(label).value(value).build();
+    }
+
+    private static class AttendanceReportCounts {
+        int sessions;
+        int present;
+        int late;
+        int absent;
+        int excused;
+        int unmarked;
+
+        void increment(AttendanceStatus status) {
+            switch (status) {
+                case PRESENT -> present++;
+                case LATE -> late++;
+                case ABSENT -> absent++;
+                case EXCUSED -> excused++;
+            }
+        }
+
+        boolean has(String status) {
+            return switch (status) {
+                case "PRESENT" -> present > 0;
+                case "LATE" -> late > 0;
+                case "ABSENT" -> absent > 0;
+                case "EXCUSED" -> excused > 0;
+                case "UNMARKED" -> unmarked > 0;
+                default -> true;
+            };
+        }
+
+        String attendancePercent() {
+            int denominator = present + late + absent;
+            if (denominator == 0) return "—";
+            return String.format(Locale.ROOT, "%.2f%%", ((present + late) * 100.0) / denominator);
+        }
+    }
+
+    private record StudentAttendanceKey(Long studentId, Long gradeId, Long sectionId) {}
+
     public ReportData getFacultyClassStrength(Long academicYearId) {
         User actor = userService.getPrincipal();
         if (!hasRole(actor, RoleName.ROLE_FACULTY)) {
@@ -226,6 +498,11 @@ public class ReportService {
     }
 
     private ReportData buildReport(String title, String year, List<String> columns, List<List<String>> rows, String subtitle) {
+        return buildReport(title, year, columns, rows, subtitle, List.of(), List.of());
+    }
+
+    private ReportData buildReport(String title, String year, List<String> columns, List<List<String>> rows, String subtitle,
+                                   List<ReportData.SummaryMetric> summary, List<ReportData.ReportSection> sections) {
         Map<String, String> settings = schoolSettingsService.getSettings();
         ReportData.SchoolIdentity identity = ReportData.SchoolIdentity.builder()
                 .name(nonBlankOrDefault(settings.get("school.name"), "School"))
@@ -246,6 +523,8 @@ public class ReportService {
                 .school(identity)
                 .columns(columns)
                 .rows(rows)
+                .summary(summary)
+                .sections(sections)
                 .build();
     }
 
