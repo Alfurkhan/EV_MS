@@ -39,14 +39,19 @@ public class ReportController {
 
     @GetMapping("/faculty-directory")
     @PreAuthorize("hasRole('ADMIN')")
-    public ReportData getFacultyDirectory() {
-        return reportService.getFacultyDirectory();
+    public ReportData getFacultyDirectory(
+            @RequestParam(required = false) Long subjectId,
+            @RequestParam(required = false) String accountStatus) {
+        return reportService.getFacultyDirectory(subjectId, accountStatus);
     }
 
     @GetMapping("/faculty-directory/export")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<byte[]> exportFacultyDirectory(@RequestParam(defaultValue = "pdf") String format) {
-        return documentResponse(reportService.exportFacultyDirectory(format), format, "faculty-directory");
+    public ResponseEntity<byte[]> exportFacultyDirectory(
+            @RequestParam(required = false) Long subjectId,
+            @RequestParam(required = false) String accountStatus,
+            @RequestParam(defaultValue = "pdf") String format) {
+        return documentResponse(reportService.exportFacultyDirectory(subjectId, accountStatus, format), format, "faculty-directory");
     }
 
     @GetMapping("/my-class-strength")
