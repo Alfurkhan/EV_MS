@@ -53,7 +53,7 @@ class ReportServiceTest {
         when(userService.getPrincipal()).thenReturn(admin);
         lenient().when(userRepository.findAll()).thenReturn(List.of());
         lenient().when(subjectRepository.findAllWithFaculties()).thenReturn(List.of());
-        when(schoolSettingsService.getSettings()).thenReturn(Map.of(
+        lenient().when(schoolSettingsService.getSettings()).thenReturn(Map.of(
                 "school.name", "Example School",
                 "school.tagline", "Learning together",
                 "school.address", "123 School Road",
@@ -170,7 +170,6 @@ class ReportServiceTest {
         when(timetable.getSubject()).thenReturn(subject);
         when(timetable.getFaculty()).thenReturn(faculty);
         when(timetable.getStatus()).thenReturn(com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED);
-        when(timetable.getStartTime()).thenReturn(java.time.LocalTime.of(9, 0));
         when(subject.getName()).thenReturn("Mathematics");
         when(faculty.getFullName()).thenReturn("Teacher");
         when(session.getId()).thenReturn(50L);
