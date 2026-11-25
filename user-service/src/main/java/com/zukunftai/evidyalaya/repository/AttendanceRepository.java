@@ -22,6 +22,8 @@ public interface AttendanceRepository
             ClassSession classSession
     );
 
+    List<Attendance> findByClassSessionIn(List<ClassSession> classSessions);
+
     List<Attendance> findByClassSessionOrderByStudentFullNameAsc(
             ClassSession classSession
     );
