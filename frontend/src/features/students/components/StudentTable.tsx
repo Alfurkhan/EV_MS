@@ -105,6 +105,7 @@ export default function StudentTable({
                     ) : (
                         students.map((student) => (
                             <StudentRow
+                                key={student.id}
                                 student={student}
                                 onViewDetails={onViewDetails}
                                 onEditStudent={onEditStudent}
