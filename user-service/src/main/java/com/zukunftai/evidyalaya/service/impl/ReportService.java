@@ -127,6 +127,7 @@ public class ReportService {
                 .sorted(Comparator.comparing(user -> Optional.ofNullable(user.getFullName()).orElse("").toLowerCase()))
                 .toList();
 
+        String selectedSubjectName = selectedSubject == null ? "" : selectedSubject.getName();
         Map<Long, String> subjectNames = new HashMap<>();
         subjectRepository.findAllWithFaculties().forEach(subject ->
                 subject.getFaculties().forEach(user ->
@@ -137,7 +138,7 @@ public class ReportService {
                         safe(user.getFullName()),
                         safe(user.getEmail()),
                         safe(user.getPhoneNumber()),
-                        subjectId == null ? safe(subjectNames.get(user.getId())) : selectedSubject.getName(),
+                        subjectId == null ? safe(subjectNames.get(user.getId())) : selectedSubjectName,
                         user.isAccountEnabled() ? "Enabled" : "Disabled",
                         user.isAccountLocked() ? "Locked" : "Unlocked"
                 ))
