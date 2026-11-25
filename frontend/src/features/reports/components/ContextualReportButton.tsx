@@ -37,6 +37,14 @@ export default function ContextualReportButton({ report }: Props) {
     const [data, setData] = useState<ReportData | null>(null);
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
+    const previewRequestRef = useRef(0);
+
+    const updateReportFilters = (updater: (current: ReportFilters) => ReportFilters) => {
+        previewRequestRef.current += 1;
+        setData(null);
+        setLoading(false);
+        setFilters(updater);
+    };
 
     useEffect(() => {
         const showButton = () => {
@@ -83,6 +91,7 @@ export default function ContextualReportButton({ report }: Props) {
     }, [open, report, filters.gradeId]);
 
     const preview = async () => {
+        const requestId = ++previewRequestRef.current;
         setLoading(true);
         try {
             const result = report === "student-roster"
@@ -90,12 +99,14 @@ export default function ContextualReportButton({ report }: Props) {
                 : report === "faculty-directory"
                     ? await previewFacultyDirectory(filters)
                     : await previewMyClassStrength(filters.academicYearId);
-            setData(result);
+            if (requestId === previewRequestRef.current) setData(result);
         } catch (error: any) {
-            setData(null);
-            toast.error(error?.response?.data?.message || "Unable to generate report preview.");
+            if (requestId === previewRequestRef.current) {
+                setData(null);
+                toast.error(error?.response?.data?.message || "Unable to generate report preview.");
+            }
         } finally {
-            setLoading(false);
+            if (requestId === previewRequestRef.current) setLoading(false);
         }
     };
 
@@ -146,11 +157,11 @@ export default function ContextualReportButton({ report }: Props) {
                         <div className="space-y-4 overflow-y-auto p-5">
                             {report === "faculty-directory" && <div className="grid gap-3 sm:grid-cols-2">
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Subject</span>
-                                    <select value={filters.subjectId ?? ""} onChange={event => setFilters(current => ({...current, subjectId: event.target.value ? Number(event.target.value) : undefined}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
+                                    <select value={filters.subjectId ?? ""} onChange={event => updateReportFilters(current => ({...current, subjectId: event.target.value ? Number(event.target.value) : undefined}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
                                         <option value="">All subjects</option>{subjects.map(subject => <option key={subject.id} value={subject.id}>{subject.name} ({subject.code})</option>)}
                                     </select></label>
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Account status</span>
-                                    <select value={filters.accountStatus ?? "all"} onChange={event => setFilters(current => ({...current, accountStatus: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
+                                    <select value={filters.accountStatus ?? "all"} onChange={event => updateReportFilters(current => ({...current, accountStatus: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
                                         <option value="all">All accounts</option><option value="enabled">Enabled only</option><option value="disabled">Disabled only</option>
                                     </select></label>
                             </div>}
@@ -158,7 +169,7 @@ export default function ContextualReportButton({ report }: Props) {
                                 <div className={"grid gap-3 sm:grid-cols-2 " + (report === "student-roster" ? "lg:grid-cols-3" : "")}>
                                     <label className="block">
                                         <span className="mb-1.5 block text-sm font-medium text-slate-700">Academic Year</span>
-                                        <select value={filters.academicYearId ?? ""} onChange={(event) => setFilters((current) => ({ ...current, academicYearId: event.target.value ? Number(event.target.value) : undefined, gradeId: undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
+                                        <select value={filters.academicYearId ?? ""} onChange={(event) => updateReportFilters((current) => ({ ...current, academicYearId: event.target.value ? Number(event.target.value) : undefined, gradeId: undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
                                             <option value="">Active / default academic year</option>
                                             {academicYears.map((year) => <option key={year.id} value={year.id}>{year.name}{year.active ? " (Active)" : ""}</option>)}
                                         </select>
@@ -166,14 +177,14 @@ export default function ContextualReportButton({ report }: Props) {
                                     {report === "student-roster" && <>
                                         <label className="block">
                                             <span className="mb-1.5 block text-sm font-medium text-slate-700">Grade</span>
-                                            <select value={filters.gradeId ?? ""} onChange={(event) => setFilters((current) => ({ ...current, gradeId: event.target.value ? Number(event.target.value) : undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
+                                            <select value={filters.gradeId ?? ""} onChange={(event) => updateReportFilters((current) => ({ ...current, gradeId: event.target.value ? Number(event.target.value) : undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
                                                 <option value="">All grades</option>
                                                 {grades.map((grade) => <option key={grade.id} value={grade.id}>{grade.name}</option>)}
                                             </select>
                                         </label>
                                         <label className="block">
                                             <span className="mb-1.5 block text-sm font-medium text-slate-700">Section</span>
-                                            <select value={filters.sectionId ?? ""} disabled={!filters.gradeId} onChange={(event) => setFilters((current) => ({ ...current, sectionId: event.target.value ? Number(event.target.value) : undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand disabled:bg-slate-50">
+                                            <select value={filters.sectionId ?? ""} disabled={!filters.gradeId} onChange={(event) => updateReportFilters((current) => ({ ...current, sectionId: event.target.value ? Number(event.target.value) : undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand disabled:bg-slate-50">
                                                 <option value="">All sections</option>
                                                 {sections.map((section) => <option key={section.id} value={section.id}>{section.name}</option>)}
                                             </select>
