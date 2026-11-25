@@ -268,7 +268,7 @@ public class ReportService {
                 .sorted(Comparator.comparing(ClassSession::getSessionDate)
                         .thenComparing(session -> session.getTimetable().getGrade().getName())
                         .thenComparing(session -> session.getTimetable().getSection().getName())
-                        .thenComparing(session -> session.getTimetable().getstartTimeSafe()))
+                        .thenComparing(session -> session.getTimetable().getStartTime()))
                 .toList();
 
         Map<StudentAttendanceKey, AttendanceReportCounts> studentCounts = new LinkedHashMap<>();
