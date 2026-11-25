@@ -123,6 +123,87 @@ class ReportServiceTest {
         assertTrue(report.getSections().get(0).getRows().isEmpty());
     }
 
+
+    @Test
+    void attendanceReportCalculatesStudentAndSessionTotals() {
+        AcademicYear year = AcademicYear.builder()
+                .id(7L).name("2026-2027")
+                .startDate(LocalDate.of(2026, 6, 1))
+                .endDate(LocalDate.of(2027, 3, 31)).active(true).build();
+        when(academicYearRepository.findById(7L)).thenReturn(Optional.of(year));
+
+        var grade = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Grade.class);
+        var section = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Section.class);
+        var subject = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Subject.class);
+        var faculty = org.mockito.Mockito.mock(User.class);
+        var studentPresent = org.mockito.Mockito.mock(User.class);
+        var studentAbsent = org.mockito.Mockito.mock(User.class);
+        var enrollmentPresent = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.StudentEnrollment.class);
+        var enrollmentAbsent = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.StudentEnrollment.class);
+        var timetable = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Timetable.class);
+        var session = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.ClassSession.class);
+        var presentRecord = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Attendance.class);
+        var absentRecord = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Attendance.class);
+
+        when(grade.getId()).thenReturn(3L);
+        when(grade.getName()).thenReturn("Grade 10");
+        when(section.getId()).thenReturn(4L);
+        when(section.getName()).thenReturn("A");
+        when(studentPresent.getId()).thenReturn(10L);
+        when(studentPresent.getFullName()).thenReturn("A Student");
+        when(studentPresent.getEmail()).thenReturn("a@example.test");
+        when(studentAbsent.getId()).thenReturn(11L);
+        when(studentAbsent.getFullName()).thenReturn("B Student");
+        when(studentAbsent.getEmail()).thenReturn("b@example.test");
+        when(enrollmentPresent.getGrade()).thenReturn(grade);
+        when(enrollmentPresent.getSection()).thenReturn(section);
+        when(enrollmentPresent.getStudent()).thenReturn(studentPresent);
+        when(enrollmentAbsent.getGrade()).thenReturn(grade);
+        when(enrollmentAbsent.getSection()).thenReturn(section);
+        when(enrollmentAbsent.getStudent()).thenReturn(studentAbsent);
+        when(enrollmentRepository.findByAcademicYear(year)).thenReturn(List.of(enrollmentPresent, enrollmentAbsent));
+
+        when(timetable.getAcademicYear()).thenReturn(year);
+        when(timetable.getGrade()).thenReturn(grade);
+        when(timetable.getSection()).thenReturn(section);
+        when(timetable.getSubject()).thenReturn(subject);
+        when(timetable.getFaculty()).thenReturn(faculty);
+        when(timetable.getStatus()).thenReturn(com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED);
+        when(timetable.getStartTime()).thenReturn(java.time.LocalTime.of(9, 0));
+        when(subject.getName()).thenReturn("Mathematics");
+        when(faculty.getFullName()).thenReturn("Teacher");
+        when(session.getId()).thenReturn(50L);
+        when(session.getTimetable()).thenReturn(timetable);
+        when(session.getSessionDate()).thenReturn(LocalDate.of(2026, 6, 2));
+        when(classSessionRepository.findBySessionDateBetweenAndStatus(
+                LocalDate.of(2026, 6, 1), LocalDate.of(2027, 3, 31),
+                com.zukunftai.evidyalaya.model.ClassSessionStatus.COMPLETED)).thenReturn(List.of(session));
+
+        when(presentRecord.getClassSession()).thenReturn(session);
+        when(presentRecord.getStudent()).thenReturn(studentPresent);
+        when(presentRecord.getStatus()).thenReturn(com.zukunftai.evidyalaya.model.AttendanceStatus.PRESENT);
+        when(absentRecord.getClassSession()).thenReturn(session);
+        when(absentRecord.getStudent()).thenReturn(studentAbsent);
+        when(absentRecord.getStatus()).thenReturn(com.zukunftai.evidyalaya.model.AttendanceStatus.ABSENT);
+        when(attendanceRepository.findByClassSessionIn(List.of(session))).thenReturn(List.of(presentRecord, absentRecord));
+
+        var report = reportService.getAttendanceReport(7L, null, null, null, null, "ALL");
+
+        assertEquals(2, report.getRows().size());
+        assertEquals("1", report.getRows().get(0).get(4));
+        assertEquals("1", report.getRows().get(0).get(5));
+        assertEquals("100.00%", report.getRows().get(0).get(10));
+        assertEquals("1", report.getRows().get(1).get(7));
+        assertEquals("0.00%", report.getRows().get(1).get(10));
+        assertEquals("50.00%", report.getSummary().get(9).getValue());
+        assertEquals("Complete", report.getSections().get(0).getRows().get(0).get(11));
+
+        var filtered = reportService.getAttendanceReport(7L, null, null, null, null, "PRESENT");
+        assertEquals(1, filtered.getRows().size());
+        assertEquals("A Student", filtered.getRows().get(0).get(0));
+        assertEquals(1, filtered.getSections().get(0).getRows().size());
+    }
+
     @Test
     void attendanceReportRejectsReversedDateRange() {
         AcademicYear year = AcademicYear.builder()
