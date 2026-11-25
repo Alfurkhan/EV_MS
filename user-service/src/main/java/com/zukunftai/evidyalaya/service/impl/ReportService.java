@@ -400,7 +400,7 @@ public class ReportService {
         if (selectedSection != null) filterText += " · Grade: " + selectedSection.getGrade().getName() + " · Section: " + selectedSection.getName();
         else if (selectedGrade != null) filterText += " · Grade: " + selectedGrade.getName() + " · All sections";
         else filterText += " · All grades and sections";
-        if (!status.equals("ALL")) filterText += " · Status: " + status;
+        if (!status.equals("ALL")) filterText += " · Student status: " + status;
         if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
 
         return buildReport("Attendance Report", year.getName(),
