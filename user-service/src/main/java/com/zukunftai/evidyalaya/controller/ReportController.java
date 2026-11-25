@@ -17,6 +17,32 @@ public class ReportController {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     private final ReportService reportService;
 
+    @GetMapping("/attendance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
+    public ReportData getAttendanceReport(
+            @RequestParam(required = false) Long academicYearId,
+            @RequestParam(required = false) Long gradeId,
+            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) java.time.LocalDate startDate,
+            @RequestParam(required = false) java.time.LocalDate endDate,
+            @RequestParam(required = false) String status) {
+        return reportService.getAttendanceReport(academicYearId, gradeId, sectionId, startDate, endDate, status);
+    }
+
+    @GetMapping("/attendance/export")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
+    public ResponseEntity<byte[]> exportAttendanceReport(
+            @RequestParam(required = false) Long academicYearId,
+            @RequestParam(required = false) Long gradeId,
+            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) java.time.LocalDate startDate,
+            @RequestParam(required = false) java.time.LocalDate endDate,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "pdf") String format) {
+        byte[] document = reportService.exportAttendanceReport(academicYearId, gradeId, sectionId, startDate, endDate, status, format);
+        return documentResponse(document, format, "attendance-report");
+    }
+
     @GetMapping("/student-roster")
     @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
     public ReportData getStudentRoster(
