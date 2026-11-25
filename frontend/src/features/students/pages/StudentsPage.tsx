@@ -18,6 +18,7 @@ import StudentDetailsModal from "../components/StudentDetailsModal";
 
 import EditStudentModal from "../components/EditStudentModal";
 import StudentEnrollmentModal from "../components/StudentEnrollmentModal";
+import ContextualReportButton from "../../reports/components/ContextualReportButton";
 
 export default function StudentsPage() {
     const {
@@ -718,6 +719,7 @@ export default function StudentsPage() {
                 }
                 onSuccess={refresh}
             />
+            <ContextualReportButton report="student-roster" />
         </div>
     );
 }
