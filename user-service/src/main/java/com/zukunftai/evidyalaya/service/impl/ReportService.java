@@ -192,13 +192,13 @@ public class ReportService {
     private ReportData buildReport(String title, String year, List<String> columns, List<List<String>> rows, String subtitle) {
         Map<String, String> settings = schoolSettingsService.getSettings();
         ReportData.SchoolIdentity identity = ReportData.SchoolIdentity.builder()
-                .name(settings.getOrDefault("school.name", "School"))
-                .tagline(settings.getOrDefault("school.tagline", ""))
-                .address(settings.getOrDefault("school.address", ""))
-                .phone(settings.getOrDefault("school.phone", ""))
-                .email(settings.getOrDefault("school.email", ""))
-                .website(settings.getOrDefault("school.website", ""))
-                .logoUrl(settings.getOrDefault("school.logoUrl", ""))
+                .name(nonBlankOrDefault(settings.get("school.name"), "School"))
+                .tagline(safe(settings.get("school.tagline")))
+                .address(safe(settings.get("school.address")))
+                .phone(safe(settings.get("school.phone")))
+                .email(safe(settings.get("school.email")))
+                .website(safe(settings.get("school.website")))
+                .logoUrl(safe(settings.get("school.logoUrl")))
                 .primaryColor(validColor(settings.get("theme.primaryColor"), DEFAULT_PRIMARY))
                 .accentColor(validColor(settings.get("theme.accentColor"), DEFAULT_ACCENT))
                 .build();
@@ -429,7 +429,7 @@ public class ReportService {
         return value != null && value.matches("^#[0-9A-Fa-f]{6}$") ? value : fallback;
     }
 
-    private String safe(String value) {
+    private String nonBlankOrDefault(String value, String fallback) {\n        return value == null || value.isBlank() ? fallback : value;\n    }\n\n    private String safe(String value) {
         return value == null ? "" : value;
     }
 
