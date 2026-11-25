@@ -258,7 +258,7 @@ public class ReportService {
                             data.getReportTitle(), Color.BLACK);
                     y -= 17;
                     String metadata = (blank(data.getAcademicYear()) ? "" : "Academic Year: " + data.getAcademicYear() + "  ·  ")
-                            + "Generated: " + data.getGeneratedAt();
+                            + "Generated: " + data.getGeneratedAt() + "  ·  Records: " + data.getRows().size();
                     drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, margin, y, metadata, Color.DARK_GRAY);
                     y -= 12;
                     String contact = String.join("  ·  ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
@@ -351,7 +351,7 @@ public class ReportService {
             titleRow.createCell(0).setCellValue(data.getReportTitle());
             Row metadataRow = sheet.createRow(3);
             metadataRow.createCell(0).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
-                    + "Generated: " + data.getGeneratedAt());
+                    + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size());
             Row contactRow = sheet.createRow(4);
             contactRow.createCell(0).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
