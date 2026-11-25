@@ -29,6 +29,12 @@ public interface ClassSessionRepository
             ClassSessionStatus status
     );
 
+    List<ClassSession> findBySessionDateBetweenAndStatus(
+            LocalDate startDate,
+            LocalDate endDate,
+            ClassSessionStatus status
+    );
+
     List<ClassSession> findByTimetableAndStatus(
             Timetable timetable,
             ClassSessionStatus status
