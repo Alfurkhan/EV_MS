@@ -104,14 +104,26 @@ public class ReportService {
                 isFaculty ? "Faculty access · " + filterDescription : filterDescription);
     }
 
-    public ReportData getFacultyDirectory() {
+    public ReportData getFacultyDirectory(Long subjectId, String accountStatus) {
         User actor = userService.getPrincipal();
         if (!hasRole(actor, RoleName.ROLE_ADMIN)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only administrators can generate the faculty directory.");
         }
 
+        Set<Long> subjectFacultyIds = null;
+        Subject selectedSubject = null;
+        if (subjectId != null) {
+            selectedSubject = subjectRepository.findByIdWithFaculties(subjectId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Subject not found."));
+            subjectFacultyIds = selectedSubject.getFaculties().stream().map(User::getId).collect(java.util.stream.Collectors.toSet());
+        }
+        String status = accountStatus == null ? "all" : accountStatus.trim().toLowerCase(Locale.ROOT);
+        if (!Set.of("all", "enabled", "disabled").contains(status)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid account status.");
+        final Set<Long> selectedFacultyIds = subjectFacultyIds;
         List<User> faculty = userRepository.findAll().stream()
                 .filter(user -> hasRole(user, RoleName.ROLE_FACULTY) && !user.isAccountDeleted())
+                .filter(user -> selectedFacultyIds == null || selectedFacultyIds.contains(user.getId()))
+                .filter(user -> status.equals("all") || (status.equals("enabled") == user.isAccountEnabled()))
                 .sorted(Comparator.comparing(user -> Optional.ofNullable(user.getFullName()).orElse("").toLowerCase()))
                 .toList();
 
@@ -125,22 +137,23 @@ public class ReportService {
                         safe(user.getFullName()),
                         safe(user.getEmail()),
                         safe(user.getPhoneNumber()),
-                        safe(subjectNames.get(user.getId())),
+                        subjectId == null ? safe(subjectNames.get(user.getId())) : selectedSubject.getName(),
                         user.isAccountEnabled() ? "Enabled" : "Disabled",
                         user.isAccountLocked() ? "Locked" : "Unlocked"
                 ))
                 .toList();
 
         return buildReport("Faculty Directory", null,
-                List.of("Faculty Name", "Email", "Phone", "Assigned Subjects", "Account", "Security"), rows, "All faculty accounts");
+                List.of("Faculty Name", "Email", "Phone", "Assigned Subjects", "Account", "Security"), rows,
+                (selectedSubject == null ? "All subjects" : "Subject: " + selectedSubject.getName()) + " · " + (status.equals("all") ? "All account statuses" : "Account: " + (status.equals("enabled") ? "Enabled" : "Disabled")));
     }
 
     public byte[] exportStudentRoster(Long academicYearId, Long gradeId, Long sectionId, String format) {
         return export(getStudentRoster(academicYearId, gradeId, sectionId), format);
     }
 
-    public byte[] exportFacultyDirectory(String format) {
-        return export(getFacultyDirectory(), format);
+    public byte[] exportFacultyDirectory(Long subjectId, String accountStatus, String format) {
+        return export(getFacultyDirectory(subjectId, accountStatus), format);
     }
 
     public ReportData getFacultyClassStrength(Long academicYearId) {
