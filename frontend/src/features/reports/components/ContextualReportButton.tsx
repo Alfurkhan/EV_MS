@@ -5,6 +5,7 @@ import api from "../../../api/axios";
 import { getAcademicYears, type AcademicYear } from "../../academic/services/academicYearService";
 import { getGradesByAcademicYear, type Grade } from "../../academic/services/gradeService";
 import { getSectionsByGrade, type Section } from "../../academic/services/sectionService";
+import { getAllSubjects, type Subject } from "../../academic/services/subjectService";
 import {
     downloadReport,
     previewFacultyDirectory,
@@ -31,7 +32,8 @@ export default function ContextualReportButton({ report }: Props) {
     const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
     const [grades, setGrades] = useState<Grade[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
-    const [filters, setFilters] = useState<ReportFilters>({});
+    const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [filters, setFilters] = useState<ReportFilters>({ accountStatus: "all" });
     const [data, setData] = useState<ReportData | null>(null);
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
@@ -50,7 +52,11 @@ export default function ContextualReportButton({ report }: Props) {
     }, []);
 
     useEffect(() => {
-        if (!open || report === "faculty-directory") return;
+        if (!open) return;
+        if (report === "faculty-directory") {
+            getAllSubjects().then(setSubjects).catch(() => toast.error("Unable to load subjects."));
+            return;
+        }
         getAcademicYears().then((years) => {
             setAcademicYears(years);
             const active = years.find((year) => year.active) ?? years[0];
@@ -82,7 +88,7 @@ export default function ContextualReportButton({ report }: Props) {
             const result = report === "student-roster"
                 ? await previewStudentRoster(filters)
                 : report === "faculty-directory"
-                    ? await previewFacultyDirectory()
+                    ? await previewFacultyDirectory(filters)
                     : await previewMyClassStrength(filters.academicYearId);
             setData(result);
         } catch (error: any) {
@@ -96,7 +102,13 @@ export default function ContextualReportButton({ report }: Props) {
     const exportFile = async (format: "pdf" | "xlsx") => {
         setExporting(format);
         try {
-            await downloadReport(report, format, filters);
+            const stem = report === "student-roster"
+                ? ["Student-Roster", academicYears.find(y => y.id === filters.academicYearId)?.name, filters.gradeId ? grades.find(g => g.id === filters.gradeId)?.name : "All-Grades", filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined].filter(Boolean).join("_")
+                : report === "faculty-directory"
+                    ? ["Faculty-Directory", filters.subjectId ? subjects.find(s => s.id === filters.subjectId)?.name : "All-Subjects", filters.accountStatus && filters.accountStatus !== "all" ? filters.accountStatus : undefined].filter(Boolean).join("_")
+                    : ["My-Class-Strength", academicYears.find(y => y.id === filters.academicYearId)?.name].filter(Boolean).join("_");
+            const safeStem = stem.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-");
+            await downloadReport(report, format, filters, safeStem);
             toast.success(`Report downloaded as ${format.toUpperCase()}.`);
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Unable to download report.");
@@ -132,6 +144,16 @@ export default function ContextualReportButton({ report }: Props) {
                         </header>
 
                         <div className="space-y-4 overflow-y-auto p-5">
+                            {report === "faculty-directory" && <div className="grid gap-3 sm:grid-cols-2">
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Subject</span>
+                                    <select value={filters.subjectId ?? ""} onChange={event => setFilters(current => ({...current, subjectId: event.target.value ? Number(event.target.value) : undefined}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
+                                        <option value="">All subjects</option>{subjects.map(subject => <option key={subject.id} value={subject.id}>{subject.name} ({subject.code})</option>)}
+                                    </select></label>
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Account status</span>
+                                    <select value={filters.accountStatus ?? "all"} onChange={event => setFilters(current => ({...current, accountStatus: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
+                                        <option value="all">All accounts</option><option value="enabled">Enabled only</option><option value="disabled">Disabled only</option>
+                                    </select></label>
+                            </div>}
                             {report !== "faculty-directory" && (
                                 <div className={"grid gap-3 sm:grid-cols-2 " + (report === "student-roster" ? "lg:grid-cols-3" : "")}>
                                     <label className="block">
