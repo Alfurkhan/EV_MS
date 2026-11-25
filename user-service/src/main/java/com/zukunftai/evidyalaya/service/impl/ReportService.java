@@ -60,8 +60,8 @@ public class ReportService {
     public ReportData getStudentRoster(Long academicYearId, Long gradeId, Long sectionId) {
         AcademicYear year = resolveAcademicYear(academicYearId);
         User actor = userService.getPrincipal();
-        boolean isFaculty = hasRole(actor, RoleName.ROLE_FACULTY);
-        Set<SectionScope> facultyScope = isFaculty ? getFacultyScope(actor, year) : Set.of();
+        boolean isFaculty = !isAdmin && hasRole(actor, RoleName.ROLE_FACULTY);
+        Set<SectionScope> facultyScope = isFaculty ? getFacultyAttendanceScope(actor, year) : Set.of();
 
         if (isFaculty && facultyScope.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have assigned classes for this academic year.");
@@ -245,7 +245,7 @@ public class ReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid attendance status filter.");
         }
 
-        List<StudentEnrollment> enrollments = enrollmentRepository.findByAcademicYearAndActiveTrue(year).stream()
+        List<StudentEnrollment> enrollments = enrollmentRepository.findByAcademicYear(year).stream()
                 .filter(enrollment -> gradeId == null || enrollment.getGrade().getId().equals(gradeId))
                 .filter(enrollment -> sectionId == null || enrollment.getSection().getId().equals(sectionId))
                 .filter(enrollment -> !isFaculty || facultyScope.contains(new SectionScope(
@@ -272,12 +272,10 @@ public class ReportService {
                 .toList();
 
         Map<StudentAttendanceKey, AttendanceReportCounts> studentCounts = new LinkedHashMap<>();
-        Map<StudentAttendanceKey, StudentEnrollment> enrollmentByKey = new HashMap<>();
         for (StudentEnrollment enrollment : enrollments) {
             StudentAttendanceKey key = new StudentAttendanceKey(enrollment.getStudent().getId(),
                     enrollment.getGrade().getId(), enrollment.getSection().getId());
             studentCounts.put(key, new AttendanceReportCounts());
-            enrollmentByKey.put(key, enrollment);
         }
 
         Map<Long, Map<StudentAttendanceKey, AttendanceStatus>> statusBySession = new HashMap<>();
@@ -477,6 +475,15 @@ public class ReportService {
 
     public byte[] exportFacultyClassStrength(Long academicYearId, String format) {
         return export(getFacultyClassStrength(academicYearId), format);
+    }
+
+    private Set<SectionScope> getFacultyAttendanceScope(User faculty, AcademicYear year) {
+        // For attendance history, include past approved assignments even if they have since expired.
+        return timetableRepository.findByFaculty(faculty).stream()
+                .filter(timetable -> timetable.getStatus() == TimetableStatus.APPROVED)
+                .filter(timetable -> timetable.getAcademicYear().getId().equals(year.getId()))
+                .map(timetable -> new SectionScope(timetable.getGrade().getId(), timetable.getSection().getId()))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
     }
 
     private Set<SectionScope> getFacultyScope(User faculty, AcademicYear year) {
