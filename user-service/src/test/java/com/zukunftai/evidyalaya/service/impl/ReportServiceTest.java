@@ -61,7 +61,7 @@ class ReportServiceTest {
     void facultyDirectoryPreviewUsesSchoolIdentityAndTheme() {
         var report = reportService.getFacultyDirectory();
 
-        assertEquals("Faculty Directory · All faculty accounts", report.getReportTitle());
+        assertEquals("Faculty Directory · All subjects · All account statuses", report.getReportTitle());
         assertEquals("Example School", report.getSchool().getName());
         assertEquals("#0D9488", report.getSchool().getPrimaryColor());
         assertEquals("#D97706", report.getSchool().getAccentColor());
