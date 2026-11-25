@@ -24,6 +24,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class ReportServiceTest {
@@ -50,8 +51,8 @@ class ReportServiceTest {
                 .roles(Set.of(new Role(1L, RoleName.ROLE_ADMIN)))
                 .build();
         when(userService.getPrincipal()).thenReturn(admin);
-        when(userRepository.findAll()).thenReturn(List.of());
-        when(subjectRepository.findAllWithFaculties()).thenReturn(List.of());
+        lenient().when(userRepository.findAll()).thenReturn(List.of());
+        lenient().when(subjectRepository.findAllWithFaculties()).thenReturn(List.of());
         when(schoolSettingsService.getSettings()).thenReturn(Map.of(
                 "school.name", "Example School",
                 "school.tagline", "Learning together",
