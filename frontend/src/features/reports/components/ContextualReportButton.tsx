@@ -118,7 +118,7 @@ export default function ContextualReportButton({ report }: Props) {
 
                         <div className="space-y-4 overflow-y-auto p-5">
                             {report !== "faculty-directory" && (
-                                <div className="grid gap-3 sm:grid-cols-2 ${report === "student-roster" ? "lg:grid-cols-3" : ""}">
+                                <div className={"grid gap-3 sm:grid-cols-2 " + (report === "student-roster" ? "lg:grid-cols-3" : "")}>
                                     <label className="block">
                                         <span className="mb-1.5 block text-sm font-medium text-slate-700">Academic Year</span>
                                         <select value={filters.academicYearId ?? ""} onChange={(event) => setFilters((current) => ({ ...current, academicYearId: event.target.value ? Number(event.target.value) : undefined, gradeId: undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
