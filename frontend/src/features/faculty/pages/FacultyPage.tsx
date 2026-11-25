@@ -14,6 +14,7 @@ import EditFacultyModal from "../components/EditFacultyModal";
 import FacultyDetailsModal from "../components/FacultyDetailsModal";
 
 import type { Faculty } from "../types/faculty";
+import ContextualReportButton from "../../reports/components/ContextualReportButton";
 
 export default function FacultyPage() {
     const {
@@ -323,6 +324,7 @@ export default function FacultyPage() {
                 }
                 onSuccess={refresh}
             />
+            <ContextualReportButton report="faculty-directory" />
         </div>
     );
 }
