@@ -27,6 +27,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
+import javax.imageio.ImageIO;
+import org.apache.poi.util.Units;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -394,7 +396,6 @@ public class ReportService {
             sheet.getRow(4).createCell(1).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
 
-            embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl());
             Row headerRow = sheet.createRow(6);
             for (int column = 0; column < data.getColumns().size(); column++) {
                 Cell cell = headerRow.createCell(column);
@@ -420,6 +421,7 @@ public class ReportService {
                         : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 18;
                 sheet.setColumnWidth(column, width * 256);
             }
+            embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl());
             int dataEndRow = 7 + data.getRows().size();
             if (!data.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(6, dataEndRow - 1, 0, data.getColumns().size() - 1));
             sheet.createFreezePane(0, 7);
@@ -466,14 +468,38 @@ public class ReportService {
             String fileName = logoUrl.substring("/public/school-branding/logo/".length());
             Path path = brandingStorageService.resolve(fileName);
             String extension = path.getFileName().toString().toLowerCase(Locale.ROOT);
-            int pictureType = extension.endsWith(".png") ? Workbook.PICTURE_TYPE_PNG : Workbook.PICTURE_TYPE_JPEG;
             if (extension.endsWith(".webp")) return;
+            int pictureType = extension.endsWith(".png") ? Workbook.PICTURE_TYPE_PNG : Workbook.PICTURE_TYPE_JPEG;
+
+            var image = ImageIO.read(path.toFile());
+            if (image == null) return;
+            int imageWidth = image.getWidth();
+            int imageHeight = image.getHeight();
+
+            // Fit the image proportionally inside the existing merged logo area (A1:A5),
+            // leaving a small inset and centering it in both directions.
+            float availableWidth = sheet.getColumnWidthInPixels(0) - 12f;
+            float availableHeight = 0f;
+            for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
+                Row row = sheet.getRow(rowIndex);
+                availableHeight += (row == null ? sheet.getDefaultRowHeightInPoints() : row.getHeightInPoints()) * 96f / 72f;
+            }
+            availableHeight -= 12f;
+            float scale = Math.min(availableWidth / imageWidth, availableHeight / imageHeight);
+            float displayWidth = imageWidth * scale;
+            float displayHeight = imageHeight * scale;
+            float leftInset = (sheet.getColumnWidthInPixels(0) - displayWidth) / 2f;
+            float topInset = (availableHeight + 12f - displayHeight) / 2f;
+
             int pictureIndex = workbook.addPicture(Files.readAllBytes(path), pictureType);
-            XSSFDrawing drawing = xssf.getSheetAt(0).createDrawingPatriarch();
-            XSSFClientAnchor anchor = new XSSFClientAnchor(2, 2, 2, 2, 0, 0, 1, 5);
+            XSSFDrawing drawing = xssf.createSheetDrawingPatriarch(sheet);
+            XSSFClientAnchor anchor = new XSSFClientAnchor(
+                    Units.pixelToEMU(leftInset), Units.pixelToEMU(topInset),
+                    Units.pixelToEMU(displayWidth - sheet.getColumnWidthInPixels(0)),
+                    Units.pixelToEMU(displayHeight - (availableHeight + 12f)),
+                    0, 0, 1, 5);
             anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_DONT_RESIZE);
-            var picture = drawing.createPicture(anchor, pictureIndex);
-            picture.resize(0.85);
+            drawing.createPicture(anchor, pictureIndex);
         } catch (Exception ignored) {
             // Optional logo embedding must not prevent exporting a report.
         }
