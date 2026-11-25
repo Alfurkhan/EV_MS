@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileChartColumn, FileSpreadsheet, FileText, Eye, RefreshCw, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../../api/axios";
@@ -26,6 +26,8 @@ const reportTitles: Record<ContextReportKind, string> = {
 
 export default function ContextualReportButton({ report }: Props) {
     const [open, setOpen] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
     const [grades, setGrades] = useState<Grade[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
@@ -33,6 +35,19 @@ export default function ContextualReportButton({ report }: Props) {
     const [data, setData] = useState<ReportData | null>(null);
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
+
+    useEffect(() => {
+        const showButton = () => {
+            setIsVisible(true);
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = setTimeout(() => setIsVisible(false), 4000);
+        };
+        window.addEventListener("mousemove", showButton);
+        return () => {
+            window.removeEventListener("mousemove", showButton);
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        };
+    }, []);
 
     useEffect(() => {
         if (!open || report === "faculty-directory") return;
@@ -97,7 +112,7 @@ export default function ContextualReportButton({ report }: Props) {
                 onClick={() => setOpen(true)}
                 aria-label="Generate report"
                 title="Generate report"
-                className="fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-lg transition hover:scale-110 hover:bg-brand-hover focus:outline-none focus:ring-4 focus:ring-brand/20"
+                className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto ${isVisible ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-75 opacity-0"}`}
             >
                 <FileChartColumn size={24} strokeWidth={2.2} />
             </button>
