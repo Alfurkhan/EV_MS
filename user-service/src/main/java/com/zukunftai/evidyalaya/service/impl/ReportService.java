@@ -448,6 +448,12 @@ public class ReportService {
 
     private record StudentAttendanceKey(Long studentId, Long gradeId, Long sectionId) {}
 
+    public byte[] exportAttendanceReport(Long academicYearId, Long gradeId, Long sectionId,
+                                         java.time.LocalDate fromDate, java.time.LocalDate toDate,
+                                         String attendanceStatus, String format) {
+        return export(getAttendanceReport(academicYearId, gradeId, sectionId, fromDate, toDate, attendanceStatus), format);
+    }
+
     public ReportData getFacultyClassStrength(Long academicYearId) {
         User actor = userService.getPrincipal();
         if (!hasRole(actor, RoleName.ROLE_FACULTY)) {
