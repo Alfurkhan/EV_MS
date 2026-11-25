@@ -1,5 +1,8 @@
 import api from "../../../api/axios";
 
+export type ReportMetric = { label: string; value: string };
+export type ReportSection = { title: string; columns: string[]; rows: string[][] };
+
 export type ReportData = {
     reportTitle: string;
     generatedAt: string;
@@ -17,6 +20,8 @@ export type ReportData = {
     };
     columns: string[];
     rows: string[][];
+    summary?: ReportMetric[];
+    sections?: ReportSection[];
 };
 
 export type ReportFilters = {
@@ -25,12 +30,20 @@ export type ReportFilters = {
     sectionId?: number;
     subjectId?: number;
     accountStatus?: string;
+    startDate?: string;
+    endDate?: string;
+    status?: string;
 };
 
 function queryParams(filters: ReportFilters) {
     return Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== undefined && value !== null),
     );
+}
+
+export async function previewAttendanceReport(filters: ReportFilters): Promise<ReportData> {
+    const { data } = await api.get<ReportData>("/reports/attendance", { params: queryParams(filters) });
+    return data;
 }
 
 export async function previewStudentRoster(filters: ReportFilters): Promise<ReportData> {
@@ -50,7 +63,7 @@ export async function previewMyClassStrength(academicYearId?: number): Promise<R
 }
 
 export async function downloadReport(
-    report: "student-roster" | "faculty-directory" | "my-class-strength",
+    report: "student-roster" | "faculty-directory" | "my-class-strength" | "attendance",
     format: "pdf" | "xlsx",
     filters: ReportFilters = {},
     filenameStem?: string,
