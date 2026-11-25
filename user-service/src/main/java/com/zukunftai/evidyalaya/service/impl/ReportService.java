@@ -432,7 +432,11 @@ public class ReportService {
         return value != null && value.matches("^#[0-9A-Fa-f]{6}$") ? value : fallback;
     }
 
-    private String nonBlankOrDefault(String value, String fallback) {\n        return value == null || value.isBlank() ? fallback : value;\n    }\n\n    private String safe(String value) {
+    private String nonBlankOrDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String safe(String value) {
         return value == null ? "" : value;
     }
 
