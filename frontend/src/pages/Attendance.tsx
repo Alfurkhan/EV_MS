@@ -32,6 +32,7 @@ import type {
 } from "../features/faculty/types/attendance";
 
 import type { ClassSessionResponse } from "../features/faculty/types/classSession";
+import ContextualReportButton from "../features/reports/components/ContextualReportButton";
 
 const STATUS_OPTIONS: {
     value: AttendanceStatus;
@@ -66,10 +67,10 @@ export default function Attendance() {
     }
 
     if (isAdmin) {
-        return <AdminAttendance />;
+        return <><AdminAttendance /><ContextualReportButton report="attendance" /></>;
     }
 
-    return <FacultyAttendance />;
+    return <><FacultyAttendance /><ContextualReportButton report="attendance" /></>;
 }
 
 /* ============================================================= */
