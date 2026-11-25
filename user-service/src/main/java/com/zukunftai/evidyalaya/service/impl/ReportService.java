@@ -60,6 +60,7 @@ public class ReportService {
     public ReportData getStudentRoster(Long academicYearId, Long gradeId, Long sectionId) {
         AcademicYear year = resolveAcademicYear(academicYearId);
         User actor = userService.getPrincipal();
+        boolean isAdmin = hasRole(actor, RoleName.ROLE_ADMIN);
         boolean isFaculty = !isAdmin && hasRole(actor, RoleName.ROLE_FACULTY);
         Set<SectionScope> facultyScope = isFaculty ? getFacultyAttendanceScope(actor, year) : Set.of();
 
@@ -672,7 +673,7 @@ public class ReportService {
                     int rowsPerPage = 28;
                     int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
                     for (int pageIndex = 0; pageIndex < pages; pageIndex++) {
-                        PDRectangle pageSize = section.getColumns().size() >= 8 ? PDRectangle.A4.rotate() : PDRectangle.A4;
+                        PDRectangle pageSize = section.getColumns().size() >= 8 ? new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()) : PDRectangle.A4;
                         PDPage page = new PDPage(pageSize);
                         document.addPage(page);
                         pageNumber++;
