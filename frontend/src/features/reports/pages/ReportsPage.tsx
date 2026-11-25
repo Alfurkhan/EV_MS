@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileSpreadsheet, FileText, GraduationCap, Users, RefreshCw, Download, Eye, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
+import api from "../../../api/axios";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getAcademicYears, type AcademicYear } from "../../academic/services/academicYearService";
 import { getGradesByAcademicYear, type Grade } from "../../academic/services/gradeService";
@@ -65,7 +66,6 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
 
-    const activeYear = academicYears.find((year) => year.id === filters.academicYearId);
     const selectedReportMeta = availableReports.find((report) => report.id === selectedReport);
 
     useEffect(() => {
@@ -248,7 +248,7 @@ export default function ReportsPage() {
                 <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
                     <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3 min-w-0">
-                            {reportData.school.logoUrl && <img src={reportData.school.logoUrl} alt="" className="h-12 w-12 rounded-lg object-contain" />}
+                            {reportData.school.logoUrl && <img src={`${api.defaults.baseURL ?? "/api"}${reportData.school.logoUrl}`} alt="" className="h-12 w-12 rounded-lg object-contain" />}
                             <div className="min-w-0">
                                 <p className="font-semibold" style={{ color: reportData.school.primaryColor }}>{reportData.school.name}</p>
                                 <h3 className="font-medium text-slate-900">{reportData.reportTitle}</h3>
