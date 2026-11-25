@@ -11,11 +11,12 @@ import {
     previewFacultyDirectory,
     previewMyClassStrength,
     previewStudentRoster,
+    previewAttendanceReport,
     type ReportData,
     type ReportFilters,
 } from "../services/reportService";
 
-export type ContextReportKind = "student-roster" | "faculty-directory" | "my-class-strength";
+export type ContextReportKind = "student-roster" | "faculty-directory" | "my-class-strength" | "attendance";
 
 type Props = { report: ContextReportKind };
 
@@ -23,6 +24,7 @@ const reportTitles: Record<ContextReportKind, string> = {
     "student-roster": "Student Strength & Roster",
     "faculty-directory": "Faculty Directory",
     "my-class-strength": "My Class Strength",
+    "attendance": "Attendance Report",
 };
 
 export default function ContextualReportButton({ report }: Props) {
@@ -70,12 +72,13 @@ export default function ContextualReportButton({ report }: Props) {
         getAcademicYears().then((years) => {
             setAcademicYears(years);
             const active = years.find((year) => year.active) ?? years[0];
-            setFilters((current) => ({ ...current, academicYearId: current.academicYearId ?? active?.id }));
+            setFilters((current) => ({ ...current, academicYearId: current.academicYearId ?? active?.id,
+                ...(report === "attendance" && !current.startDate && active ? { startDate: active.startDate, endDate: active.endDate, status: "ALL" } : {}) }));
         }).catch(() => toast.error("Unable to load academic years."));
     }, [open, report]);
 
     useEffect(() => {
-        if (!open || report !== "student-roster" || !filters.academicYearId) {
+        if (!open || !["student-roster", "attendance"].includes(report) || !filters.academicYearId) {
             setGrades([]);
             return;
         }
@@ -84,7 +87,7 @@ export default function ContextualReportButton({ report }: Props) {
     }, [open, report, filters.academicYearId]);
 
     useEffect(() => {
-        if (!open || report !== "student-roster" || !filters.gradeId) {
+        if (!open || !["student-roster", "attendance"].includes(report) || !filters.gradeId) {
             setSections([]);
             return;
         }
@@ -100,7 +103,9 @@ export default function ContextualReportButton({ report }: Props) {
                 ? await previewStudentRoster(filters)
                 : report === "faculty-directory"
                     ? await previewFacultyDirectory(filters)
-                    : await previewMyClassStrength(filters.academicYearId);
+                    : report === "attendance"
+                        ? await previewAttendanceReport(filters)
+                        : await previewMyClassStrength(filters.academicYearId);
             if (requestId === previewRequestRef.current) {
                 setData(result);
                 setPreviewStale(false);
@@ -122,6 +127,8 @@ export default function ContextualReportButton({ report }: Props) {
                 ? ["Student-Roster", academicYears.find(y => y.id === filters.academicYearId)?.name, filters.gradeId ? grades.find(g => g.id === filters.gradeId)?.name : "All-Grades", filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined].filter(Boolean).join("_")
                 : report === "faculty-directory"
                     ? ["Faculty-Directory", filters.subjectId ? subjects.find(s => s.id === filters.subjectId)?.name : "All-Subjects", filters.accountStatus && filters.accountStatus !== "all" ? filters.accountStatus : undefined].filter(Boolean).join("_")
+                    : report === "attendance"
+                    ? ["Attendance", academicYears.find(y => y.id === filters.academicYearId)?.name, filters.gradeId ? grades.find(g => g.id === filters.gradeId)?.name : "All-Grades", filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined, filters.startDate, filters.endDate, filters.status !== "ALL" ? filters.status : undefined].filter(Boolean).join("_")
                     : ["My-Class-Strength", academicYears.find(y => y.id === filters.academicYearId)?.name].filter(Boolean).join("_");
             const safeStem = stem.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-");
             await downloadReport(report, format, filters, safeStem);
@@ -179,7 +186,7 @@ export default function ContextualReportButton({ report }: Props) {
                                             {academicYears.map((year) => <option key={year.id} value={year.id}>{year.name}{year.active ? " (Active)" : ""}</option>)}
                                         </select>
                                     </label>
-                                    {report === "student-roster" && <>
+                                    {["student-roster", "attendance"].includes(report) && <>
                                         <label className="block">
                                             <span className="mb-1.5 block text-sm font-medium text-slate-700">Grade</span>
                                             <select value={filters.gradeId ?? ""} onChange={(event) => updateReportFilters((current) => ({ ...current, gradeId: event.target.value ? Number(event.target.value) : undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
@@ -197,6 +204,12 @@ export default function ContextualReportButton({ report }: Props) {
                                     </>}
                                 </div>
                             )}
+
+                            {report === "attendance" && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Start Date</span><input type="date" value={filters.startDate ?? ""} onChange={event => updateReportFilters(current => ({...current, startDate: event.target.value || undefined}))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand" /></label>
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">End Date</span><input type="date" value={filters.endDate ?? ""} onChange={event => updateReportFilters(current => ({...current, endDate: event.target.value || undefined}))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand" /></label>
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Attendance Status</span><select value={filters.status ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, status: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All statuses</option><option value="PRESENT">Present</option><option value="ABSENT">Absent</option><option value="LATE">Late</option><option value="EXCUSED">Excused</option><option value="UNMARKED">Unmarked</option></select></label>
+                            </div>}
 
                             <div className="flex justify-end">
                                 <button type="button" onClick={preview} disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover disabled:opacity-60">
@@ -222,6 +235,9 @@ export default function ContextualReportButton({ report }: Props) {
                                     </div>
                                 </div>
                                 {data.school.tagline && <p className="px-4 pt-3 text-sm text-slate-500">{data.school.tagline}</p>}
+                                {data.summary && data.summary.length > 0 && <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-5">
+                                    {data.summary.map(metric => <div key={metric.label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-medium text-slate-500">{metric.label}</p><p className="mt-1 text-lg font-semibold text-slate-800">{metric.value}</p></div>)}
+                                </div>}
                                 <div className="max-h-[48vh] overflow-auto">
                                     <table className="min-w-full divide-y divide-slate-200 text-sm">
                                         <thead className="sticky top-0 z-10" style={{ backgroundColor: data.school.primaryColor }}>
@@ -233,6 +249,11 @@ export default function ContextualReportButton({ report }: Props) {
                                         </tbody>
                                     </table>
                                 </div>
+                                </div>
+                                {data.sections?.map(section => <div key={section.title} className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+                                    <div className="border-b border-slate-200 bg-slate-50 px-4 py-3"><h4 className="font-semibold text-slate-800">{section.title}</h4><p className="text-xs text-slate-500">{section.rows.length} record{section.rows.length === 1 ? "" : "s"}</p></div>
+                                    <div className="max-h-[40vh] overflow-auto"><table className="min-w-full divide-y divide-slate-200 text-sm"><thead className="sticky top-0 z-10" style={{backgroundColor: data.school.primaryColor}}><tr>{section.columns.map(column => <th key={column} className="whitespace-nowrap px-3 py-2 text-left font-semibold text-white">{column}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{section.rows.map((row,index)=><tr key={index} className={index%2?"bg-slate-50":"bg-white"}>{section.columns.map((column,colIndex)=><td key={column} className="whitespace-nowrap px-3 py-2 text-slate-700">{row[colIndex] ?? ""}</td>)}</tr>)}{section.rows.length===0 && <tr><td colSpan={section.columns.length} className="px-5 py-8 text-center text-slate-500">No session records found.</td></tr>}</tbody></table></div>
+                                </div>)}
                                 <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500" style={{ borderTopColor: data.school.accentColor }}>{data.rows.length} record{data.rows.length === 1 ? "" : "s"} · Preview only</div>
                             </div>}
                         </div>
