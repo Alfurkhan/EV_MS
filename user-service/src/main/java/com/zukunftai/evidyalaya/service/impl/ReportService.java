@@ -111,7 +111,7 @@ public class ReportService {
         }
 
         List<User> faculty = userRepository.findAll().stream()
-                .filter(user -> hasRole(user, RoleName.ROLE_FACULTY))
+                .filter(user -> hasRole(user, RoleName.ROLE_FACULTY) && !user.isAccountDeleted())
                 .sorted(Comparator.comparing(user -> Optional.ofNullable(user.getFullName()).orElse("").toLowerCase()))
                 .toList();
 
@@ -169,14 +169,9 @@ public class ReportService {
     }
 
     private Set<SectionScope> getFacultyScope(User faculty, AcademicYear year) {
+        // Approved, active timetable assignments are the authorization source.
+        // Subject-to-grade associations alone do not grant access to every section.
         Set<SectionScope> scope = new LinkedHashSet<>();
-        subjectRepository.findByFacultiesContaining(faculty).stream()
-                .filter(Subject::isActive)
-                .flatMap(subject -> subject.getGrades().stream())
-                .filter(grade -> grade.isActive() && grade.getAcademicYear().getId().equals(year.getId()))
-                .forEach(grade -> sectionRepository.findByGradeAndActiveTrue(grade)
-                        .forEach(section -> scope.add(new SectionScope(grade.getId(), section.getId()))));
-
         timetableRepository.findByFacultyAndStatusAndActiveTrue(faculty, TimetableStatus.APPROVED).stream()
                 .filter(timetable -> timetable.getAcademicYear().getId().equals(year.getId()))
                 .filter(timetable -> timetable.getGrade().isActive() && timetable.getSection().isActive())
