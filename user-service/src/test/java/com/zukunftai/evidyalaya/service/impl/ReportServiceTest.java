@@ -148,6 +148,11 @@ class ReportServiceTest {
         assertEquals("Grade 10 · Section A Active Student Roster", report.getSections().get(0).getTitle());
         assertEquals(List.of("Student ID", "Student Name", "Email", "Phone"), report.getSections().get(0).getColumns());
         assertEquals(List.of("STU-101", "Sample Student", "student@example.test", "1234567890"), report.getSections().get(0).getRows().get(0));
+
+        byte[] pdf = reportService.exportFacultyClassStrength(9L, 5L, 6L, "pdf");
+        byte[] excel = reportService.exportFacultyClassStrength(9L, 5L, 6L, "xlsx");
+        assertEquals("%PDF", new String(pdf, 0, 4));
+        assertEquals("PK", new String(excel, 0, 2));
     }
 
     @Test
