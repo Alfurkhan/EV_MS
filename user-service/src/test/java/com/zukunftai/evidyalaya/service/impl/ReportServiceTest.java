@@ -11,6 +11,9 @@ import com.zukunftai.evidyalaya.service.SchoolSettingsService;
 import com.zukunftai.evidyalaya.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.apache.pdfbox.Loader;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import java.io.ByteArrayInputStream;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -150,6 +153,17 @@ class ReportServiceTest {
         byte[] excel = reportService.exportFacultyClassStrength(9L, 5L, 6L, "xlsx");
         assertEquals("%PDF", new String(pdf, 0, 4));
         assertEquals("PK", new String(excel, 0, 2));
+        try (var pdfDocument = Loader.loadPDF(pdf)) {
+            assertEquals(1, pdfDocument.getNumberOfPages(), "Class-strength roster should fit on one page for this test dataset.");
+        }
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(excel))) {
+            var sheet = workbook.getSheet("Report");
+            assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
+                    region.getFirstRow() == 0 && region.getFirstColumn() == 1 && region.getLastColumn() == 3),
+                    "The report header should span the full roster table width.");
+            assertEquals(40, sheet.getColumnWidth(2) / 256, "Email column should be wide enough for addresses.");
+            assertEquals(20, sheet.getColumnWidth(3) / 256, "Phone column should have consistent sizing.");
+        }
     }
 
     @Test
