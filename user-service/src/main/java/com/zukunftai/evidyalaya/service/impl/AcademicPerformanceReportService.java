@@ -95,7 +95,7 @@ public class AcademicPerformanceReportService {
                         bandRow("Needs Improvement (<60%)", performanceBands[3], officialCount)))
                 .build());
         return reportService.buildCustomReport(title, assessment.getAcademicYear().getName(),
-                List.of("Student Name", "Student Identifier", "Submission Status", "Marks Obtained", "Maximum Marks", "Percentage"),
+                List.of("Student Name", "Username", "Submission Status", "Marks Obtained", "Maximum Marks", "Percentage"),
                 rows, subtitle, metrics, sections);
     }
 
