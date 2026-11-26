@@ -766,6 +766,9 @@ public class ReportService {
                             if (isNameColumn(pdfColumns.get(col))) {
                                 drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 5.0f,
                                         margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
+                            } else if (pdfColumns.get(col).equalsIgnoreCase("Student ID")) {
+                                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6.5f, 5.0f,
+                                        margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
                             } else if (pdfColumns.get(col).equalsIgnoreCase("Email")) {
                                 drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6, 4.25f,
                                         margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
