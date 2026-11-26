@@ -78,13 +78,15 @@ export async function previewMyClassStrength(filters: ReportFilters = {}): Promi
     return data;
 }
 
-export async function previewAcademicPerformanceReport(assessmentId: number): Promise<ReportData> {
-    const { data } = await api.get<ReportData>(`/reports/academic-performance/${assessmentId}`);
+export async function previewAcademicPerformanceReport(assessmentId: number, audience: "admin" | "faculty" = "admin"): Promise<ReportData> {
+    const endpoint = audience === "faculty" ? `/reports/academic-performance/faculty/${assessmentId}` : `/reports/academic-performance/${assessmentId}`;
+    const { data } = await api.get<ReportData>(endpoint);
     return data;
 }
 
-export async function downloadAcademicPerformanceReport(assessmentId: number, format: "pdf" | "xlsx", filenameStem?: string): Promise<void> {
-    const { data } = await api.get<Blob>(`/reports/academic-performance/${assessmentId}/export`, {
+export async function downloadAcademicPerformanceReport(assessmentId: number, format: "pdf" | "xlsx", filenameStem?: string, audience: "admin" | "faculty" = "admin"): Promise<void> {
+    const endpoint = audience === "faculty" ? `/reports/academic-performance/faculty/${assessmentId}/export` : `/reports/academic-performance/${assessmentId}/export`;
+    const { data } = await api.get<Blob>(endpoint, {
         params: { format }, responseType: "blob",
     });
     const blobUrl = URL.createObjectURL(data);
