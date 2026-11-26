@@ -477,13 +477,15 @@ public class ReportService {
         return export(getAttendanceReport(academicYearId, gradeId, sectionId, fromDate, toDate, attendanceStatus), format);
     }
 
-    public List<FacultyReportScopeOption> getFacultyReportScope(Long academicYearId) {
+    public List<FacultyReportScopeOption> getFacultyReportScope(Long academicYearId, String reportKind) {
         User actor = userService.getPrincipal();
         if (!hasRole(actor, RoleName.ROLE_FACULTY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This report scope is available to faculty.");
         }
         AcademicYear year = resolveAcademicYear(academicYearId);
-        return getFacultyScope(actor, year).stream()
+        Set<SectionScope> reportScope = "student-roster".equalsIgnoreCase(reportKind)
+                ? getFacultyAttendanceScope(actor, year) : getFacultyScope(actor, year);
+        return reportScope.stream()
                 .map(scope -> {
                     Grade grade = gradeRepository.findById(scope.gradeId())
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned grade not found."));
