@@ -1234,6 +1234,7 @@ public class ReportService {
     private float[] pdfColumnRatios(List<String> columns) {
         if (columns.size() == 4 && columns.contains("Student ID") && columns.contains("Student Name")) return new float[]{0.18f, 0.30f, 0.34f, 0.18f};
         if (columns.size() == 6 && columns.get(0).equalsIgnoreCase("Student")) return new float[]{0.27f, 0.24f, 0.13f, 0.12f, 0.10f, 0.14f};
+        if (columns.size() == 6 && columns.contains("Username") && columns.contains("Submission Status")) return new float[]{0.22f, 0.22f, 0.18f, 0.12f, 0.12f, 0.14f};
         if (columns.size() == 6 && columns.contains("Student ID") && columns.contains("Grade")) return new float[]{0.11f, 0.08f, 0.18f, 0.23f, 0.30f, 0.10f};
         if (columns.size() == 6 && columns.get(0).toLowerCase(Locale.ROOT).contains("faculty")) return new float[]{0.27f, 0.23f, 0.13f, 0.20f, 0.09f, 0.08f};
         if (columns.contains("Attendance Flag")) {
