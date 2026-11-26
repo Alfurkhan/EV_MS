@@ -86,9 +86,8 @@ class ReportServiceTest {
         when(timetable.getGrade()).thenReturn(grade);
         when(timetable.getSection()).thenReturn(section);
         when(timetable.getStatus()).thenReturn(com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED);
-        when(timetable.isActive()).thenReturn(true);
         when(timetableRepository.findByFacultyAndStatusAndActiveTrue(faculty,
-                com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED)).thenReturn(List.of(timetable);
+                com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED)).thenReturn(List.of(timetable));
         when(gradeRepository.findById(5L)).thenReturn(Optional.of(grade));
         when(sectionRepository.findById(6L)).thenReturn(Optional.of(section));
 
