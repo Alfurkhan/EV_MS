@@ -245,6 +245,8 @@ export default function ContextualReportButton({ report }: Props) {
                                 </div>
                             )}
 
+                            {isFacultyScope && facultyScope.length === 0 && ["student-roster", "attendance", "my-class-strength"].includes(report) && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">No approved active class assignments are available for this academic year.</div>}
+
                             {report === "attendance" && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Start Date</span><input type="date" value={filters.startDate ?? ""} onChange={event => updateReportFilters(current => ({...current, startDate: event.target.value || undefined}))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand" min={academicYears.find(year => year.id === filters.academicYearId)?.startDate} max={academicYears.find(year => year.id === filters.academicYearId)?.endDate} /></label>
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">End Date</span><input type="date" value={filters.endDate ?? ""} onChange={event => updateReportFilters(current => ({...current, endDate: event.target.value || undefined}))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand" min={academicYears.find(year => year.id === filters.academicYearId)?.startDate} max={academicYears.find(year => year.id === filters.academicYearId)?.endDate} /></label>
@@ -252,7 +254,7 @@ export default function ContextualReportButton({ report }: Props) {
                             </div>}
 
                             <div className="flex justify-end">
-                                <button type="button" onClick={preview} disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover disabled:opacity-60">
+                                <button type="button" onClick={preview} disabled={loading || (isFacultyScope && facultyScope.length === 0)} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover disabled:opacity-60">
                                     {loading ? <RefreshCw size={16} className="animate-spin" /> : <Eye size={16} />}
                                     {loading ? "Generating preview…" : "Generate Preview"}
                                 </button>
