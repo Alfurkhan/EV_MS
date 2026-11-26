@@ -1003,9 +1003,18 @@ public class ReportService {
             for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
                 Row headerRow = sheet.createRow(rowIndex);
                 headerRow.setHeightInPoints(rowIndex == 0 ? 32 : 22);
-                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowIndex, rowIndex, 0, classStrengthReport ? Math.max(0, lastColumn - 2) : lastColumn));
+                if (classStrengthReport) {
+                    // Reserve the rightmost columns for the school logo and merge the report text area.
+                    sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(
+                            rowIndex, rowIndex, 0, Math.max(0, lastColumn - 2)));
+                } else {
+                    // Column A is reserved for the logo; merge the text cells in columns B onward.
+                    sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(
+                            rowIndex, rowIndex, 1, Math.max(1, lastColumn)));
+                }
             }
             if (!classStrengthReport) {
+                // The vertical logo region must not overlap the row-wise text merges.
                 sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 0, 0));
                 sheet.setColumnWidth(0, 32 * 256);
             }
