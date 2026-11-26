@@ -1254,6 +1254,8 @@ public class ReportService {
             }
             availableHeight -= 12f;
             float scale = Math.min(availableWidth / imageWidth, availableHeight / imageHeight);
+            // Keep logos visually compact even when the reserved columns are unusually wide.
+            scale = Math.min(scale, 72f / Math.max(imageWidth, imageHeight));
             float displayWidth = imageWidth * scale;
             float displayHeight = imageHeight * scale;
             float leftInset = (availableWidth + 12f - displayWidth) / 2f;
