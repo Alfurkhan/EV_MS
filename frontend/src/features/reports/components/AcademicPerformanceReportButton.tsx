@@ -54,7 +54,7 @@ export default function AcademicPerformanceReportButton() {
     return <>
         <button type="button" aria-label="Generate report" title="Academic Performance Report"
             onClick={() => setOpen(true)}
-            className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto ${isVisible ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-75 opacity-0"}`>
+            className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto ${isVisible ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-75 opacity-0"}` }>
             <FileChartColumn size={24} strokeWidth={2.2}/>
         </button>
         {open && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-3 sm:p-6" onClick={event => { if(event.target===event.currentTarget) setOpen(false); }}>
