@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FileChartColumn, FileSpreadsheet, FileText, Eye, RefreshCw, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAdminAssessments } from "../../assessments/services/adminAssessmentService";
@@ -9,10 +9,20 @@ import api from "../../../api/axios";
 export default function AcademicPerformanceReportButton() {
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState<AdminAssessmentItem[]>([]);
+    const [academicYear, setAcademicYear] = useState("");
+    const [grade, setGrade] = useState("");
+    const [section, setSection] = useState("");
+    const [subject, setSubject] = useState("");
     const [assessmentId, setAssessmentId] = useState("");
     const [data, setData] = useState<ReportData | null>(null);
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState<"pdf" | "xlsx" | null>(null);
+    const academicYears = useMemo(() => [...new Set(items.map(item => item.academicYearName).filter(Boolean))].sort(), [items]);
+    const grades = useMemo(() => [...new Set(items.filter(item => !academicYear || item.academicYearName === academicYear).map(item => item.gradeName))].sort(), [items, academicYear]);
+    const sections = useMemo(() => [...new Set(items.filter(item => (!academicYear || item.academicYearName === academicYear) && (!grade || item.gradeName === grade)).map(item => item.sectionName))].sort(), [items, academicYear, grade]);
+    const subjects = useMemo(() => [...new Set(items.filter(item => (!academicYear || item.academicYearName === academicYear) && (!grade || item.gradeName === grade) && (!section || item.sectionName === section)).map(item => item.subjectName))].sort(), [items, academicYear, grade, section]);
+    const filteredAssessments = useMemo(() => items.filter(item => (!academicYear || item.academicYearName === academicYear) && (!grade || item.gradeName === grade) && (!section || item.sectionName === section) && (!subject || item.subjectName === subject)), [items, academicYear, grade, section, subject]);
+
 
     useEffect(() => {
         if (!open) return;
@@ -52,12 +62,13 @@ export default function AcademicPerformanceReportButton() {
                     <button type="button" onClick={()=>setOpen(false)} aria-label="Close report dialog" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"><X size={20}/></button>
                 </header>
                 <div className="space-y-4 overflow-y-auto p-5">
-                    <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Assessment</span>
-                        <select value={assessmentId} onChange={e=>{setAssessmentId(e.target.value);setData(null);}} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
-                            <option value="">Select assessment</option>
-                            {items.map(a=><option key={a.id} value={a.id}>{a.title} · {a.subjectName} · {a.gradeName} {a.sectionName} · {a.status}{a.resultsPublished?" · Results Published":""}</option>)}
-                        </select>
-                    </label>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Academic Year</span><select value={academicYear} onChange={e=>{setAcademicYear(e.target.value);setGrade("");setSection("");setSubject("");setAssessmentId("");setData(null);}} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All academic years</option>{academicYears.map(y=><option key={y}>{y}</option>)}</select></label>
+                        <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Grade</span><select value={grade} onChange={e=>{setGrade(e.target.value);setSection("");setSubject("");setAssessmentId("");setData(null);}} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All grades</option>{grades.map(g=><option key={g}>{g}</option>)}</select></label>
+                        <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Section</span><select value={section} onChange={e=>{setSection(e.target.value);setSubject("");setAssessmentId("");setData(null);}} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All sections</option>{sections.map(s=><option key={s}>{s}</option>)}</select></label>
+                        <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Subject</span><select value={subject} onChange={e=>{setSubject(e.target.value);setAssessmentId("");setData(null);}} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All subjects</option>{subjects.map(s=><option key={s}>{s}</option>)}</select></label>
+                        <label className="block sm:col-span-2"><span className="mb-1.5 block text-sm font-medium text-slate-700">Assessment</span><select value={assessmentId} onChange={e=>{setAssessmentId(e.target.value);setData(null);}} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">Select assessment</option>{filteredAssessments.map(a=><option key={a.id} value={a.id}>{a.title} · {a.subjectName} · {a.gradeName} {a.sectionName} · {a.status}{a.resultsPublished?" · Results Published":""}</option>)}</select></label>
+                    </div>
                     {assessmentId && <div className="rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">The report covers the selected assessment and its enrolled class. Unpublished marks are not presented as official results.</div>}
                     <div className="flex justify-end"><button type="button" onClick={()=>void preview()} disabled={loading||!assessmentId} className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60">{loading?<RefreshCw size={16} className="animate-spin"/>:<Eye size={16}/>} {loading?"Generating preview…":"Generate Preview"}</button></div>
                     {data && <div className="overflow-hidden rounded-xl border border-slate-200">
