@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FileChartColumn, FileSpreadsheet, FileText, Eye, RefreshCw, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAdminAssessments } from "../../assessments/services/adminAssessmentService";
@@ -8,8 +8,6 @@ import api from "../../../api/axios";
 
 export default function AcademicPerformanceReportButton() {
     const [open, setOpen] = useState(false);
-    const [isVisible, setIsVisible] = useState(false);
-    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [items, setItems] = useState<AdminAssessmentItem[]>([]);
     const [academicYear, setAcademicYear] = useState("");
     const [grade, setGrade] = useState("");
@@ -54,7 +52,7 @@ export default function AcademicPerformanceReportButton() {
     return <>
         <button type="button" aria-label="Generate report" title="Academic Performance Report"
             onClick={() => setOpen(true)}
-            className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto ${isVisible ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-75 opacity-0"}` }>
+            className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto` }>
             <FileChartColumn size={24} strokeWidth={2.2}/>
         </button>
         {open && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-3 sm:p-6" onClick={event => { if(event.target===event.currentTarget) setOpen(false); }}>
@@ -79,7 +77,7 @@ export default function AcademicPerformanceReportButton() {
                             <div className="flex gap-2"><button type="button" onClick={()=>void exportFile("pdf")} disabled={!!exporting} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-50">{exporting==="pdf"?<RefreshCw size={15} className="animate-spin"/>:<FileText size={15}/>} PDF</button><button type="button" onClick={()=>void exportFile("xlsx")} disabled={!!exporting} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-50">{exporting==="xlsx"?<RefreshCw size={15} className="animate-spin"/>:<FileSpreadsheet size={15}/>} Excel</button></div>
                         </div>
                         {data.school.tagline&&<p className="px-4 pt-3 text-sm text-slate-500">{data.school.tagline}</p>}
-                        {data.summary?.length>0&&<div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">{data.summary.map(m=><div key={m.label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-medium text-slate-500">{m.label}</p><p className="mt-1 text-lg font-semibold text-slate-800">{m.value}</p></div>)}</div>}
+                        {data.summary && data.summary.length > 0 && <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-4">{data.summary.map(m=><div key={m.label} className="rounded-xl bg-slate-50 p-3"><p className="text-xs font-medium text-slate-500">{m.label}</p><p className="mt-1 text-lg font-semibold text-slate-800">{m.value}</p></div>)}</div>}
                         <div className="max-h-[48vh] overflow-auto"><table className="min-w-full divide-y divide-slate-200 text-sm"><thead className="sticky top-0 z-10" style={{backgroundColor:data.school.primaryColor}}><tr>{data.columns.map(col=><th key={col} className="whitespace-nowrap px-4 py-3 text-left font-semibold text-white">{col}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{data.rows.map((row,i)=><tr key={i} className={i%2?"bg-slate-50":"bg-white"}>{data.columns.map((col,j)=><td key={col} className="whitespace-nowrap px-4 py-3 text-slate-700">{row[j]??""}</td>)}</tr>)}{data.rows.length===0&&<tr><td colSpan={data.columns.length} className="px-6 py-10 text-center text-slate-500">No students found for this assessment's class.</td></tr>}</tbody></table></div>
                         {data.sections?.map(section=><div key={section.title} className="mt-4 overflow-hidden rounded-xl border border-slate-200"><div className="border-b border-slate-200 bg-slate-50 px-4 py-3"><h4 className="font-semibold text-slate-800">{section.title}</h4></div><div className="overflow-auto"><table className="min-w-full divide-y divide-slate-200 text-sm"><thead style={{backgroundColor:data.school.primaryColor}}><tr>{section.columns.map(col=><th key={col} className="whitespace-nowrap px-3 py-2 text-left font-semibold text-white">{col}</th>)}</tr></thead><tbody className="divide-y divide-slate-100">{section.rows.map((row,i)=><tr key={i} className={i%2?"bg-slate-50":"bg-white"}>{section.columns.map((col,j)=><td key={col} className="whitespace-nowrap px-3 py-2 text-slate-700">{row[j]??""}</td>)}</tr>)}</tbody></table></div></div>)}
                         <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500" style={{borderTopColor:data.school.accentColor}}>{data.rows.length} student record(s) · Preview only</div>
