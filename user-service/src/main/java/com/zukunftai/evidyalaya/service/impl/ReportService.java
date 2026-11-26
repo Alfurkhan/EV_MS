@@ -117,7 +117,7 @@ public class ReportService {
             filterDescription = "All grades and sections";
         }
         return buildReport(title, year.getName(), List.of("Student", "Email", "Phone", "Grade", "Section", "Enrollment"), rows,
-                isFaculty ? "Faculty access · " + filterDescription : filterDescription);
+                isFaculty ? "Report prepared by: " + safe(actor.getFullName()) + " · " + filterDescription : filterDescription);
     }
 
     public ReportData getFacultyDirectory() {
@@ -406,7 +406,7 @@ public class ReportService {
         else if (selectedGrade != null) filterText += " · Grade: " + selectedGrade.getName() + " · All sections";
         else filterText += " · All grades and sections";
         if (!status.equals("ALL")) filterText += " · Student status: " + status;
-        if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
+        if (isFaculty) filterText = "Report prepared by: " + safe(actor.getFullName()) + " · Faculty assigned classes · " + filterText;
 
         return buildReport("Attendance Report", year.getName(),
                 List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance Rate", "Attendance Flag"),
@@ -477,30 +477,93 @@ public class ReportService {
         return export(getAttendanceReport(academicYearId, gradeId, sectionId, fromDate, toDate, attendanceStatus), format);
     }
 
-    public ReportData getFacultyClassStrength(Long academicYearId) {
+    public List<FacultyReportScopeOption> getFacultyReportScope(Long academicYearId) {
+        User actor = userService.getPrincipal();
+        if (!hasRole(actor, RoleName.ROLE_FACULTY)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This report scope is available to faculty.");
+        }
+        AcademicYear year = resolveAcademicYear(academicYearId);
+        return getFacultyScope(actor, year).stream()
+                .map(scope -> {
+                    Grade grade = gradeRepository.findById(scope.gradeId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned grade not found."));
+                    Section section = sectionRepository.findById(scope.sectionId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned section not found."));
+                    return new FacultyReportScopeOption(grade.getId(), grade.getName(), section.getId(), section.getName());
+                })
+                .sorted(Comparator.comparing(FacultyReportScopeOption::gradeName).thenComparing(FacultyReportScopeOption::sectionName))
+                .toList();
+    }
+
+    public ReportData getFacultyClassStrength(Long academicYearId, Long gradeId, Long sectionId) {
         User actor = userService.getPrincipal();
         if (!hasRole(actor, RoleName.ROLE_FACULTY)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This report is available to faculty.");
         }
         AcademicYear year = resolveAcademicYear(academicYearId);
         Set<SectionScope> scope = getFacultyScope(actor, year);
-        List<List<String>> rows = scope.stream()
-                .map(sectionScope -> {
-                    Grade grade = gradeRepository.findById(sectionScope.gradeId())
-                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned grade not found."));
-                    Section section = sectionRepository.findById(sectionScope.sectionId())
-                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned section not found."));
-                    long count = enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(year, grade, section);
-                    return List.of(grade.getName(), section.getName(), String.valueOf(count));
-                })
-                .sorted(Comparator.comparing(row -> row.get(0) + " " + row.get(1)))
-                .toList();
-        return buildReport("My Class Strength", year.getName(), List.of("Grade", "Section", "Active Students"), rows, "Assigned classes only");
+        if (scope.isEmpty()) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No assigned classes are available for this academic year.");
+        if (gradeId != null && scope.stream().noneMatch(item -> item.gradeId().equals(gradeId))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not assigned to the selected grade.");
+        }
+        if (sectionId != null && scope.stream().noneMatch(item -> item.sectionId().equals(sectionId) && (gradeId == null || item.gradeId().equals(gradeId)))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not assigned to the selected section.");
+        }
+        List<SectionScope> selectedScope = scope.stream()
+                .filter(item -> gradeId == null || item.gradeId().equals(gradeId))
+                .filter(item -> sectionId == null || item.sectionId().equals(sectionId))
+                .sorted(Comparator.comparing(item -> {
+                    Grade grade = gradeRepository.findById(item.gradeId()).orElseThrow();
+                    Section section = sectionRepository.findById(item.sectionId()).orElseThrow();
+                    return grade.getName() + " " + section.getName();
+                })).toList();
+
+        List<List<String>> rows = selectedScope.stream().map(item -> {
+            Grade grade = gradeRepository.findById(item.gradeId()).orElseThrow();
+            Section section = sectionRepository.findById(item.sectionId()).orElseThrow();
+            long count = enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(year, grade, section);
+            return List.of(grade.getName(), section.getName(), String.valueOf(count));
+        }).toList();
+
+        List<ReportData.ReportSection> detailSections = selectedScope.stream().map(item -> {
+            Grade grade = gradeRepository.findById(item.gradeId()).orElseThrow();
+            Section section = sectionRepository.findById(item.sectionId()).orElseThrow();
+            List<List<String>> students = enrollmentRepository.findByAcademicYearAndActiveTrue(year).stream()
+                    .filter(enrollment -> enrollment.getGrade().getId().equals(grade.getId())
+                            && enrollment.getSection().getId().equals(section.getId()))
+                    .sorted(Comparator.comparing(enrollment -> Optional.ofNullable(enrollment.getStudent().getFullName()).orElse("").toLowerCase(Locale.ROOT)))
+                    .map(enrollment -> List.of(
+                            safe(enrollment.getStudent().getFullName()),
+                            safe(enrollment.getStudent().getEmail()),
+                            safe(enrollment.getStudent().getPhoneNumber()),
+                            enrollment.isActive() ? "Active" : "Inactive"
+                    )).toList();
+            return ReportData.ReportSection.builder()
+                    .title(grade.getName() + " · Section " + section.getName() + " Student Details")
+                    .columns(List.of("Student Name", "Email", "Phone", "Enrollment"))
+                    .rows(students)
+                    .build();
+        }).toList();
+
+        long totalStudents = rows.stream().mapToLong(row -> Long.parseLong(row.get(2))).sum();
+        List<ReportData.SummaryMetric> summary = List.of(
+                metric("Assigned Sections", String.valueOf(selectedScope.size())),
+                metric("Grades Covered", String.valueOf(selectedScope.stream().map(SectionScope::gradeId).distinct().count())),
+                metric("Active Students", String.valueOf(totalStudents))
+        );
+        String scopeDescription = (gradeId == null ? "All assigned grades" : "Grade: " + rows.stream().map(row -> row.get(0)).findFirst().orElse(""))
+                + (sectionId == null ? " · All assigned sections" : " · Section: " + rows.stream().map(row -> row.get(1)).findFirst().orElse(""));
+        return buildReport("My Class Strength & Student Roster", year.getName(),
+                List.of("Grade", "Section", "Active Students"), rows,
+                "Report prepared by: " + safe(actor.getFullName()) + " · " + scopeDescription, summary, detailSections);
     }
 
-    public byte[] exportFacultyClassStrength(Long academicYearId, String format) {
-        return export(getFacultyClassStrength(academicYearId), format);
+    public byte[] exportFacultyClassStrength(Long academicYearId, Long gradeId, Long sectionId, String format) {
+        return export(getFacultyClassStrength(academicYearId, gradeId, sectionId), format);
     }
+
+    public record FacultyReportScopeOption(Long gradeId, String gradeName, Long sectionId, String sectionName) {}
+
 
     private Set<SectionScope> getFacultyAttendanceScope(User faculty, AcademicYear year) {
         // For attendance history, include past approved assignments even if they have since expired.
@@ -554,8 +617,11 @@ public class ReportService {
                 .accentColor(validColor(settings.get("theme.accentColor"), DEFAULT_ACCENT))
                 .build();
         String fullTitle = subtitle == null || subtitle.isBlank() ? title : title + " · " + subtitle;
+        User reportActor = userService.getPrincipal();
+        String preparedBy = hasRole(reportActor, RoleName.ROLE_FACULTY) ? safe(reportActor.getFullName()) : null;
         return ReportData.builder()
                 .reportTitle(fullTitle)
+                .preparedBy(preparedBy)
                 .generatedAt(LocalDateTime.now().format(GENERATED_AT))
                 .academicYear(year)
                 .school(identity)
