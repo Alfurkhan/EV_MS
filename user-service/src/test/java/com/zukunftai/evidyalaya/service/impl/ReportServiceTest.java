@@ -195,12 +195,22 @@ class ReportServiceTest {
     }
 
     @Test
-    void exportsFacultyDirectoryAsExcelWorkbook() {
+    void exportsFacultyDirectoryAsExcelWorkbookWithRightLogoHeader() throws Exception {
         byte[] excel = reportService.exportFacultyDirectory("xlsx");
 
         assertNotNull(excel);
         assertTrue(excel.length > 4);
         assertEquals("PK", new String(excel, 0, 2));
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(excel))) {
+            var sheet = workbook.getSheet("Report");
+            assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
+                    region.getFirstRow() == 0 && region.getFirstColumn() == 0 && region.getLastColumn() == 3),
+                    "Faculty directory report details should occupy the left header area.");
+            assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
+                    region.getFirstRow() == 0 && region.getLastRow() == 4
+                            && region.getFirstColumn() == 4 && region.getLastColumn() == 5),
+                    "Faculty directory logo space should be merged vertically at the right.");
+        }
     }
 
 
@@ -322,6 +332,16 @@ class ReportServiceTest {
         byte[] xlsx = reportService.exportAttendanceReport(7L, null, null, null, null, "ALL", "xlsx");
         assertEquals("%PDF", new String(pdf, 0, 4));
         assertEquals("PK", new String(xlsx, 0, 2));
+        try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(xlsx))) {
+            var sheet = workbook.getSheet("Report");
+            assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
+                    region.getFirstRow() == 0 && region.getFirstColumn() == 0 && region.getLastColumn() == 11),
+                    "Attendance report details should span the main report columns on the left.");
+            assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
+                    region.getFirstRow() == 0 && region.getLastRow() == 4
+                            && region.getFirstColumn() == 12 && region.getLastColumn() == 13),
+                    "Attendance report logo space should be right aligned across the header.");
+        }
         try (var pdfDocument = Loader.loadPDF(pdf)) {
             assertEquals(1, pdfDocument.getNumberOfPages(),
                     "Small attendance audits should share the main report page instead of leaving a mostly empty second page.");
