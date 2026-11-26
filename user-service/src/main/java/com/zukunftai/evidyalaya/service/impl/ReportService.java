@@ -773,7 +773,14 @@ public class ReportService {
                             y -= 15;
                             drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7,
                                     margin, y, "Academic Year: " + safe(data.getAcademicYear()) + " · " + data.getReportTitle(), Color.DARK_GRAY);
-                            y -= 16;
+                            y -= 11;
+                            if (!blank(data.getPreparedBy())) {
+                                drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 7, margin, y,
+                                        "Report prepared by: " + data.getPreparedBy() + " (Faculty)", Color.DARK_GRAY);
+                                y -= 11;
+                            } else {
+                                y -= 5;
+                            }
                             float headerHeight = 20;
                             float rowHeight = section.getColumns().size() >= 8 ? 12.5f : 17;
                             float[] ratios = pdfColumnRatios(section.getColumns());
