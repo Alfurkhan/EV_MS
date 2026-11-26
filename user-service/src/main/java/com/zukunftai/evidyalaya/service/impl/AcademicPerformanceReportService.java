@@ -36,7 +36,7 @@ public class AcademicPerformanceReportService {
         List<AssessmentQuestion> questions = questionRepository.findByAssessmentIdOrderByPositionAsc(assessment.getId());
         List<List<String>> rows = new ArrayList<>();
         BigDecimal highest = null, lowest = null, sum = BigDecimal.ZERO;
-        int officialCount = 0, submittedCount = 0, activeCount = 0, pendingCount = 0;
+        int officialCount = 0, submittedCount = 0, activeCount = 0, pendingCount = 0;\n        int[] performanceBands = new int[4];
         for (StudentEnrollment enrollment : enrollments) {
             User student = enrollment.getStudent();
             AssessmentAttempt attempt = attempts.get(student.getId());
@@ -78,9 +78,18 @@ public class AcademicPerformanceReportService {
                 + assessment.getGrade().getName() + " " + assessment.getSection().getName()
                 + " · Faculty: " + safe(assessment.getFaculty().getFullName())
                 + " · " + (assessment.isResultsPublished() ? "Published Results" : "Results Not Published");
+        List<ReportData.ReportSection> sections = List.of(ReportData.ReportSection.builder()
+                .title("Published Result Distribution")
+                .columns(List.of("Performance Band", "Students", "Share of Published Results"))
+                .rows(List.of(
+                        bandRow("Excellent (90–100%)", performanceBands[0], officialCount),
+                        bandRow("Good (75–89%)", performanceBands[1], officialCount),
+                        bandRow("Satisfactory (60–74%)", performanceBands[2], officialCount),
+                        bandRow("Needs Improvement (<60%)", performanceBands[3], officialCount)))
+                .build());
         return reportService.buildCustomReport(title, assessment.getAcademicYear().getName(),
                 List.of("Student Name", "Student ID", "Status", "Marks Obtained", "Maximum Marks", "Percentage"),
-                rows, subtitle, metrics, List.of());
+                rows, subtitle, metrics, sections);
     }
 
     public byte[] export(Long assessmentId, String format) {
@@ -96,7 +105,7 @@ public class AcademicPerformanceReportService {
         }
         return true;
     }
-    private ReportData.SummaryMetric metric(String label, Object value) {
+    private List<String> bandRow(String label, int count, int total) {\n        String share = total == 0 ? \"—\" : BigDecimal.valueOf(count * 100L).divide(BigDecimal.valueOf(total), 1, RoundingMode.HALF_UP).toPlainString() + \"%\";\n        return List.of(label, String.valueOf(count), share);\n    }\n    private ReportData.SummaryMetric metric(String label, Object value) {
         return ReportData.SummaryMetric.builder().label(label).value(String.valueOf(value)).build();
     }
     private String safe(String value) { return value == null ? "" : value; }
