@@ -1,14 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FileChartColumn, FileSpreadsheet, FileText, Eye, RefreshCw, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { getAdminAssessments } from "../../assessments/services/adminAssessmentService";
 import type { AdminAssessmentItem } from "../../assessments/types/adminAssessment";
+import { getFacultyAssessments } from "../../assessments/services/assessmentService";
+import type { Assessment } from "../../assessments/types/assessment";
 import { previewAcademicPerformanceReport, downloadAcademicPerformanceReport, type ReportData } from "../services/reportService";
 import api from "../../../api/axios";
 
-export default function AcademicPerformanceReportButton() {
+type Props = { audience?: "admin" | "faculty" };
+type ReportAssessment = Pick<AdminAssessmentItem, "id" | "title" | "academicYearName" | "gradeName" | "sectionName" | "subjectName" | "status" | "resultsPublished">;
+
+export default function AcademicPerformanceReportButton({ audience = "admin" }: Props) {
     const [open, setOpen] = useState(false);
-    const [items, setItems] = useState<AdminAssessmentItem[]>([]);
+    const [items, setItems] = useState<ReportAssessment[]>([]);
+    const [isVisible, setIsVisible] = useState(false);
+    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [academicYear, setAcademicYear] = useState("");
     const [grade, setGrade] = useState("");
     const [section, setSection] = useState("");
@@ -26,13 +33,16 @@ export default function AcademicPerformanceReportButton() {
 
     useEffect(() => {
         if (!open) return;
-        getAdminAssessments().then(setItems).catch(() => toast.error("Unable to load assessments."));
-    }, [open]);
+        (audience === "faculty"
+            ? getFacultyAssessments().then((assessments: Assessment[]) => setItems(assessments.map(a => ({ id: a.id, title: a.title, academicYearName: a.academicYearName, gradeName: a.gradeName, sectionName: a.sectionName, subjectName: a.subjectName, status: a.status, resultsPublished: a.resultsPublished })))
+            : getAdminAssessments().then(setItems))
+            .catch(() => toast.error("Unable to load assessments."));
+    }, [open, audience]);
 
     const preview = async () => {
         if (!assessmentId) { toast.error("Select an assessment first."); return; }
         setLoading(true); setData(null);
-        try { setData(await previewAcademicPerformanceReport(Number(assessmentId))); }
+        try { setData(await previewAcademicPerformanceReport(Number(assessmentId), audience)); }
         catch (error: any) { toast.error(error?.response?.data?.message || "Unable to generate academic performance report."); }
         finally { setLoading(false); }
     };
@@ -41,18 +51,28 @@ export default function AcademicPerformanceReportButton() {
         const selected = items.find(item => item.id === Number(assessmentId));
         setExporting(format);
         try {
-            const stem = ["Academic-Performance", selected?.title, selected?.gradeName, selected?.sectionName, selected?.subjectName]
+            const stem = ["Academic-Performance", selected?.title, selected?.gradeName, selected?.sectionName, selected?.subjectName, audience === "faculty" ? "Faculty" : undefined]
                 .filter(Boolean).join("_").replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-");
-            await downloadAcademicPerformanceReport(Number(assessmentId), format, stem);
+            await downloadAcademicPerformanceReport(Number(assessmentId), format, stem, audience);
             toast.success(`Report downloaded as ${format.toUpperCase()}.`);
         } catch (error: any) { toast.error(error?.response?.data?.message || "Unable to export report."); }
         finally { setExporting(null); }
     };
 
+    useEffect(() => {
+        const showButton = () => {
+            setIsVisible(true);
+            if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = setTimeout(() => setIsVisible(false), 4000);
+        };
+        window.addEventListener("mousemove", showButton);
+        return () => { window.removeEventListener("mousemove", showButton); if (hideTimerRef.current) clearTimeout(hideTimerRef.current); };
+    }, []);
+
     return <>
         <button type="button" aria-label="Generate report" title="Academic Performance Report"
             onClick={() => setOpen(true)}
-            className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto` }>
+            className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto ${isVisible ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-75 opacity-0"}`}>
             <FileChartColumn size={24} strokeWidth={2.2}/>
         </button>
         {open && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-3 sm:p-6" onClick={event => { if(event.target===event.currentTarget) setOpen(false); }}>
