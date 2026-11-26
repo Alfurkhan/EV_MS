@@ -118,8 +118,7 @@ public class ReportController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<byte[]> exportAcademicPerformanceReport(@PathVariable Long assessmentId,
             @RequestParam(defaultValue = "pdf") String format) {
-        ReportData data = academicPerformanceReportService.preview(assessmentId);
-        return documentResponse(academicPerformanceReportService.export(data, format), format, "academic-performance-report");
+        return documentResponse(academicPerformanceReportService.export(assessmentId, format), format, "academic-performance-report");
     }
 
     private ResponseEntity<byte[]> documentResponse(byte[] content, String format, String fileName) {
