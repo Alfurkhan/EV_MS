@@ -351,6 +351,8 @@ public class ReportService {
             int unmarked = Math.max(0, expected - sessionRecords.size());
             return List.of(
                     session.getSessionDate().toString(),
+                    timetable.getStartTime() == null ? "" : timetable.getStartTime().toString(),
+                    timetable.getEndTime() == null ? "" : timetable.getEndTime().toString(),
                     timetable.getGrade().getName(),
                     timetable.getSection().getName(),
                     safe(timetable.getSubject().getName()),
@@ -392,7 +394,8 @@ public class ReportService {
                 metric("Late", String.valueOf(totals.late)),
                 metric("Absent", String.valueOf(totals.absent)),
                 metric("Excused", String.valueOf(totals.excused)),
-                metric("Marked Attendance Rate", totals.attendancePercent()),
+                metric("Overall Attendance Rate", totals.attendancePercent()),
+                metric("Attendance Marking Completion", expectedTotal == 0 ? "—" : String.format(Locale.ROOT, "%.2f%%", recordedTotal * 100.0 / expectedTotal)), 
                 metric("Students Below 75%", String.valueOf(lowAttendanceStudents)),
                 metric("Students With Unmarked Sessions", String.valueOf(incompleteStudents))
         );
@@ -406,11 +409,11 @@ public class ReportService {
         if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
 
         return buildReport("Attendance Report", year.getName(),
-                List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Marked Attendance %", "Attendance Flag"),
+                List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance Rate", "Attendance Flag"),
                 studentRows, filterText, metrics,
                 List.of(ReportData.ReportSection.builder()
                         .title("Session-wise Attendance Audit")
-                        .columns(List.of("Date", "Grade", "Section", "Subject", "Faculty", "Enrolled", "Present", "Late", "Absent", "Excused", "Unmarked", "Marking"))
+                        .columns(List.of("Date", "Start Time", "End Time", "Grade", "Section", "Subject", "Faculty", "Enrolled", "Present", "Late", "Absent", "Excused", "Unmarked", "Marking"))
                         .rows(sessionRows)
                         .build()));
     }
@@ -580,7 +583,7 @@ public class ReportService {
 
     private byte[] createPdf(ReportData data) throws Exception {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            int mainRowsPerPage = data.getColumns().size() >= 8 ? 24 : 32;
+            int mainRowsPerPage = data.getColumns().size() >= 8 ? 30 : 32;
             int mainPages = Math.max(1, (int) Math.ceil(data.getRows().size() / (double) mainRowsPerPage));
             int sectionPages = data.getSections() == null ? 0 : data.getSections().stream()
                     .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 28.0))).sum();
@@ -628,7 +631,7 @@ public class ReportService {
                         }
                     }
                     float headerHeight = 20;
-                    float rowHeight = data.getColumns().size() >= 8 ? 15 : 17;
+                    float rowHeight = data.getColumns().size() >= 8 ? 12.5f : 17;
                     float[] columnRatios = pdfColumnRatios(data.getColumns());
                     float[] columnWidths = new float[data.getColumns().size()];
                     for (int col = 0; col < columnWidths.length; col++) columnWidths[col] = usableWidth * columnRatios[col];
@@ -658,9 +661,14 @@ public class ReportService {
                         }
                         for (int col = 0; col < data.getColumns().size(); col++) {
                             String value = col < row.size() ? row.get(col) : "";
-                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), data.getColumns().size() >= 8 ? 6 : 7,
-                                    margin + pdfColumnOffset(columnWidths, col) + 3, y - 9,
-                                    truncate(value, pdfTextLimit(columnWidths[col])), Color.BLACK);
+                            if (isNameColumn(data.getColumns().get(col))) {
+                                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 5.0f,
+                                        margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
+                            } else {
+                                drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), data.getColumns().size() >= 8 ? 6 : 7,
+                                        margin + pdfColumnOffset(columnWidths, col) + 3, y - 9,
+                                        truncate(value, pdfTextLimit(columnWidths[col])), Color.BLACK);
+                            }
                         }
                         y -= rowHeight;
                     }
@@ -670,7 +678,7 @@ public class ReportService {
 
             if (data.getSections() != null) {
                 for (ReportData.ReportSection section : data.getSections()) {
-                    int rowsPerPage = 28;
+                    int rowsPerPage = 32;
                     int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
                     for (int pageIndex = 0; pageIndex < pages; pageIndex++) {
                         PDRectangle pageSize = section.getColumns().size() >= 8 ? new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()) : PDRectangle.A4;
@@ -693,7 +701,7 @@ public class ReportService {
                                     margin, y, "Academic Year: " + safe(data.getAcademicYear()) + " · " + data.getReportTitle(), Color.DARK_GRAY);
                             y -= 16;
                             float headerHeight = 20;
-                            float rowHeight = section.getColumns().size() >= 8 ? 15 : 17;
+                            float rowHeight = section.getColumns().size() >= 8 ? 12.5f : 17;
                             float[] ratios = pdfColumnRatios(section.getColumns());
                             float[] widths = new float[ratios.length];
                             for (int col = 0; col < widths.length; col++) widths[col] = usableWidth * ratios[col];
@@ -718,9 +726,14 @@ public class ReportService {
                                 }
                                 for (int col = 0; col < section.getColumns().size(); col++) {
                                     String value = col < row.size() ? row.get(col) : "";
+                                    if (isNameColumn(section.getColumns().get(col))) {
+                                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 5.0f,
+                                            margin + pdfColumnOffset(widths, col) + 3, y - 9, value, Color.BLACK, widths[col] - 6);
+                                } else {
                                     drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), section.getColumns().size() >= 8 ? 6 : 7,
                                             margin + pdfColumnOffset(widths, col) + 3, y - 9,
                                             truncate(value, pdfTextLimit(widths[col])), Color.BLACK);
+                                }
                                 }
                                 y -= rowHeight;
                             }
@@ -767,6 +780,7 @@ public class ReportService {
             titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setWrapText(true);
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
             headerFont.setColor(IndexedColors.WHITE.getIndex());
@@ -825,23 +839,28 @@ public class ReportService {
             }
             int mainHeaderRow = rowCursor;
             Row headerRow = sheet.createRow(mainHeaderRow);
+            headerRow.setHeightInPoints(30);
             for (int column = 0; column < data.getColumns().size(); column++) {
                 Cell cell = headerRow.createCell(column);
                 cell.setCellValue(data.getColumns().get(column));
                 cell.setCellStyle(headerStyle);
             }
             CellStyle alternateRowStyle = workbook.createCellStyle();
+            alternateRowStyle.setWrapText(true);
             alternateRowStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             alternateRowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             CellStyle lowAttendanceStyle = workbook.createCellStyle();
+            lowAttendanceStyle.setWrapText(true);
             lowAttendanceStyle.setFillForegroundColor(IndexedColors.ROSE.getIndex());
             lowAttendanceStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             CellStyle incompleteStyle = workbook.createCellStyle();
+            incompleteStyle.setWrapText(true);
             incompleteStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
             incompleteStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             int mainDataStart = mainHeaderRow + 1;
             for (int rowIndex = 0; rowIndex < data.getRows().size(); rowIndex++) {
                 Row row = sheet.createRow(mainDataStart + rowIndex);
+                row.setHeightInPoints(28);
                 List<String> values = data.getRows().get(rowIndex);
                 for (int column = 0; column < data.getColumns().size(); column++) {
                     Cell cell = row.createCell(column);
@@ -855,9 +874,10 @@ public class ReportService {
             }
             for (int column = 0; column < data.getColumns().size(); column++) {
                 String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
-                int width = heading.contains("email") ? 36 : heading.contains("student") || heading.contains("faculty name") ? 30
+                int width = heading.contains("email") ? 40 : heading.equals("student") || heading.contains("faculty name") || heading.equals("faculty") ? 40
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
-                        : heading.contains("attendance flag") ? 22 : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 18;
+                        : heading.contains("attendance flag") ? 22 : heading.contains("grade") ? 14 : heading.contains("section") ? 12
+                        : heading.contains("time") ? 12 : heading.contains("attendance rate") ? 20 : 15;
                 sheet.setColumnWidth(column, width * 256);
             }
             int mainDataEnd = mainDataStart + data.getRows().size() - 1;
@@ -870,13 +890,20 @@ public class ReportService {
                     sectionTitleRow.getCell(0).setCellStyle(sectionStyle);
                     sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(sectionTitleRow.getRowNum(), sectionTitleRow.getRowNum(), 0, Math.max(0, section.getColumns().size() - 1)));
                     Row sectionHeader = sheet.createRow(sectionCursor++);
+                    sectionHeader.setHeightInPoints(30);
                     for (int column = 0; column < section.getColumns().size(); column++) {
                         Cell cell = sectionHeader.createCell(column);
                         cell.setCellValue(section.getColumns().get(column));
                         cell.setCellStyle(headerStyle);
                     }
+                    for (int column = 0; column < section.getColumns().size(); column++) {
+                        String heading = section.getColumns().get(column).toLowerCase(Locale.ROOT);
+                        int width = heading.equals("faculty") ? 40 : heading.contains("subject") ? 28 : heading.contains("date") ? 16 : heading.contains("time") ? 12 : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 15;
+                        sheet.setColumnWidth(column, width * 256);
+                    }
                     for (int rowIndex = 0; rowIndex < section.getRows().size(); rowIndex++) {
                         Row row = sheet.createRow(sectionCursor++);
+                        row.setHeightInPoints(28);
                         List<String> values = section.getRows().get(rowIndex);
                         for (int column = 0; column < section.getColumns().size(); column++) {
                             Cell cell = row.createCell(column);
@@ -889,6 +916,15 @@ public class ReportService {
             }
             embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl());
             sheet.createFreezePane(0, mainHeaderRow + 1);
+            sheet.getPrintSetup().setLandscape(true);
+            sheet.getPrintSetup().setFitWidth((short) 1);
+            sheet.getPrintSetup().setFitHeight((short) 0);
+            sheet.setFitToPage(true);
+            sheet.setAutobreaks(true);
+            sheet.setRepeatingRows(new org.apache.poi.ss.util.CellRangeAddress(mainHeaderRow, mainHeaderRow));
+            int printColumnCount = data.getColumns().size();
+            if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) printColumnCount = Math.max(printColumnCount, section.getColumns().size());
+            workbook.setPrintArea(0, 0, Math.max(printColumnCount, 1) - 1, 0, Math.max(sectionCursor - 1, mainHeaderRow));
             workbook.write(output);
             return output.toByteArray();
         }
@@ -905,12 +941,49 @@ public class ReportService {
     }
 
     private float[] pdfColumnRatios(List<String> columns) {
-        if (columns.size() == 6 && columns.get(0).equalsIgnoreCase("Student")) return new float[]{0.24f, 0.25f, 0.14f, 0.12f, 0.10f, 0.15f};
-        if (columns.size() == 6 && columns.get(0).toLowerCase(Locale.ROOT).contains("faculty")) return new float[]{0.22f, 0.24f, 0.14f, 0.22f, 0.09f, 0.09f};
+        if (columns.size() == 6 && columns.get(0).equalsIgnoreCase("Student")) return new float[]{0.27f, 0.24f, 0.13f, 0.12f, 0.10f, 0.14f};
+        if (columns.size() == 6 && columns.get(0).toLowerCase(Locale.ROOT).contains("faculty")) return new float[]{0.27f, 0.23f, 0.13f, 0.20f, 0.09f, 0.08f};
+        if (columns.contains("Attendance Flag")) {
+            float[] weights = {1.8f, 1.35f, 0.8f, 0.65f, 0.65f, 0.58f, 0.58f, 0.58f, 0.65f, 0.65f, 1.0f, 1.2f};
+            return normalizeRatios(weights, columns.size());
+        }
+        if (columns.contains("Faculty") && columns.contains("Start Time")) {
+            float[] weights = {0.75f, 0.55f, 0.55f, 0.75f, 0.6f, 0.75f, 1.15f, 0.55f, 0.55f, 0.55f, 0.55f, 0.55f, 0.65f, 0.75f};
+            return normalizeRatios(weights, columns.size());
+        }
         float ratio = 1f / Math.max(1, columns.size());
         float[] widths = new float[columns.size()];
         Arrays.fill(widths, ratio);
         return widths;
+    }
+
+    private float[] normalizeRatios(float[] weights, int size) {
+        float total = Arrays.stream(weights).sum();
+        float[] ratios = new float[size];
+        for (int i = 0; i < size; i++) ratios[i] = weights[i] / total;
+        return ratios;
+    }
+
+    private boolean isNameColumn(String column) {
+        String normalized = column == null ? "" : column.trim().toLowerCase(Locale.ROOT);
+        return normalized.equals("student") || normalized.equals("faculty") || normalized.equals("faculty name");
+    }
+
+    private void drawFitText(PDPageContentStream stream, PDType1Font font, float preferredSize, float minimumSize,
+                             float x, float y, String value, Color color, float maxWidth) throws Exception {
+        String text = sanitizePdfText(value);
+        float size = preferredSize;
+        while (size > minimumSize && font.getStringWidth(text) / 1000f * size > maxWidth) size -= 0.25f;
+        if (font.getStringWidth(text) / 1000f * size > maxWidth) {
+            size = minimumSize;
+            text = truncate(text, Math.max(1, (int) (maxWidth / (font.getStringWidth("M") / 1000f * size))));
+        }
+        stream.beginText();
+        stream.setFont(font, size);
+        stream.setNonStrokingColor(color);
+        stream.newLineAtOffset(x, y);
+        stream.showText(text);
+        stream.endText();
     }
 
     private void drawSchoolLogo(PDDocument document, PDPageContentStream stream, String logoUrl, float x, float y) {
