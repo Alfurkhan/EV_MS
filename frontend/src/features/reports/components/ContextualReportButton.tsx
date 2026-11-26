@@ -12,6 +12,8 @@ import {
     previewMyClassStrength,
     previewStudentRoster,
     previewAttendanceReport,
+    getFacultyReportScope,
+    type FacultyReportScopeOption,
     type ReportData,
     type ReportFilters,
 } from "../services/reportService";
@@ -35,6 +37,8 @@ export default function ContextualReportButton({ report }: Props) {
     const [grades, setGrades] = useState<Grade[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [facultyScope, setFacultyScope] = useState<FacultyReportScopeOption[]>([]);
+    const [isFacultyScope, setIsFacultyScope] = useState(false);
     const [filters, setFilters] = useState<ReportFilters>({ accountStatus: "all" });
     const [data, setData] = useState<ReportData | null>(null);
     const [previewStale, setPreviewStale] = useState(false);
@@ -78,22 +82,53 @@ export default function ContextualReportButton({ report }: Props) {
     }, [open, report]);
 
     useEffect(() => {
-        if (!open || !["student-roster", "attendance"].includes(report) || !filters.academicYearId) {
-            setGrades([]);
+        if (!open || !filters.academicYearId || !["student-roster", "attendance", "my-class-strength"].includes(report)) {
+            setFacultyScope([]);
+            setIsFacultyScope(false);
             return;
         }
-        getGradesByAcademicYear(filters.academicYearId).then(setGrades)
-            .catch(() => toast.error("Unable to load grades."));
+        let cancelled = false;
+        getFacultyReportScope(filters.academicYearId).then((scope) => {
+            if (cancelled) return;
+            setFacultyScope(scope);
+            setIsFacultyScope(true);
+            const uniqueGrades = [...new Map(scope.map(item => [item.gradeId, item])).values()];
+            if (uniqueGrades.length === 1) {
+                setFilters(current => ({ ...current, gradeId: uniqueGrades[0].gradeId, sectionId: undefined }));
+            } else {
+                setFilters(current => ({ ...current, gradeId: current.gradeId && uniqueGrades.some(g => g.gradeId === current.gradeId) ? current.gradeId : undefined, sectionId: undefined }));
+            }
+        }).catch((error: any) => {
+            if (cancelled) return;
+            if (error?.response?.status === 403) {
+                setIsFacultyScope(false);
+                setFacultyScope([]);
+            } else {
+                toast.error("Unable to load your assigned report classes.");
+            }
+        });
+        return () => { cancelled = true; };
     }, [open, report, filters.academicYearId]);
 
     useEffect(() => {
-        if (!open || !["student-roster", "attendance"].includes(report) || !filters.gradeId) {
+        if (!open || !["student-roster", "attendance", "my-class-strength"].includes(report) || !filters.academicYearId) {
+            setGrades([]);
+            return;
+        }
+        getGradesByAcademicYear(filters.academicYearId).then(allGrades => {
+            setGrades(isFacultyScope ? allGrades.filter(grade => facultyScope.some(scope => scope.gradeId === grade.id)) : allGrades);
+        }).catch(() => toast.error("Unable to load grades."));
+    }, [open, report, filters.academicYearId, isFacultyScope, facultyScope]);
+
+    useEffect(() => {
+        if (!open || !["student-roster", "attendance", "my-class-strength"].includes(report) || !filters.gradeId) {
             setSections([]);
             return;
         }
-        getSectionsByGrade(filters.gradeId).then(setSections)
-            .catch(() => toast.error("Unable to load sections."));
-    }, [open, report, filters.gradeId]);
+        getSectionsByGrade(filters.gradeId).then(allSections => {
+            setSections(isFacultyScope ? allSections.filter(section => facultyScope.some(scope => scope.gradeId === filters.gradeId && scope.sectionId === section.id)) : allSections);
+        }).catch(() => toast.error("Unable to load sections."));
+    }, [open, report, filters.gradeId, isFacultyScope, facultyScope]);
 
     const preview = async () => {
         const requestId = ++previewRequestRef.current;
@@ -105,7 +140,7 @@ export default function ContextualReportButton({ report }: Props) {
                     ? await previewFacultyDirectory(filters)
                     : report === "attendance"
                         ? await previewAttendanceReport(filters)
-                        : await previewMyClassStrength(filters.academicYearId);
+                        : await previewMyClassStrength(filters);
             if (requestId === previewRequestRef.current) {
                 setData(result);
                 setPreviewStale(false);
@@ -123,13 +158,18 @@ export default function ContextualReportButton({ report }: Props) {
     const exportFile = async (format: "pdf" | "xlsx") => {
         setExporting(format);
         try {
+            const facultyTag = data?.preparedBy ? ["Faculty", data.preparedBy] : undefined;
+            const assignedGradeNames = [...new Set(facultyScope.map(scope => scope.gradeName))];
+            const gradeTag = filters.gradeId ? grades.find(g => g.id === filters.gradeId)?.name
+                : isFacultyScope ? assignedGradeNames.join("-") || "Assigned-Grades" : "All-Grades";
+            const dateTag = (value?: string) => value ? value.split("-").reverse().join("-") : undefined;
             const stem = report === "student-roster"
-                ? ["Student-Roster", academicYears.find(y => y.id === filters.academicYearId)?.name, filters.gradeId ? grades.find(g => g.id === filters.gradeId)?.name : "All-Grades", filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined].filter(Boolean).join("_")
+                ? ["Student-Roster", academicYears.find(y => y.id === filters.academicYearId)?.name, facultyTag, gradeTag, filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined].filter(Boolean).join("_")
                 : report === "faculty-directory"
                     ? ["Faculty-Directory", filters.subjectId ? subjects.find(s => s.id === filters.subjectId)?.name : "All-Subjects", filters.accountStatus && filters.accountStatus !== "all" ? filters.accountStatus : undefined].filter(Boolean).join("_")
                     : report === "attendance"
-                    ? ["Attendance", academicYears.find(y => y.id === filters.academicYearId)?.name, filters.gradeId ? grades.find(g => g.id === filters.gradeId)?.name : "All-Grades", filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined, filters.startDate, filters.endDate, filters.status !== "ALL" ? filters.status : undefined].filter(Boolean).join("_")
-                    : ["My-Class-Strength", academicYears.find(y => y.id === filters.academicYearId)?.name].filter(Boolean).join("_");
+                    ? ["Attendance", academicYears.find(y => y.id === filters.academicYearId)?.name, facultyTag, gradeTag, filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined, dateTag(filters.startDate), dateTag(filters.endDate), filters.status !== "ALL" ? filters.status : undefined].filter(Boolean).join("_")
+                    : ["My-Class-Strength", academicYears.find(y => y.id === filters.academicYearId)?.name, facultyTag, gradeTag, filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined].filter(Boolean).join("_");
             const safeStem = stem.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-");
             await downloadReport(report, format, filters, safeStem);
             toast.success(`Report downloaded as ${format.toUpperCase()}.`);
@@ -186,18 +226,18 @@ export default function ContextualReportButton({ report }: Props) {
                                             {academicYears.map((year) => <option key={year.id} value={year.id}>{year.name}{year.active ? " (Active)" : ""}</option>)}
                                         </select>
                                     </label>
-                                    {["student-roster", "attendance"].includes(report) && <>
+                                    {["student-roster", "attendance", "my-class-strength"].includes(report) && <>
                                         <label className="block">
                                             <span className="mb-1.5 block text-sm font-medium text-slate-700">Grade</span>
-                                            <select value={filters.gradeId ?? ""} onChange={(event) => updateReportFilters((current) => ({ ...current, gradeId: event.target.value ? Number(event.target.value) : undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
-                                                <option value="">All grades</option>
+                                            <select value={filters.gradeId ?? ""} disabled={isFacultyScope && grades.length === 1} onChange={(event) => updateReportFilters((current) => ({ ...current, gradeId: event.target.value ? Number(event.target.value) : undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand disabled:bg-slate-50 disabled:text-slate-600">
+                                                {isFacultyScope ? <option value="">All assigned grades</option> : <option value="">All grades</option>}
                                                 {grades.map((grade) => <option key={grade.id} value={grade.id}>{grade.name}</option>)}
                                             </select>
                                         </label>
                                         <label className="block">
                                             <span className="mb-1.5 block text-sm font-medium text-slate-700">Section</span>
                                             <select value={filters.sectionId ?? ""} disabled={!filters.gradeId} onChange={(event) => updateReportFilters((current) => ({ ...current, sectionId: event.target.value ? Number(event.target.value) : undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand disabled:bg-slate-50">
-                                                <option value="">All sections</option>
+                                                <option value="">{isFacultyScope ? "All assigned sections" : "All sections"}</option>
                                                 {sections.map((section) => <option key={section.id} value={section.id}>{section.name}</option>)}
                                             </select>
                                         </label>
@@ -227,6 +267,7 @@ export default function ContextualReportButton({ report }: Props) {
                                             <p className="font-semibold" style={{ color: data.school.primaryColor }}>{data.school.name}</p>
                                             <h3 className="font-medium text-slate-900">{data.reportTitle}</h3>
                                             <p className="text-xs text-slate-500">Generated {data.generatedAt}{data.academicYear ? ` · ${data.academicYear}` : ""}</p>
+                                            {data.preparedBy && <p className="text-xs font-medium text-slate-600">Report prepared by: {data.preparedBy} (Faculty)</p>}
                                         </div>
                                     </div>
                                     <div className="flex gap-2">
