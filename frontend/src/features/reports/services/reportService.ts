@@ -7,6 +7,7 @@ export type ReportData = {
     reportTitle: string;
     generatedAt: string;
     academicYear: string | null;
+    preparedBy?: string | null;
     school: {
         name: string;
         tagline: string;
@@ -22,6 +23,13 @@ export type ReportData = {
     rows: string[][];
     summary?: ReportMetric[];
     sections?: ReportSection[];
+};
+
+export type FacultyReportScopeOption = {
+    gradeId: number;
+    gradeName: string;
+    sectionId: number;
+    sectionName: string;
 };
 
 export type ReportFilters = {
@@ -55,9 +63,16 @@ export async function previewFacultyDirectory(filters: ReportFilters = {}): Prom
     const { data } = await api.get<ReportData>("/reports/faculty-directory", { params: queryParams(filters) });
     return data;}
 
-export async function previewMyClassStrength(academicYearId?: number): Promise<ReportData> {
-    const { data } = await api.get<ReportData>("/reports/my-class-strength", {
+export async function getFacultyReportScope(academicYearId?: number): Promise<FacultyReportScopeOption[]> {
+    const { data } = await api.get<FacultyReportScopeOption[]>("/reports/my-class-scope", {
         params: queryParams({ academicYearId }),
+    });
+    return data;
+}
+
+export async function previewMyClassStrength(filters: ReportFilters = {}): Promise<ReportData> {
+    const { data } = await api.get<ReportData>("/reports/my-class-strength", {
+        params: queryParams(filters),
     });
     return data;
 }
