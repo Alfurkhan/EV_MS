@@ -877,7 +877,8 @@ public class ReportService {
             }
             for (int column = 0; column < data.getColumns().size(); column++) {
                 String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
-                int width = heading.contains("email") ? 40 : heading.equals("student") || heading.contains("faculty name") || heading.equals("faculty") ? 40
+                int width = heading.contains("email") ? 36 : heading.equals("student") || heading.contains("faculty name") || heading.equals("faculty") ? 32
+                        : data.getColumns().contains("Attendance Flag") && column == 6 ? 32
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
                         : heading.contains("attendance flag") ? 22 : heading.contains("grade") ? 14 : heading.contains("section") ? 12
                         : heading.contains("time") ? 12 : heading.contains("attendance rate") ? 20 : 15;
