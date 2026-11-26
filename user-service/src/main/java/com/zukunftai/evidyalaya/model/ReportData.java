@@ -11,6 +11,7 @@ public class ReportData {
     private String reportTitle;
     private String generatedAt;
     private String academicYear;
+    private String preparedBy;
     private SchoolIdentity school;
     private List<String> columns;
     private List<List<String>> rows;
