@@ -117,7 +117,7 @@ public class ReportService {
             filterDescription = "All grades and sections";
         }
         return buildReport(title, year.getName(), List.of("Student", "Email", "Phone", "Grade", "Section", "Enrollment"), rows,
-                isFaculty ? "Report prepared by: " + safe(actor.getFullName()) + " · " + filterDescription : filterDescription);
+                isFaculty ? "Faculty assigned classes · " + filterDescription : filterDescription);
     }
 
     public ReportData getFacultyDirectory() {
@@ -406,7 +406,7 @@ public class ReportService {
         else if (selectedGrade != null) filterText += " · Grade: " + selectedGrade.getName() + " · All sections";
         else filterText += " · All grades and sections";
         if (!status.equals("ALL")) filterText += " · Student status: " + status;
-        if (isFaculty) filterText = "Report prepared by: " + safe(actor.getFullName()) + " · Faculty assigned classes · " + filterText;
+        if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
 
         return buildReport("Attendance Report", year.getName(),
                 List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance Rate", "Attendance Flag"),
@@ -555,7 +555,7 @@ public class ReportService {
                 + (sectionId == null ? " · All assigned sections" : " · Section: " + rows.stream().map(row -> row.get(1)).findFirst().orElse(""));
         return buildReport("My Class Strength & Student Roster", year.getName(),
                 List.of("Grade", "Section", "Active Students"), rows,
-                "Report prepared by: " + safe(actor.getFullName()) + " · " + scopeDescription, summary, detailSections);
+                scopeDescription, summary, detailSections);
     }
 
     public byte[] exportFacultyClassStrength(Long academicYearId, Long gradeId, Long sectionId, String format) {
