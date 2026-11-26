@@ -161,8 +161,8 @@ class ReportServiceTest {
             assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
                     region.getFirstRow() == 0 && region.getFirstColumn() == 0 && region.getLastColumn() == 3),
                     "The report text header should span the left side while reserving the right side for the logo.");
-            assertEquals("Grade", sheet.getRow(6).getCell(0).getStringCellValue());
-            assertEquals("Phone", sheet.getRow(6).getCell(5).getStringCellValue());
+            assertEquals("Grade", sheet.getRow(8).getCell(0).getStringCellValue());
+            assertEquals("Phone", sheet.getRow(8).getCell(5).getStringCellValue());
             assertEquals(24, sheet.getColumnWidth(2) / 256, "Student ID column should be readable.");
             assertEquals(36, sheet.getColumnWidth(4) / 256, "Email column should be wide enough for addresses.");
             assertEquals(18, sheet.getColumnWidth(5) / 256, "Phone column should have consistent sizing.");
