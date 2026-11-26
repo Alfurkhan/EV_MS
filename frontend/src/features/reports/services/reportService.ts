@@ -63,9 +63,9 @@ export async function previewFacultyDirectory(filters: ReportFilters = {}): Prom
     const { data } = await api.get<ReportData>("/reports/faculty-directory", { params: queryParams(filters) });
     return data;}
 
-export async function getFacultyReportScope(academicYearId?: number): Promise<FacultyReportScopeOption[]> {
+export async function getFacultyReportScope(academicYearId?: number, reportKind?: string): Promise<FacultyReportScopeOption[]> {
     const { data } = await api.get<FacultyReportScopeOption[]>("/reports/my-class-scope", {
-        params: queryParams({ academicYearId }),
+        params: queryParams({ academicYearId, reportKind }),
     });
     return data;
 }
