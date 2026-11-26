@@ -107,7 +107,7 @@ public class AcademicPerformanceReportService {
         return true;
     }
     private List<String> bandRow(String label, int count, int total) {
-        String share = total == 0 ? \"—\" : BigDecimal.valueOf(count * 100L).divide(BigDecimal.valueOf(total), 1, RoundingMode.HALF_UP).toPlainString() + \"%\";
+        String share = total == 0 ? "—" : BigDecimal.valueOf(count * 100L).divide(BigDecimal.valueOf(total), 1, RoundingMode.HALF_UP).toPlainString() + "%";
         return List.of(label, String.valueOf(count), share);
     }
     private ReportData.SummaryMetric metric(String label, Object value) {
