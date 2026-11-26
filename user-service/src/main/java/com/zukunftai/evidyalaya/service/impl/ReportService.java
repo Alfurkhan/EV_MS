@@ -944,8 +944,11 @@ public class ReportService {
             schoolRow.getCell(1).setCellStyle(titleStyle);
             sheet.getRow(1).createCell(1).setCellValue(data.getSchool().getTagline());
             sheet.getRow(2).createCell(1).setCellValue(data.getReportTitle());
+            int reportRecordCount = classStrengthReport && data.getSections() != null
+                    ? data.getSections().stream().mapToInt(section -> section.getRows().size()).sum()
+                    : data.getRows().size();
             sheet.getRow(3).createCell(1).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
-                    + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size()
+                    + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRecordCount
                     + (blank(data.getPreparedBy()) ? "" : " · Report prepared by: " + data.getPreparedBy() + " (Faculty)"));
             sheet.getRow(4).createCell(1).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
