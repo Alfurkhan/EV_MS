@@ -103,7 +103,7 @@ class ReportServiceTest {
     }
 
     @Test
-    void facultyClassStrengthIncludesRosterDetailsForAuthorizedSection() {
+    void facultyClassStrengthIncludesRosterDetailsForAuthorizedSection() throws Exception {
         AcademicYear year = AcademicYear.builder().id(9L).name("2026-2027")
                 .startDate(LocalDate.of(2026, 6, 1)).endDate(LocalDate.of(2027, 3, 31)).active(true).build();
         User faculty = User.builder().id(2L).fullName("Assigned Faculty")
@@ -230,7 +230,7 @@ class ReportServiceTest {
 
 
     @Test
-    void attendanceReportCalculatesStudentAndSessionTotals() {
+    void attendanceReportCalculatesStudentAndSessionTotals() throws Exception {
         AcademicYear year = AcademicYear.builder()
                 .id(7L).name("2026-2027")
                 .startDate(LocalDate.of(2026, 6, 1))
