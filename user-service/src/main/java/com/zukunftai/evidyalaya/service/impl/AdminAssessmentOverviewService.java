@@ -40,7 +40,7 @@ public class AdminAssessmentOverviewService {
   long submitted=rows.size()-active;
   long pending=rows.stream().filter(x->x.getStatus()!=AssessmentAttemptStatus.IN_PROGRESS).filter(x->!complete(x)).count();
   return AdminAssessmentOverviewResponse.Item.builder().id(a.getId()).title(a.getTitle())
-   .assessmentType(a.getAssessmentType()).status(a.getStatus()).subjectName(a.getSubject().getName())
+   .assessmentType(a.getAssessmentType()).status(a.getStatus()).academicYearName(a.getAcademicYear().getName()).subjectName(a.getSubject().getName())
    .facultyName(a.getFaculty().getFullName()).gradeName(a.getGrade().getName()).sectionName(a.getSection().getName())
    .availableFrom(a.getAvailableFrom()).availableUntil(a.getAvailableUntil()).timingMode(a.getTimingMode())
    .totalMarks(a.getTotalMarks()).resultsPublished(a.isResultsPublished()).submittedCount(submitted)
