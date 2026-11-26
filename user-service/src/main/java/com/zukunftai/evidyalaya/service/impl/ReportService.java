@@ -728,7 +728,7 @@ public class ReportService {
                         }
                     }
                     float headerHeight = 20;
-                    float rowHeight = data.getColumns().size() >= 8 ? 12.5f : 17;
+                    float rowHeight = pdfColumns.size() >= 8 ? 12.5f : 17;
                     float[] columnRatios = pdfColumnRatios(data.getColumns());
                     float[] columnWidths = new float[data.getColumns().size()];
                     for (int col = 0; col < columnWidths.length; col++) columnWidths[col] = usableWidth * columnRatios[col];
@@ -743,7 +743,7 @@ public class ReportService {
                     }
                     y -= headerHeight;
                     int start = pageIndex * mainRowsPerPage;
-                    int end = Math.min(data.getRows().size(), start + mainRowsPerPage);
+                    int end = Math.min(pdfRows.size(), start + mainRowsPerPage);
                     for (int rowIndex = start; rowIndex < end; rowIndex++) {
                         List<String> row = data.getRows().get(rowIndex);
                         String attendanceFlag = data.getColumns().contains("Attendance Flag") && row.size() > data.getColumns().indexOf("Attendance Flag")
@@ -1093,6 +1093,7 @@ public class ReportService {
     private float[] pdfColumnRatios(List<String> columns) {
         if (columns.size() == 4 && columns.contains("Student ID") && columns.contains("Student Name")) return new float[]{0.18f, 0.30f, 0.34f, 0.18f};
         if (columns.size() == 6 && columns.get(0).equalsIgnoreCase("Student")) return new float[]{0.27f, 0.24f, 0.13f, 0.12f, 0.10f, 0.14f};
+        if (columns.size() == 6 && columns.contains("Student ID") && columns.contains("Grade")) return new float[]{0.11f, 0.08f, 0.18f, 0.23f, 0.30f, 0.10f};
         if (columns.size() == 6 && columns.get(0).toLowerCase(Locale.ROOT).contains("faculty")) return new float[]{0.27f, 0.23f, 0.13f, 0.20f, 0.09f, 0.08f};
         if (columns.contains("Attendance Flag")) {
             float[] weights = {1.45f, 2.4f, 0.8f, 0.65f, 0.65f, 0.58f, 0.58f, 0.58f, 0.65f, 0.65f, 0.95f, 1.0f};
