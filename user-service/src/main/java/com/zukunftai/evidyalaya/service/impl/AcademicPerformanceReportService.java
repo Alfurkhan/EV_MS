@@ -83,6 +83,10 @@ public class AcademicPerformanceReportService {
                 rows, subtitle, metrics, List.of());
     }
 
+    public byte[] export(Long assessmentId, String format) {
+        return reportService.exportCustomReport(preview(assessmentId), format);
+    }
+
     private boolean evaluationComplete(AssessmentAttempt attempt, List<AssessmentQuestion> questions) {
         for (AssessmentQuestion question : questions) {
             if (question.getQuestionType() != AssessmentQuestionType.SHORT_ANSWER
