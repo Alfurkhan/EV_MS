@@ -998,15 +998,10 @@ public class ReportService {
             }
             final List<String> reportColumns = excelColumns;
             final List<List<String>> reportRows = excelRows;
+            // Keep the report header and logo aligned with the primary table.
+            // Supplemental sections may be wider, but should not push the logo away from the header.
             maxColumnCount = Math.max(reportColumns.size(), 1);
-            if (!classStrengthReport && data.getSections() != null) {
-                for (ReportData.ReportSection section : data.getSections()) {
-                    maxColumnCount = Math.max(maxColumnCount, section.getColumns().size());
-                }
-            }
             lastColumn = Math.max(1, maxColumnCount - 1);
-            // All Excel reports use the same header layout: report details on the left,
-            // with a reserved two-column logo area on the right of the widest report table.
             int logoStartColumn = Math.max(0, maxColumnCount - 2);
             int headerTextEndColumn = Math.max(0, logoStartColumn - 1);
             for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
