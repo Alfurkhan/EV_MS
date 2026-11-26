@@ -114,7 +114,7 @@ public class ReportService {
             Grade selectedGrade = gradeRepository.findById(gradeId).orElseThrow();
             filterDescription = "Grade: " + selectedGrade.getName() + " · All sections";
         } else {
-            filterDescription = "All grades and sections";
+            filterDescription = isFaculty ? "All assigned grades and sections" : "All grades and sections";
         }
         return buildReport(title, year.getName(), List.of("Student", "Email", "Phone", "Grade", "Section", "Enrollment"), rows,
                 isFaculty ? "Faculty assigned classes · " + filterDescription : filterDescription);
@@ -404,9 +404,8 @@ public class ReportService {
                 : "Date: No overlap with the selected academic year";
         if (selectedSection != null) filterText += " · Grade: " + selectedSection.getGrade().getName() + " · Section: " + selectedSection.getName();
         else if (selectedGrade != null) filterText += " · Grade: " + selectedGrade.getName() + " · All sections";
-        else filterText += " · All grades and sections";
+        else filterText += isFaculty ? " · All assigned grades and sections" : " · All grades and sections";
         if (!status.equals("ALL")) filterText += " · Student status: " + status;
-        if (isFaculty) filterText = "Faculty assigned classes · " + filterText;
 
         return buildReport("Attendance Report", year.getName(),
                 List.of("Student", "Email", "Grade", "Section", "Sessions", "Present", "Late", "Absent", "Excused", "Unmarked", "Attendance Rate", "Attendance Flag"),
