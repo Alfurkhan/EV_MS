@@ -913,15 +913,32 @@ public class ReportService {
             Font metricFont = workbook.createFont();
             metricFont.setBold(true);
             metricLabelStyle.setFont(metricFont);
+            metricLabelStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            metricLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            metricLabelStyle.setBorderBottom(BorderStyle.THIN);
+            metricLabelStyle.setBorderTop(BorderStyle.THIN);
+            metricLabelStyle.setBorderLeft(BorderStyle.THIN);
+            metricLabelStyle.setBorderRight(BorderStyle.THIN);
+            CellStyle metricValueStyle = workbook.createCellStyle();
+            metricValueStyle.setBorderBottom(BorderStyle.THIN);
+            metricValueStyle.setBorderTop(BorderStyle.THIN);
+            metricValueStyle.setBorderLeft(BorderStyle.THIN);
+            metricValueStyle.setBorderRight(BorderStyle.THIN);
+            metricValueStyle.setVerticalAlignment(VerticalAlignment.CENTER;
 
-            int lastColumn = Math.max(1, data.getColumns().size() - 1);
+            int maxColumnCount = data.getColumns().size();
+            if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) {
+                maxColumnCount = Math.max(maxColumnCount, section.getColumns().size());
+            }
+            int lastColumn = Math.max(1, maxColumnCount - 1);
+            boolean classStrengthReport = data.getReportTitle() != null && data.getReportTitle().startsWith("My Class Strength & Student Roster");
             for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
                 Row headerRow = sheet.createRow(rowIndex);
                 headerRow.setHeightInPoints(rowIndex == 0 ? 32 : 22);
                 sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowIndex, rowIndex, 1, lastColumn));
             }
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 0, 0));
-            sheet.setColumnWidth(0, 16 * 256);
+            sheet.setColumnWidth(0, (classStrengthReport ? 26 : 32) * 256);
             Row schoolRow = sheet.getRow(0);
             schoolRow.createCell(1).setCellValue(data.getSchool().getName());
             schoolRow.getCell(1).setCellStyle(titleStyle);
@@ -943,7 +960,9 @@ public class ReportService {
                         Cell label = summaryRow.createCell(cellIndex);
                         label.setCellValue(metric.getLabel());
                         label.setCellStyle(metricLabelStyle);
-                        summaryRow.createCell(cellIndex + 1).setCellValue(metric.getValue());
+                        Cell value = summaryRow.createCell(cellIndex + 1);
+                        value.setCellValue(metric.getValue());
+                        value.setCellStyle(metricValueStyle);
                     }
                 }
                 rowCursor++;
@@ -958,8 +977,18 @@ public class ReportService {
             }
             CellStyle wrappedCellStyle = workbook.createCellStyle();
             wrappedCellStyle.setWrapText(true);
+            wrappedCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            wrappedCellStyle.setBorderBottom(BorderStyle.THIN);
+            wrappedCellStyle.setBorderTop(BorderStyle.THIN);
+            wrappedCellStyle.setBorderLeft(BorderStyle.THIN);
+            wrappedCellStyle.setBorderRight(BorderStyle.THIN);
             CellStyle alternateRowStyle = workbook.createCellStyle();
             alternateRowStyle.setWrapText(true);
+            alternateRowStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            alternateRowStyle.setBorderBottom(BorderStyle.THIN);
+            alternateRowStyle.setBorderTop(BorderStyle.THIN);
+            alternateRowStyle.setBorderLeft(BorderStyle.THIN);
+            alternateRowStyle.setBorderRight(BorderStyle.THIN);
             alternateRowStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             alternateRowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             CellStyle lowAttendanceStyle = workbook.createCellStyle();
@@ -986,14 +1015,24 @@ public class ReportService {
                     else if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
                 }
             }
-            for (int column = 0; column < data.getColumns().size(); column++) {
-                String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
+            for (int column = 0; column < maxColumnCount; column++) {
+                String heading = "";
+                for (String reportColumn : data.getColumns()) if (column < data.getColumns().size()) heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
+                if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) {
+                    if (column < section.getColumns().size()) heading = section.getColumns().get(column).toLowerCase(Locale.ROOT);
+                }
                 int width = heading.contains("email") ? 36 : heading.equals("student") || heading.equals("student name") || heading.contains("faculty name") || heading.equals("faculty") ? 32
                         : data.getColumns().contains("Attendance Flag") && column == 6 ? 32
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
                         : heading.contains("attendance flag") ? 22 : heading.contains("grade") ? 14 : heading.contains("section") ? 12
                         : heading.contains("time") ? 12 : heading.contains("attendance rate") ? 20 : 15;
                 sheet.setColumnWidth(column, width * 256);
+            }
+            if (classStrengthReport) {
+                sheet.setColumnWidth(0, 26 * 256);
+                sheet.setColumnWidth(1, 30 * 256);
+                sheet.setColumnWidth(2, 40 * 256);
+                sheet.setColumnWidth(3, 20 * 256);
             }
             int mainDataEnd = mainDataStart + data.getRows().size() - 1;
             if (!data.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(mainHeaderRow, mainDataEnd, 0, data.getColumns().size() - 1));
@@ -1003,7 +1042,8 @@ public class ReportService {
                     Row sectionTitleRow = sheet.createRow(sectionCursor++);
                     sectionTitleRow.createCell(0).setCellValue(section.getTitle());
                     sectionTitleRow.getCell(0).setCellStyle(sectionStyle);
-                    sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(sectionTitleRow.getRowNum(), sectionTitleRow.getRowNum(), 0, Math.max(0, section.getColumns().size() - 1)));
+                    sectionTitleRow.setHeightInPoints(24);
+                    sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(sectionTitleRow.getRowNum(), sectionTitleRow.getRowNum(), 0, Math.max(0, maxColumnCount - 1)));
                     Row sectionHeader = sheet.createRow(sectionCursor++);
                     sectionHeader.setHeightInPoints(30);
                     for (int column = 0; column < section.getColumns().size(); column++) {
@@ -1013,7 +1053,7 @@ public class ReportService {
                     }
                     for (int rowIndex = 0; rowIndex < section.getRows().size(); rowIndex++) {
                         Row row = sheet.createRow(sectionCursor++);
-                        row.setHeightInPoints(40);
+                        row.setHeightInPoints(classStrengthReport ? 24 : 32);
                         List<String> values = section.getRows().get(rowIndex);
                         for (int column = 0; column < section.getColumns().size(); column++) {
                             Cell cell = row.createCell(column);
