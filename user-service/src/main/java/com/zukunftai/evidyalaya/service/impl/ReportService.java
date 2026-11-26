@@ -677,7 +677,12 @@ public class ReportService {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             int mainRowsPerPage = pdfColumns.size() >= 8 ? 30 : 32;
             int mainPages = Math.max(1, (int) Math.ceil(pdfRows.size() / (double) mainRowsPerPage));
-            int sectionPages = classStrengthReport || data.getSections() == null ? 0 : data.getSections().stream()
+            boolean compactAttendanceAudit = !classStrengthReport
+                    && data.getReportTitle() != null && data.getReportTitle().startsWith("Attendance Report")
+                    && data.getSections() != null && data.getSections().size() == 1
+                    && data.getSections().get(0).getRows().size() <= 6
+                    && pdfRows.size() <= 25;
+            int sectionPages = classStrengthReport || compactAttendanceAudit || data.getSections() == null ? 0 : data.getSections().stream()
                     .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 32.0))).sum();
             int totalPages = mainPages + sectionPages;
             int pageNumber = 0;
@@ -772,11 +777,48 @@ public class ReportService {
                         }
                         y -= rowHeight;
                     }
+                    if (compactAttendanceAudit && pageIndex == 0) {
+                        ReportData.ReportSection audit = data.getSections().get(0);
+                        if (y > 180) {
+                            drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 9,
+                                    margin, y - 1, audit.getTitle(), Color.BLACK);
+                            y -= 15;
+                            float auditHeaderHeight = 17;
+                            float auditRowHeight = 11;
+                            float[] auditRatios = pdfColumnRatios(audit.getColumns());
+                            float[] auditWidths = new float[auditRatios.length];
+                            for (int col = 0; col < auditWidths.length; col++) auditWidths[col] = usableWidth * auditRatios[col];
+                            stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
+                            stream.addRect(margin, y - auditHeaderHeight + 3, usableWidth, auditHeaderHeight);
+                            stream.fill();
+                            for (int col = 0; col < audit.getColumns().size(); col++) {
+                                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 5.8f, 4.0f,
+                                        margin + pdfColumnOffset(auditWidths, col) + 2, y - 9,
+                                        audit.getColumns().get(col), Color.WHITE, auditWidths[col] - 4);
+                            }
+                            y -= auditHeaderHeight;
+                            for (int rowIndex = 0; rowIndex < audit.getRows().size(); rowIndex++) {
+                                List<String> auditRow = audit.getRows().get(rowIndex);
+                                if (rowIndex % 2 == 1) {
+                                    stream.setNonStrokingColor(new Color(245, 247, 250));
+                                    stream.addRect(margin, y - auditRowHeight + 2, usableWidth, auditRowHeight);
+                                    stream.fill();
+                                }
+                                for (int col = 0; col < audit.getColumns().size(); col++) {
+                                    String value = col < auditRow.size() ? auditRow.get(col) : "";
+                                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 5.6f, 4.0f,
+                                            margin + pdfColumnOffset(auditWidths, col) + 2, y - 7,
+                                            value, Color.BLACK, auditWidths[col] - 4);
+                                }
+                                y -= auditRowHeight;
+                            }
+                        }
+                    }
                     drawPdfFooter(stream, pageWidth, margin, pageNumber, totalPages, data);
                 }
             }
 
-            if (!classStrengthReport && data.getSections() != null) {
+            if (!classStrengthReport && !compactAttendanceAudit && data.getSections() != null) {
                 for (ReportData.ReportSection section : data.getSections()) {
                     int rowsPerPage = 32;
                     int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
