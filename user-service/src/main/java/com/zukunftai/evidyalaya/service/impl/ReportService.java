@@ -682,6 +682,11 @@ public class ReportService {
                             + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size();
                     drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, margin, y, metadata, Color.DARK_GRAY);
                     y -= 11;
+                    if (!blank(data.getPreparedBy())) {
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 7, margin, y,
+                                "Report prepared by: " + data.getPreparedBy() + " (Faculty)", Color.DARK_GRAY);
+                        y -= 11;
+                    }
                     String contact = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                             data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
                     if (!contact.isEmpty()) {
@@ -887,7 +892,8 @@ public class ReportService {
             sheet.getRow(1).createCell(1).setCellValue(data.getSchool().getTagline());
             sheet.getRow(2).createCell(1).setCellValue(data.getReportTitle());
             sheet.getRow(3).createCell(1).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
-                    + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size());
+                    + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size()
+                    + (blank(data.getPreparedBy()) ? "" : " · Report prepared by: " + data.getPreparedBy() + " (Faculty)"));
             sheet.getRow(4).createCell(1).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
 
