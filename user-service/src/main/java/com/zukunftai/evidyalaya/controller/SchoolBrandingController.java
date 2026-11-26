@@ -118,6 +118,21 @@ public class SchoolBrandingController {
         return ResponseEntity.noContent().build();
     }
 
-    public record SchoolProfileDetails(String name, String tagline, String about, String address, String phone, String email, String website, String logoUrl) {}\n    public record PublicSchoolBranding(String name, String tagline, String logoUrl) {}
+    public record SchoolProfileDetails(
+            String name,
+            String tagline,
+            String about,
+            String address,
+            String phone,
+            String email,
+            String website,
+            String logoUrl
+    ) {}
+
+    public record PublicSchoolBranding(
+            String name,
+            String tagline,
+            String logoUrl
+    ) {}
     public record LogoUploadResponse(String logoUrl, String contentType, long fileSize) {}
 }
