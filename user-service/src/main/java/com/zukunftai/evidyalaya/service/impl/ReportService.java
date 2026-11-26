@@ -1260,7 +1260,7 @@ public class ReportService {
             XSSFDrawing drawing = (XSSFDrawing) sheet.createDrawingPatriarch();
             XSSFClientAnchor anchor = new XSSFClientAnchor(
                     Units.pixelToEMU(Math.round(leftInset)), Units.pixelToEMU(Math.round(topInset)),
-                    Units.pixelToEMU(Math.round(leftInset + displayWidth - sheet.getColumnWidthInPixels(firstLogoColumn))),
+                    Units.pixelToEMU(Math.round(leftInset + displayWidth - (availableWidth + 12f))),
                     Units.pixelToEMU(Math.round(topInset + displayHeight - (availableHeight + 12f))),
                     firstLogoColumn, 0, lastLogoColumn, 5);
             anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_DONT_RESIZE);
