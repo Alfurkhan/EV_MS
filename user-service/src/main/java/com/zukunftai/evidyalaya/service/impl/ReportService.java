@@ -957,7 +957,8 @@ public class ReportService {
     }
 
     private float[] normalizeRatios(float[] weights, int size) {
-        float total = Arrays.stream(weights).sum();
+        float total = 0f;
+        for (float weight : weights) total += weight;
         float[] ratios = new float[size];
         for (int i = 0; i < size; i++) ratios[i] = weights[i] / total;
         return ratios;
