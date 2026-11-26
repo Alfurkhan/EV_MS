@@ -138,8 +138,9 @@ class ReportServiceTest {
 
         var report = reportService.getFacultyClassStrength(9L, 5L, 6L);
 
-        assertEquals("My Class Strength & Student Roster · Report prepared by: Assigned Faculty · Grade: Grade 10 · Section: A", report.getReportTitle());
+        assertEquals("My Class Strength & Student Roster · Grade: Grade 10 · Section: A", report.getReportTitle());
         assertEquals(List.of("Grade 10", "A", "1"), report.getRows().get(0));
+        assertEquals("Assigned Faculty", report.getPreparedBy());
         assertEquals("Active Students", report.getSummary().get(2).getLabel());
         assertEquals("1", report.getSummary().get(2).getValue());
         assertEquals("Grade 10 · Section A Student Details", report.getSections().get(0).getTitle());
