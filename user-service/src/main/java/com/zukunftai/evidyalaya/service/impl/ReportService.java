@@ -653,8 +653,8 @@ public class ReportService {
 
     private byte[] createPdf(ReportData data) throws Exception {
         boolean classStrengthReport = data.getReportTitle() != null && data.getReportTitle().startsWith("My Class Strength & Student Roster");
-        List<String> pdfMainColumns = pdfColumns;
-        List<List<String>> pdfMainRows = pdfRows;
+        List<String> pdfMainColumns = data.getColumns();
+        List<List<String>> pdfMainRows = data.getRows();
         if (classStrengthReport && data.getSections() != null) {
             pdfMainColumns = List.of("Grade", "Section", "Student ID", "Student Name", "Email", "Phone");
             List<List<String>> rosterRows = new ArrayList<>();
@@ -683,7 +683,7 @@ public class ReportService {
             int pageNumber = 0;
 
             for (int pageIndex = 0; pageIndex < mainPages; pageIndex++) {
-                PDRectangle pageSize = data.getColumns().size() >= 8 ? new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()) : PDRectangle.A4;
+                PDRectangle pageSize = pdfColumns.size() >= 8 ? new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()) : PDRectangle.A4;
                 PDPage page = new PDPage(pageSize);
                 document.addPage(page);
                 pageNumber++;
@@ -705,7 +705,7 @@ public class ReportService {
                             margin, y, data.getReportTitle(), Color.BLACK);
                     y -= 15;
                     String metadata = (blank(data.getAcademicYear()) ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
-                            + "Generated: " + data.getGeneratedAt() + " · Records: " + data.getRows().size();
+                            + "Generated: " + data.getGeneratedAt() + " · Records: " + pdfRows.size();
                     drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, margin, y, metadata, Color.DARK_GRAY);
                     y -= 11;
                     if (!blank(data.getPreparedBy())) {
@@ -924,7 +924,7 @@ public class ReportService {
             metricValueStyle.setBorderTop(BorderStyle.THIN);
             metricValueStyle.setBorderLeft(BorderStyle.THIN);
             metricValueStyle.setBorderRight(BorderStyle.THIN);
-            metricValueStyle.setVerticalAlignment(VerticalAlignment.CENTER;
+            metricValueStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
             int maxColumnCount = data.getColumns().size();
             if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) {
