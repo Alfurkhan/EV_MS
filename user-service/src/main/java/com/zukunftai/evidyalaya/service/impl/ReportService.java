@@ -527,10 +527,11 @@ public class ReportService {
             return List.of(grade.getName(), section.getName(), String.valueOf(count));
         }).toList();
 
+        List<StudentEnrollment> activeEnrollments = enrollmentRepository.findByAcademicYearAndActiveTrue(year);
         List<ReportData.ReportSection> detailSections = selectedScope.stream().map(item -> {
             Grade grade = gradeRepository.findById(item.gradeId()).orElseThrow();
             Section section = sectionRepository.findById(item.sectionId()).orElseThrow();
-            List<List<String>> students = enrollmentRepository.findByAcademicYearAndActiveTrue(year).stream()
+            List<List<String>> students = activeEnrollments.stream()
                     .filter(enrollment -> enrollment.getGrade().getId().equals(grade.getId())
                             && enrollment.getSection().getId().equals(section.getId()))
                     .sorted(Comparator.comparing(enrollment -> Optional.ofNullable(enrollment.getStudent().getFullName()).orElse("").toLowerCase(Locale.ROOT)))
