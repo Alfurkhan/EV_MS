@@ -121,6 +121,19 @@ public class ReportController {
         return documentResponse(academicPerformanceReportService.export(assessmentId, format), format, "academic-performance-report");
     }
 
+    @GetMapping("/academic-performance/faculty/{assessmentId}")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ReportData getFacultyAcademicPerformanceReport(@PathVariable Long assessmentId) {
+        return academicPerformanceReportService.previewForFaculty(assessmentId);
+    }
+
+    @GetMapping("/academic-performance/faculty/{assessmentId}/export")
+    @PreAuthorize("hasRole('FACULTY')")
+    public ResponseEntity<byte[]> exportFacultyAcademicPerformanceReport(@PathVariable Long assessmentId,
+            @RequestParam(defaultValue = "pdf") String format) {
+        return documentResponse(academicPerformanceReportService.exportForFaculty(assessmentId, format), format, "academic-performance-report");
+    }
+
     private ResponseEntity<byte[]> documentResponse(byte[] content, String format, String fileName) {
         String extension = format != null && (format.equalsIgnoreCase("xlsx") || format.equalsIgnoreCase("excel"))
                 ? "xlsx" : "pdf";
