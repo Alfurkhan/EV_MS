@@ -91,7 +91,7 @@ class ReportServiceTest {
         when(gradeRepository.findById(5L)).thenReturn(Optional.of(grade));
         when(sectionRepository.findById(6L)).thenReturn(Optional.of(section));
 
-        var scope = reportService.getFacultyReportScope(9L);
+        var scope = reportService.getFacultyReportScope(9L, "attendance");
 
         assertEquals(1, scope.size());
         assertEquals(5L, scope.get(0).gradeId());
