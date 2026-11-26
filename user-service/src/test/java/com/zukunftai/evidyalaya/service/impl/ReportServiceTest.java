@@ -315,6 +315,10 @@ class ReportServiceTest {
         byte[] xlsx = reportService.exportAttendanceReport(7L, null, null, null, null, "ALL", "xlsx");
         assertEquals("%PDF", new String(pdf, 0, 4));
         assertEquals("PK", new String(xlsx, 0, 2));
+        try (var pdfDocument = Loader.loadPDF(pdf)) {
+            assertEquals(1, pdfDocument.getNumberOfPages(),
+                    "Small attendance audits should share the main report page instead of leaving a mostly empty second page.");
+        }
     }
 
     @Test
