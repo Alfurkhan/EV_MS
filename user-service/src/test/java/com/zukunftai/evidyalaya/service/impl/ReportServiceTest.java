@@ -335,12 +335,12 @@ class ReportServiceTest {
         try (var workbook = WorkbookFactory.create(new ByteArrayInputStream(xlsx))) {
             var sheet = workbook.getSheet("Report");
             assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
-                    region.getFirstRow() == 0 && region.getFirstColumn() == 0 && region.getLastColumn() == 11),
-                    "Attendance report details should span the main report columns on the left.");
+                    region.getFirstRow() == 0 && region.getFirstColumn() == 0 && region.getLastColumn() == 9),
+                    "Attendance report details should stop before the logo area within the main report width.");
             assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
                     region.getFirstRow() == 0 && region.getLastRow() == 4
-                            && region.getFirstColumn() == 12 && region.getLastColumn() == 13),
-                    "Attendance report logo space should be right aligned across the header.");
+                            && region.getFirstColumn() == 10 && region.getLastColumn() == 11),
+                    "Attendance report logo space should be right aligned within the primary table header.");
         }
         try (var pdfDocument = Loader.loadPDF(pdf)) {
             assertEquals(1, pdfDocument.getNumberOfPages(),
