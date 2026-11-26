@@ -85,7 +85,6 @@ class ReportServiceTest {
         when(timetable.getAcademicYear()).thenReturn(year);
         when(timetable.getGrade()).thenReturn(grade);
         when(timetable.getSection()).thenReturn(section);
-        when(timetable.getStatus()).thenReturn(com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED);
         when(timetableRepository.findByFacultyAndStatusAndActiveTrue(faculty,
                 com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED)).thenReturn(List.of(timetable));
         when(gradeRepository.findById(5L)).thenReturn(Optional.of(grade));
@@ -131,8 +130,6 @@ class ReportServiceTest {
         when(enrollment.getGrade()).thenReturn(grade);
         when(enrollment.getSection()).thenReturn(section);
         when(enrollment.getStudent()).thenReturn(student);
-        when(enrollment.isActive()).thenReturn(true);
-        when(student.getId()).thenReturn(101L);
         when(student.getUsername()).thenReturn("STU-101");
         when(student.getFullName()).thenReturn("Sample Student");
         when(student.getEmail()).thenReturn("student@example.test");
