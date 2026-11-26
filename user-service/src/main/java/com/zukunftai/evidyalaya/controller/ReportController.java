@@ -83,8 +83,9 @@ public class ReportController {
     @GetMapping("/my-class-scope")
     @PreAuthorize("hasRole('FACULTY')")
     public java.util.List<ReportService.FacultyReportScopeOption> getFacultyReportScope(
-            @RequestParam(required = false) Long academicYearId) {
-        return reportService.getFacultyReportScope(academicYearId);
+            @RequestParam(required = false) Long academicYearId,
+            @RequestParam(required = false) String reportKind) {
+        return reportService.getFacultyReportScope(academicYearId, reportKind);
     }
 
     @GetMapping("/my-class-strength")
