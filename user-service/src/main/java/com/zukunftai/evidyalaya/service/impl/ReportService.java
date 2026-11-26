@@ -586,7 +586,7 @@ public class ReportService {
             int mainRowsPerPage = data.getColumns().size() >= 8 ? 30 : 32;
             int mainPages = Math.max(1, (int) Math.ceil(data.getRows().size() / (double) mainRowsPerPage));
             int sectionPages = data.getSections() == null ? 0 : data.getSections().stream()
-                    .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 28.0))).sum();
+                    .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 32.0))).sum();
             int totalPages = mainPages + sectionPages;
             int pageNumber = 0;
 
@@ -898,7 +898,7 @@ public class ReportService {
                     }
                     for (int rowIndex = 0; rowIndex < section.getRows().size(); rowIndex++) {
                         Row row = sheet.createRow(sectionCursor++);
-                        row.setHeightInPoints(28);
+                        row.setHeightInPoints(40);
                         List<String> values = section.getRows().get(rowIndex);
                         for (int column = 0; column < section.getColumns().size(); column++) {
                             Cell cell = row.createCell(column);
