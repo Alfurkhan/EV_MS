@@ -41,6 +41,7 @@ export type ReportFilters = {
     startDate?: string;
     endDate?: string;
     status?: string;
+    reportKind?: string;
 };
 
 function queryParams(filters: ReportFilters) {
