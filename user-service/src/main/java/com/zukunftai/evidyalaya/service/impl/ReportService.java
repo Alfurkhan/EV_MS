@@ -693,7 +693,7 @@ public class ReportService {
                     && pdfRows.size() <= 25;
             boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
             boolean compactAcademicDistribution = academicPerformanceReport && data.getSections() != null
-                    && data.getSections().size() == 1 && data.getSections().get(0).getRows().size() <= 4 && pdfRows.size() <= 20;
+                    && data.getSections().size() == 1 && data.getSections().get(0).getRows().size() <= 4 && pdfRows.size() <= 25;
             int sectionPages = classStrengthReport || compactAttendanceAudit || compactAcademicDistribution || data.getSections() == null ? 0 : data.getSections().stream()
                     .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 32.0))).sum();
             int totalPages = mainPages + sectionPages;
