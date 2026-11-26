@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class ReportController {
     private static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    private final ReportService reportService;
+    private final ReportService reportService;\n    private final com.zukunftai.evidyalaya.service.impl.AcademicPerformanceReportService academicPerformanceReportService;
 
     @GetMapping("/attendance")
     @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
@@ -105,6 +105,20 @@ public class ReportController {
             @RequestParam(required = false) Long sectionId,
             @RequestParam(defaultValue = "pdf") String format) {
         return documentResponse(reportService.exportFacultyClassStrength(academicYearId, gradeId, sectionId, format), format, "my-class-strength");
+    }
+
+    @GetMapping("/academic-performance/{assessmentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ReportData getAcademicPerformanceReport(@PathVariable Long assessmentId) {
+        return academicPerformanceReportService.preview(assessmentId);
+    }
+
+    @GetMapping("/academic-performance/{assessmentId}/export")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> exportAcademicPerformanceReport(@PathVariable Long assessmentId,
+            @RequestParam(defaultValue = "pdf") String format) {
+        ReportData data = academicPerformanceReportService.preview(assessmentId);
+        return documentResponse(academicPerformanceReportService.export(data, format), format, "academic-performance-report");
     }
 
     private ResponseEntity<byte[]> documentResponse(byte[] content, String format, String fileName) {
