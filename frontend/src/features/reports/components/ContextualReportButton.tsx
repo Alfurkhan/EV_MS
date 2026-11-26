@@ -88,7 +88,7 @@ export default function ContextualReportButton({ report }: Props) {
             return;
         }
         let cancelled = false;
-        getFacultyReportScope(filters.academicYearId).then((scope) => {
+        getFacultyReportScope(filters.academicYearId, report).then((scope) => {
             if (cancelled) return;
             setFacultyScope(scope);
             setIsFacultyScope(true);
