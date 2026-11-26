@@ -1000,29 +1000,22 @@ public class ReportService {
             final List<List<String>> reportRows = excelRows;
             maxColumnCount = Math.max(reportColumns.size(), 1);
             lastColumn = Math.max(1, maxColumnCount - 1);
+            // All Excel reports use the same header layout: report details on the left,
+            // with a reserved two-column logo area on the right.
+            int logoStartColumn = Math.max(0, maxColumnCount - 2);
+            int headerTextEndColumn = Math.max(0, logoStartColumn - 1);
             for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
                 Row headerRow = sheet.createRow(rowIndex);
                 headerRow.setHeightInPoints(rowIndex == 0 ? 32 : 22);
-                if (classStrengthReport) {
-                    // Reserve the rightmost columns for the school logo and merge the report text area.
-                    sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(
-                            rowIndex, rowIndex, 0, Math.max(0, lastColumn - 2)));
-                } else {
-                    // Column A is reserved for the logo; merge the text cells in columns B onward.
-                    sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(
-                            rowIndex, rowIndex, 1, Math.max(1, lastColumn)));
-                }
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(
+                        rowIndex, rowIndex, 0, headerTextEndColumn));
             }
-            if (classStrengthReport) {
-                // Merge the reserved logo area into one block aligned with the five header rows.
-                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, lastColumn - 1, lastColumn));
-            } else {
-                // The vertical logo region must not overlap the row-wise text merges.
-                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 0, 0));
-                sheet.setColumnWidth(0, 32 * 256);
+            if (logoStartColumn < maxColumnCount) {
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(
+                        0, 4, logoStartColumn, maxColumnCount - 1));
             }
             Row schoolRow = sheet.getRow(0);
-            int headerTextColumn = classStrengthReport ? 0 : 1;
+            int headerTextColumn = 0;
             schoolRow.createCell(headerTextColumn).setCellValue(data.getSchool().getName());
             schoolRow.getCell(headerTextColumn).setCellStyle(titleStyle);
             sheet.getRow(1).createCell(headerTextColumn).setCellValue(data.getSchool().getTagline());
@@ -1148,7 +1141,7 @@ public class ReportService {
                     sectionCursor += 1;
                 }
             }
-            embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl(), classStrengthReport);
+            embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl(), logoStartColumn, maxColumnCount);
             sheet.createFreezePane(0, mainHeaderRow + 1);
             sheet.getPrintSetup().setLandscape(true);
             sheet.getPrintSetup().setFitWidth((short) 1);
@@ -1236,7 +1229,7 @@ public class ReportService {
         }
     }
 
-    private void embedExcelLogo(Workbook workbook, Sheet sheet, String logoUrl, boolean classStrengthReport) {
+    private void embedExcelLogo(Workbook workbook, Sheet sheet, String logoUrl, int firstLogoColumn, int lastLogoColumn) {
         if (blank(logoUrl) || !logoUrl.startsWith("/public/school-branding/logo/") || !(workbook instanceof XSSFWorkbook xssf)) return;
         try {
             String fileName = logoUrl.substring("/public/school-branding/logo/".length());
@@ -1250,9 +1243,7 @@ public class ReportService {
             int imageWidth = image.getWidth();
             int imageHeight = image.getHeight();
 
-            // Class-strength reports use a right-aligned logo; other reports retain the existing logo column.
-            int firstLogoColumn = classStrengthReport ? 4 : 0;
-            int lastLogoColumn = classStrengthReport ? 6 : 1;
+            // The logo is positioned in the rightmost reserved header columns for every report.
             float availableWidth = 0f;
             for (int column = firstLogoColumn; column < lastLogoColumn; column++) availableWidth += sheet.getColumnWidthInPixels(column);
             availableWidth -= 12f;
