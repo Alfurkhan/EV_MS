@@ -11,8 +11,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -73,7 +71,6 @@ public class AcademicPerformanceReportService {
                 metric("Official Results", officialCount), metric("Average Marks", officialCount == 0 ? "—" : average + " / " + assessment.getTotalMarks()),
                 metric("Highest", highest == null ? "—" : highest + " / " + assessment.getTotalMarks()),
                 metric("Lowest", lowest == null ? "—" : lowest + " / " + assessment.getTotalMarks()));
-        String generated = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"));
         String title = "Academic Performance Report";
         String subtitle = assessment.getTitle() + " · " + assessment.getSubject().getName() + " · "
                 + assessment.getGrade().getName() + " " + assessment.getSection().getName()
