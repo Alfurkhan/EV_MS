@@ -161,6 +161,10 @@ class ReportServiceTest {
             assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
                     region.getFirstRow() == 0 && region.getFirstColumn() == 0 && region.getLastColumn() == 3),
                     "The report text header should span the left side while reserving the right side for the logo.");
+            assertTrue(sheet.getMergedRegions().stream().anyMatch(region ->
+                    region.getFirstRow() == 0 && region.getLastRow() == 4
+                            && region.getFirstColumn() == 4 && region.getLastColumn() == 5),
+                    "The logo area should be merged vertically across the five header rows.");
             assertEquals("Grade", sheet.getRow(8).getCell(0).getStringCellValue());
             assertEquals("Phone", sheet.getRow(8).getCell(5).getStringCellValue());
             assertEquals(24, sheet.getColumnWidth(2) / 256, "Student ID column should be readable.");
