@@ -896,11 +896,6 @@ public class ReportService {
                         cell.setCellValue(section.getColumns().get(column));
                         cell.setCellStyle(headerStyle);
                     }
-                    for (int column = 0; column < section.getColumns().size(); column++) {
-                        String heading = section.getColumns().get(column).toLowerCase(Locale.ROOT);
-                        int width = heading.equals("faculty") ? 40 : heading.contains("subject") ? 28 : heading.contains("date") ? 16 : heading.contains("time") ? 12 : heading.contains("grade") ? 14 : heading.contains("section") ? 12 : 15;
-                        sheet.setColumnWidth(column, width * 256);
-                    }
                     for (int rowIndex = 0; rowIndex < section.getRows().size(); rowIndex++) {
                         Row row = sheet.createRow(sectionCursor++);
                         row.setHeightInPoints(28);
