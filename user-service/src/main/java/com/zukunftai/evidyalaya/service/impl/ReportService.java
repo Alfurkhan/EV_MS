@@ -985,10 +985,11 @@ public class ReportService {
     private byte[] createExcel(ReportData data) throws Exception {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Report");
+            boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
             CellStyle titleStyle = workbook.createCellStyle();
             Font titleFont = workbook.createFont();
             titleFont.setBold(true);
-            titleFont.setFontHeightInPoints((short) 16);
+            titleFont.setFontHeightInPoints((short) (academicPerformanceReport ? 19 : 16));
             titleFont.setColor(IndexedColors.WHITE.getIndex());
             titleStyle.setFont(titleFont);
             ((XSSFCellStyle) titleStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
@@ -998,6 +999,7 @@ public class ReportService {
             headerStyle.setWrapText(true);
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) (academicPerformanceReport ? 12 : 11));
             headerFont.setColor(IndexedColors.WHITE.getIndex());
             headerStyle.setFont(headerFont);
             ((XSSFCellStyle) headerStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
@@ -1017,6 +1019,7 @@ public class ReportService {
             CellStyle metricLabelStyle = workbook.createCellStyle();
             Font metricFont = workbook.createFont();
             metricFont.setBold(true);
+            metricFont.setFontHeightInPoints((short) (academicPerformanceReport ? 11 : 11));
             metricLabelStyle.setFont(metricFont);
             metricLabelStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             metricLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -1025,6 +1028,10 @@ public class ReportService {
             metricLabelStyle.setBorderLeft(BorderStyle.THIN);
             metricLabelStyle.setBorderRight(BorderStyle.THIN);
             CellStyle metricValueStyle = workbook.createCellStyle();
+            Font metricValueFont = workbook.createFont();
+            metricValueFont.setBold(academicPerformanceReport);
+            metricValueFont.setFontHeightInPoints((short) (academicPerformanceReport ? 14 : 11));
+            metricValueStyle.setFont(metricValueFont);
             metricValueStyle.setBorderBottom(BorderStyle.THIN);
             metricValueStyle.setBorderTop(BorderStyle.THIN);
             metricValueStyle.setBorderLeft(BorderStyle.THIN);
@@ -1079,15 +1086,32 @@ public class ReportService {
             schoolRow.createCell(headerTextColumn).setCellValue(data.getSchool().getName());
             schoolRow.getCell(headerTextColumn).setCellStyle(titleStyle);
             sheet.getRow(1).createCell(headerTextColumn).setCellValue(data.getSchool().getTagline());
-            boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
             if (academicPerformanceReport) {
-                sheet.getRow(2).createCell(headerTextColumn).setCellValue("Academic Performance Report");
+                Cell reportTitleCell = sheet.getRow(2).createCell(headerTextColumn);
+                reportTitleCell.setCellValue("Academic Performance Report");
+                CellStyle reportTitleStyle = workbook.createCellStyle();
+                Font reportTitleFont = workbook.createFont();
+                reportTitleFont.setBold(true);
+                reportTitleFont.setFontHeightInPoints((short) 17);
+                reportTitleFont.setColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
+                reportTitleStyle.setFont(reportTitleFont);
+                reportTitleCell.setCellStyle(reportTitleStyle);
+                sheet.getRow(2).setHeightInPoints(28);
+                Cell taglineCell = sheet.getRow(1).getCell(headerTextColumn);
+                CellStyle taglineStyle = workbook.createCellStyle();
+                Font taglineFont = workbook.createFont();
+                taglineFont.setItalic(true);
+                taglineFont.setFontHeightInPoints((short) 11);
+                taglineFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+                taglineStyle.setFont(taglineFont);
+                if (taglineCell != null) taglineCell.setCellStyle(taglineStyle);
                 Cell subtitleCell = sheet.getRow(3).createCell(headerTextColumn);
                 subtitleCell.setCellValue(data.getReportTitle().replaceFirst("^Academic Performance Report\\s*[·-]?\\s*", ""));
                 CellStyle subtitleStyle = workbook.createCellStyle();
                 subtitleStyle.setWrapText(true);
                 Font subtitleFont = workbook.createFont();
-                subtitleFont.setFontHeightInPoints((short) 8);
+                subtitleFont.setBold(true);
+                subtitleFont.setFontHeightInPoints((short) 11);
                 subtitleStyle.setFont(subtitleFont);
                 subtitleCell.setCellStyle(subtitleStyle);
                 sheet.getRow(3).setHeightInPoints(32);
@@ -1100,10 +1124,11 @@ public class ReportService {
                 CellStyle metadataStyle = workbook.createCellStyle();
                 metadataStyle.setWrapText(true);
                 Font metadataFont = workbook.createFont();
-                metadataFont.setFontHeightInPoints((short) 7);
+                metadataFont.setFontHeightInPoints((short) 10);
+                metadataFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
                 metadataStyle.setFont(metadataFont);
                 metadataCell.setCellStyle(metadataStyle);
-                sheet.getRow(4).setHeightInPoints(32);
+                sheet.getRow(4).setHeightInPoints(42);
             } else {
                 sheet.getRow(2).createCell(headerTextColumn).setCellValue(data.getReportTitle());
                 sheet.getRow(3).createCell(headerTextColumn).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
@@ -1132,7 +1157,7 @@ public class ReportService {
             }
             int mainHeaderRow = rowCursor;
             Row headerRow = sheet.createRow(mainHeaderRow);
-            headerRow.setHeightInPoints(30);
+            headerRow.setHeightInPoints(academicPerformanceReport ? 34 : 30);
             for (int column = 0; column < reportColumns.size(); column++) {
                 Cell cell = headerRow.createCell(column);
                 cell.setCellValue(reportColumns.get(column));
@@ -1141,6 +1166,11 @@ public class ReportService {
             CellStyle wrappedCellStyle = workbook.createCellStyle();
             wrappedCellStyle.setWrapText(true);
             wrappedCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            if (academicPerformanceReport) {
+                Font bodyFont = workbook.createFont();
+                bodyFont.setFontHeightInPoints((short) 11);
+                wrappedCellStyle.setFont(bodyFont);
+            }
             wrappedCellStyle.setBorderBottom(BorderStyle.THIN);
             wrappedCellStyle.setBorderTop(BorderStyle.THIN);
             wrappedCellStyle.setBorderLeft(BorderStyle.THIN);
@@ -1148,6 +1178,7 @@ public class ReportService {
             CellStyle alternateRowStyle = workbook.createCellStyle();
             alternateRowStyle.setWrapText(true);
             alternateRowStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            if (academicPerformanceReport) alternateRowStyle.setFont(wrappedCellStyle.getFont());
             alternateRowStyle.setBorderBottom(BorderStyle.THIN);
             alternateRowStyle.setBorderTop(BorderStyle.THIN);
             alternateRowStyle.setBorderLeft(BorderStyle.THIN);
@@ -1165,7 +1196,7 @@ public class ReportService {
             int mainDataStart = mainHeaderRow + 1;
             for (int rowIndex = 0; rowIndex < reportRows.size(); rowIndex++) {
                 Row row = sheet.createRow(mainDataStart + rowIndex);
-                row.setHeightInPoints(classStrengthReport ? 25 : 28);
+                row.setHeightInPoints(classStrengthReport ? 25 : academicPerformanceReport ? 30 : 28);
                 List<String> values = reportRows.get(rowIndex);
                 for (int column = 0; column < reportColumns.size(); column++) {
                     Cell cell = row.createCell(column);
@@ -1207,10 +1238,10 @@ public class ReportService {
                     Row sectionTitleRow = sheet.createRow(sectionCursor++);
                     sectionTitleRow.createCell(0).setCellValue(section.getTitle());
                     sectionTitleRow.getCell(0).setCellStyle(sectionStyle);
-                    sectionTitleRow.setHeightInPoints(24);
+                    sectionTitleRow.setHeightInPoints(academicPerformanceReport ? 28 : 24);
                     sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(sectionTitleRow.getRowNum(), sectionTitleRow.getRowNum(), 0, Math.max(0, maxColumnCount - 1)));
                     Row sectionHeader = sheet.createRow(sectionCursor++);
-                    sectionHeader.setHeightInPoints(30);
+                    sectionHeader.setHeightInPoints(academicPerformanceReport ? 34 : 30);
                     for (int column = 0; column < section.getColumns().size(); column++) {
                         Cell cell = sectionHeader.createCell(column);
                         cell.setCellValue(section.getColumns().get(column));
@@ -1218,7 +1249,7 @@ public class ReportService {
                     }
                     for (int rowIndex = 0; rowIndex < section.getRows().size(); rowIndex++) {
                         Row row = sheet.createRow(sectionCursor++);
-                        row.setHeightInPoints(classStrengthReport ? 24 : 32);
+                        row.setHeightInPoints(classStrengthReport ? 24 : academicPerformanceReport ? 30 : 32);
                         List<String> values = section.getRows().get(rowIndex);
                         for (int column = 0; column < section.getColumns().size(); column++) {
                             Cell cell = row.createCell(column);
