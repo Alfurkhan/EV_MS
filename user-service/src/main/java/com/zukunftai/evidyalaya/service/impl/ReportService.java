@@ -845,6 +845,8 @@ public class ReportService {
                 cell.setCellValue(data.getColumns().get(column));
                 cell.setCellStyle(headerStyle);
             }
+            CellStyle wrappedCellStyle = workbook.createCellStyle();
+            wrappedCellStyle.setWrapText(true);
             CellStyle alternateRowStyle = workbook.createCellStyle();
             alternateRowStyle.setWrapText(true);
             alternateRowStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
@@ -865,6 +867,7 @@ public class ReportService {
                 for (int column = 0; column < data.getColumns().size(); column++) {
                     Cell cell = row.createCell(column);
                     cell.setCellValue(column < values.size() ? values.get(column) : "");
+                    cell.setCellStyle(wrappedCellStyle);
                     String flag = data.getColumns().contains("Attendance Flag") && values.size() > data.getColumns().indexOf("Attendance Flag")
                             ? values.get(data.getColumns().indexOf("Attendance Flag")) : "";
                     if (flag.equals("Low Attendance")) cell.setCellStyle(lowAttendanceStyle);
@@ -903,7 +906,7 @@ public class ReportService {
                         for (int column = 0; column < section.getColumns().size(); column++) {
                             Cell cell = row.createCell(column);
                             cell.setCellValue(column < values.size() ? values.get(column) : "");
-                            if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
+                            cell.setCellStyle(rowIndex % 2 == 1 ? alternateRowStyle : wrappedCellStyle);
                         }
                     }
                     sectionCursor += 1;
