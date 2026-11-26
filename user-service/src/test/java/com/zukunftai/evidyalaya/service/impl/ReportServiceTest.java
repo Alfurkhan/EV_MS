@@ -132,6 +132,8 @@ class ReportServiceTest {
         when(enrollment.getSection()).thenReturn(section);
         when(enrollment.getStudent()).thenReturn(student);
         when(enrollment.isActive()).thenReturn(true);
+        when(student.getId()).thenReturn(101L);
+        when(student.getUsername()).thenReturn("STU-101");
         when(student.getFullName()).thenReturn("Sample Student");
         when(student.getEmail()).thenReturn("student@example.test");
         when(student.getPhoneNumber()).thenReturn("1234567890");
@@ -143,8 +145,9 @@ class ReportServiceTest {
         assertEquals("Assigned Faculty", report.getPreparedBy());
         assertEquals("Active Students", report.getSummary().get(2).getLabel());
         assertEquals("1", report.getSummary().get(2).getValue());
-        assertEquals("Grade 10 · Section A Student Details", report.getSections().get(0).getTitle());
-        assertEquals(List.of("Sample Student", "student@example.test", "1234567890", "Active"), report.getSections().get(0).getRows().get(0));
+        assertEquals("Grade 10 · Section A Active Student Roster", report.getSections().get(0).getTitle());
+        assertEquals(List.of("Student ID", "Student Name", "Email", "Phone"), report.getSections().get(0).getColumns());
+        assertEquals(List.of("STU-101", "Sample Student", "student@example.test", "1234567890"), report.getSections().get(0).getRows().get(0));
     }
 
     @Test
