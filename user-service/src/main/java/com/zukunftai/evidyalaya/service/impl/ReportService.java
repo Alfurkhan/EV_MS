@@ -733,7 +733,7 @@ public class ReportService {
                         }
                     }
                     float headerHeight = 20;
-                    float rowHeight = pdfColumns.size() >= 8 ? 12.5f : 17;
+                    float rowHeight = classStrengthReport ? 20 : pdfColumns.size() >= 8 ? 12.5f : 17;
                     float[] columnRatios = pdfColumnRatios(pdfColumns);
                     float[] columnWidths = new float[pdfColumns.size()];
                     for (int col = 0; col < columnWidths.length; col++) columnWidths[col] = usableWidth * columnRatios[col];
@@ -1224,7 +1224,7 @@ public class ReportService {
         }
     }
 
-    private void embedExcelLogo(Workbook workbook, Sheet sheet, String logoUrl) {
+    private void embedExcelLogo(Workbook workbook, Sheet sheet, String logoUrl, boolean classStrengthReport) {
         if (blank(logoUrl) || !logoUrl.startsWith("/public/school-branding/logo/") || !(workbook instanceof XSSFWorkbook xssf)) return;
         try {
             String fileName = logoUrl.substring("/public/school-branding/logo/".length());
@@ -1238,9 +1238,12 @@ public class ReportService {
             int imageWidth = image.getWidth();
             int imageHeight = image.getHeight();
 
-            // Fit the image proportionally inside the existing merged logo area (A1:A5),
-            // leaving a small inset and centering it in both directions.
-            float availableWidth = sheet.getColumnWidthInPixels(0) - 12f;
+            // Class-strength reports use a right-aligned logo; other reports retain the existing logo column.
+            int firstLogoColumn = classStrengthReport ? 4 : 0;
+            int lastLogoColumn = classStrengthReport ? 6 : 1;
+            float availableWidth = 0f;
+            for (int column = firstLogoColumn; column < lastLogoColumn; column++) availableWidth += sheet.getColumnWidthInPixels(column);
+            availableWidth -= 12f;
             float availableHeight = 0f;
             for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
                 Row row = sheet.getRow(rowIndex);
@@ -1250,16 +1253,16 @@ public class ReportService {
             float scale = Math.min(availableWidth / imageWidth, availableHeight / imageHeight);
             float displayWidth = imageWidth * scale;
             float displayHeight = imageHeight * scale;
-            float leftInset = (sheet.getColumnWidthInPixels(0) - displayWidth) / 2f;
+            float leftInset = (availableWidth + 12f - displayWidth) / 2f;
             float topInset = (availableHeight + 12f - displayHeight) / 2f;
 
             int pictureIndex = workbook.addPicture(Files.readAllBytes(path), pictureType);
             XSSFDrawing drawing = (XSSFDrawing) sheet.createDrawingPatriarch();
             XSSFClientAnchor anchor = new XSSFClientAnchor(
                     Units.pixelToEMU(Math.round(leftInset)), Units.pixelToEMU(Math.round(topInset)),
-                    Units.pixelToEMU(Math.round(displayWidth - sheet.getColumnWidthInPixels(0))),
-                    Units.pixelToEMU(Math.round(displayHeight - (availableHeight + 12f))),
-                    0, 0, 1, 5);
+                    Units.pixelToEMU(Math.round(leftInset + displayWidth - sheet.getColumnWidthInPixels(firstLogoColumn))),
+                    Units.pixelToEMU(Math.round(topInset + displayHeight - (availableHeight + 12f))),
+                    firstLogoColumn, 0, lastLogoColumn, 5);
             anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_DONT_RESIZE);
             drawing.createPicture(anchor, pictureIndex);
         } catch (Exception ignored) {
