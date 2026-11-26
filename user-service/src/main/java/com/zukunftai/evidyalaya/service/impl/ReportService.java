@@ -400,7 +400,7 @@ public class ReportService {
                 metric("Students With Unmarked Sessions", String.valueOf(incompleteStudents))
         );
 
-        String filterText = dateRangeWithinYear ? "Date: " + effectiveStart + " to " + effectiveEnd
+        String filterText = dateRangeWithinYear ? "Date: " + effectiveStart.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")) + " to " + effectiveEnd.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
                 : "Date: No overlap with the selected academic year";
         if (selectedSection != null) filterText += " · Grade: " + selectedSection.getGrade().getName() + " · Section: " + selectedSection.getName();
         else if (selectedGrade != null) filterText += " · Grade: " + selectedGrade.getName() + " · All sections";
@@ -663,6 +663,9 @@ public class ReportService {
                             String value = col < row.size() ? row.get(col) : "";
                             if (isNameColumn(data.getColumns().get(col))) {
                                 drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 5.0f,
+                                        margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
+                            } else if (data.getColumns().get(col).equalsIgnoreCase("Email")) {
+                                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6, 4.25f,
                                         margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
                             } else {
                                 drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), data.getColumns().size() >= 8 ? 6 : 7,
@@ -943,7 +946,7 @@ public class ReportService {
         if (columns.size() == 6 && columns.get(0).equalsIgnoreCase("Student")) return new float[]{0.27f, 0.24f, 0.13f, 0.12f, 0.10f, 0.14f};
         if (columns.size() == 6 && columns.get(0).toLowerCase(Locale.ROOT).contains("faculty")) return new float[]{0.27f, 0.23f, 0.13f, 0.20f, 0.09f, 0.08f};
         if (columns.contains("Attendance Flag")) {
-            float[] weights = {1.8f, 1.35f, 0.8f, 0.65f, 0.65f, 0.58f, 0.58f, 0.58f, 0.65f, 0.65f, 1.0f, 1.2f};
+            float[] weights = {1.45f, 2.4f, 0.8f, 0.65f, 0.65f, 0.58f, 0.58f, 0.58f, 0.65f, 0.65f, 0.95f, 1.0f};
             return normalizeRatios(weights, columns.size());
         }
         if (columns.contains("Faculty") && columns.contains("Start Time")) {
