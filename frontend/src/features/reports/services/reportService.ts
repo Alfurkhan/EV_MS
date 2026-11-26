@@ -78,6 +78,25 @@ export async function previewMyClassStrength(filters: ReportFilters = {}): Promi
     return data;
 }
 
+export async function previewAcademicPerformanceReport(assessmentId: number): Promise<ReportData> {
+    const { data } = await api.get<ReportData>(`/reports/academic-performance/${assessmentId}`);
+    return data;
+}
+
+export async function downloadAcademicPerformanceReport(assessmentId: number, format: "pdf" | "xlsx", filenameStem?: string): Promise<void> {
+    const { data } = await api.get<Blob>(`/reports/academic-performance/${assessmentId}/export`, {
+        params: { format }, responseType: "blob",
+    });
+    const blobUrl = URL.createObjectURL(data);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = filenameStem ? `${filenameStem}.${format}` : `academic-performance-report.${format}`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(blobUrl);
+}
+
 export async function downloadReport(
     report: "student-roster" | "faculty-directory" | "my-class-strength" | "attendance",
     format: "pdf" | "xlsx",
