@@ -51,7 +51,16 @@ public class AcademicPerformanceReportService {
                         BigDecimal score = attempt.getPublishedScore();
                         BigDecimal total = assessment.getTotalMarks();
                         marks = score.setScale(2, RoundingMode.HALF_UP).toPlainString();
-                        percentage = total.signum() > 0 ? score.multiply(BigDecimal.valueOf(100)).divide(total, 2, RoundingMode.HALF_UP).toPlainString() + "%" : "-";
+                        BigDecimal percentageValue = total.signum() > 0
+                                ? score.multiply(BigDecimal.valueOf(100)).divide(total, 2, RoundingMode.HALF_UP)
+                                : BigDecimal.ZERO;
+                        percentage = total.signum() > 0 ? percentageValue.toPlainString() + "%" : "-";
+                        if (total.signum() > 0) {
+                            if (percentageValue.compareTo(BigDecimal.valueOf(90)) >= 0) performanceBands[0]++;
+                            else if (percentageValue.compareTo(BigDecimal.valueOf(75)) >= 0) performanceBands[1]++;
+                            else if (percentageValue.compareTo(BigDecimal.valueOf(60)) >= 0) performanceBands[2]++;
+                            else performanceBands[3]++;
+                        }
                         sum = sum.add(score); officialCount++;
                         highest = highest == null || score.compareTo(highest) > 0 ? score : highest;
                         lowest = lowest == null || score.compareTo(lowest) < 0 ? score : lowest;
@@ -86,7 +95,7 @@ public class AcademicPerformanceReportService {
                         bandRow("Needs Improvement (<60%)", performanceBands[3], officialCount)))
                 .build());
         return reportService.buildCustomReport(title, assessment.getAcademicYear().getName(),
-                List.of("Student Name", "Student ID", "Status", "Marks Obtained", "Maximum Marks", "Percentage"),
+                List.of("Student Name", "Student Identifier", "Submission Status", "Marks Obtained", "Maximum Marks", "Percentage"),
                 rows, subtitle, metrics, sections);
     }
 
