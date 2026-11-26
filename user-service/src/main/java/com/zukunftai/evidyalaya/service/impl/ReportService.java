@@ -602,6 +602,15 @@ public class ReportService {
         return user != null && user.getRoles() != null && user.getRoles().stream().anyMatch(item -> item.getName() == role);
     }
 
+    public ReportData buildCustomReport(String title, String year, List<String> columns, List<List<String>> rows, String subtitle,
+                                        List<ReportData.SummaryMetric> summary, List<ReportData.ReportSection> sections) {
+        return buildReport(title, year, columns, rows, subtitle, summary, sections);
+    }
+
+    public byte[] exportCustomReport(ReportData data, String format) {
+        return export(data, format);
+    }
+
     private ReportData buildReport(String title, String year, List<String> columns, List<List<String>> rows, String subtitle) {
         return buildReport(title, year, columns, rows, subtitle, List.of(), List.of());
     }
