@@ -18,6 +18,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFColor;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFDrawing;
 import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
@@ -1010,7 +1011,7 @@ public class ReportService {
             CellStyle sectionStyle = workbook.createCellStyle();
             Font sectionFont = workbook.createFont();
             sectionFont.setBold(true);
-            sectionFont.setFontHeightInPoints((short) 12);
+            sectionFont.setFontHeightInPoints((short) (academicPerformanceReport ? 14 : 12));
             sectionFont.setColor(IndexedColors.WHITE.getIndex());
             sectionStyle.setFont(sectionFont);
             ((XSSFCellStyle) sectionStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
@@ -1019,7 +1020,7 @@ public class ReportService {
             CellStyle metricLabelStyle = workbook.createCellStyle();
             Font metricFont = workbook.createFont();
             metricFont.setBold(true);
-            metricFont.setFontHeightInPoints((short) (academicPerformanceReport ? 11 : 11));
+            metricFont.setFontHeightInPoints((short) 11);
             metricLabelStyle.setFont(metricFont);
             metricLabelStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             metricLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -1093,7 +1094,7 @@ public class ReportService {
                 Font reportTitleFont = workbook.createFont();
                 reportTitleFont.setBold(true);
                 reportTitleFont.setFontHeightInPoints((short) 17);
-                reportTitleFont.setColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
+                ((XSSFFont) reportTitleFont).setColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
                 reportTitleStyle.setFont(reportTitleFont);
                 reportTitleCell.setCellStyle(reportTitleStyle);
                 sheet.getRow(2).setHeightInPoints(28);
@@ -1142,6 +1143,7 @@ public class ReportService {
             if (data.getSummary() != null && !data.getSummary().isEmpty()) {
                 for (int i = 0; i < data.getSummary().size(); i += 3) {
                     Row summaryRow = sheet.createRow(rowCursor++);
+                    if (academicPerformanceReport) summaryRow.setHeightInPoints(28);
                     for (int metricIndex = i; metricIndex < Math.min(i + 3, data.getSummary().size()); metricIndex++) {
                         int cellIndex = (metricIndex - i) * 2;
                         var metric = data.getSummary().get(metricIndex);
