@@ -33,10 +33,28 @@ export default function AcademicPerformanceReportButton({ audience = "admin" }: 
 
     useEffect(() => {
         if (!open) return;
-        (audience === "faculty"
-            ? getFacultyAssessments().then((assessments: Assessment[]) => setItems(assessments.map(a => ({ id: a.id, title: a.title, academicYearName: a.academicYearName, gradeName: a.gradeName, sectionName: a.sectionName, subjectName: a.subjectName, status: a.status, resultsPublished: a.resultsPublished })))
-            : getAdminAssessments().then(setItems))
-            .catch(() => toast.error("Unable to load assessments."));
+        const loadAssessments = async () => {
+            try {
+                if (audience === "faculty") {
+                    const assessments = await getFacultyAssessments();
+                    setItems(assessments.map(a => ({
+                        id: a.id,
+                        title: a.title,
+                        academicYearName: a.academicYearName,
+                        gradeName: a.gradeName,
+                        sectionName: a.sectionName,
+                        subjectName: a.subjectName,
+                        status: a.status,
+                        resultsPublished: a.resultsPublished
+                    })));
+                } else {
+                    setItems(await getAdminAssessments());
+                }
+            } catch {
+                toast.error("Unable to load assessments.");
+            }
+        };
+        void loadAssessments();
     }, [open, audience]);
 
     const preview = async () => {
