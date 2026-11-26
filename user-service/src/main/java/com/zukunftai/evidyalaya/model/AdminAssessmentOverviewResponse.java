@@ -10,7 +10,7 @@ public class AdminAssessmentOverviewResponse {
  @Getter @Builder
  public static class Item {
   private Long id; private String title; private AssessmentType assessmentType; private AssessmentStatus status;
-  private String subjectName; private String facultyName; private String gradeName; private String sectionName;
+  private String academicYearName; private String subjectName; private String facultyName; private String gradeName; private String sectionName;
   private LocalDateTime availableFrom; private LocalDateTime availableUntil; private AssessmentTimingMode timingMode;
   private BigDecimal totalMarks; private boolean resultsPublished; private long submittedCount;
   private long activeCount; private long pendingEvaluationCount;
