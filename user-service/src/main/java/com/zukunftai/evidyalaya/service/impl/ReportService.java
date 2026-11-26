@@ -535,14 +535,16 @@ public class ReportService {
                             && enrollment.getSection().getId().equals(section.getId()))
                     .sorted(Comparator.comparing(enrollment -> Optional.ofNullable(enrollment.getStudent().getFullName()).orElse("").toLowerCase(Locale.ROOT)))
                     .map(enrollment -> List.of(
+                            blank(enrollment.getStudent().getUsername())
+                                    ? "ID-" + enrollment.getStudent().getId()
+                                    : enrollment.getStudent().getUsername(),
                             safe(enrollment.getStudent().getFullName()),
                             safe(enrollment.getStudent().getEmail()),
-                            safe(enrollment.getStudent().getPhoneNumber()),
-                            enrollment.isActive() ? "Active" : "Inactive"
+                            safe(enrollment.getStudent().getPhoneNumber())
                     )).toList();
             return ReportData.ReportSection.builder()
-                    .title(grade.getName() + " · Section " + section.getName() + " Student Details")
-                    .columns(List.of("Student Name", "Email", "Phone", "Enrollment"))
+                    .title(grade.getName() + " · Section " + section.getName() + " Active Student Roster")
+                    .columns(List.of("Student ID", "Student Name", "Email", "Phone"))
                     .rows(students)
                     .build();
         }).toList();
