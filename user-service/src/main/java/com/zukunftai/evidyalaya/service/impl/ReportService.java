@@ -1079,15 +1079,31 @@ public class ReportService {
             schoolRow.createCell(headerTextColumn).setCellValue(data.getSchool().getName());
             schoolRow.getCell(headerTextColumn).setCellStyle(titleStyle);
             sheet.getRow(1).createCell(headerTextColumn).setCellValue(data.getSchool().getTagline());
-            sheet.getRow(2).createCell(headerTextColumn).setCellValue(data.getReportTitle());
-            int reportRecordCount = classStrengthReport && data.getSections() != null
-                    ? data.getSections().stream().mapToInt(section -> section.getRows().size()).sum()
-                    : data.getRows().size();
-            sheet.getRow(3).createCell(headerTextColumn).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
-                    + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRecordCount
-                    + (blank(data.getPreparedBy()) ? "" : " · Report prepared by: " + data.getPreparedBy() + " (Faculty)"));
-            sheet.getRow(4).createCell(headerTextColumn).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
-                    data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
+            boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
+            if (academicPerformanceReport) {
+                sheet.getRow(2).createCell(headerTextColumn).setCellValue("Academic Performance Report");
+                Cell subtitleCell = sheet.getRow(3).createCell(headerTextColumn);
+                subtitleCell.setCellValue(data.getReportTitle().replaceFirst("^Academic Performance Report\\s*[·-]?\\s*", ""));
+                CellStyle subtitleStyle = workbook.createCellStyle();
+                subtitleStyle.setWrapText(true);
+                Font subtitleFont = workbook.createFont();
+                subtitleFont.setFontHeightInPoints((short) 8);
+                subtitleStyle.setFont(subtitleFont);
+                subtitleCell.setCellStyle(subtitleStyle);
+                sheet.getRow(3).setHeightInPoints(32);
+                String contactDetails = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+                        data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
+                sheet.getRow(4).createCell(headerTextColumn).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
+                        + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRecordCount
+                        + (contactDetails.isEmpty() ? "" : " · " + contactDetails));
+            } else {
+                sheet.getRow(2).createCell(headerTextColumn).setCellValue(data.getReportTitle());
+                sheet.getRow(3).createCell(headerTextColumn).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
+                        + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRecordCount
+                        + (blank(data.getPreparedBy()) ? "" : " · Report prepared by: " + data.getPreparedBy() + " (Faculty)"));
+                sheet.getRow(4).createCell(headerTextColumn).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+                        data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
+            }
 
             int rowCursor = 6;
             if (data.getSummary() != null && !data.getSummary().isEmpty()) {
@@ -1157,7 +1173,7 @@ public class ReportService {
             for (int column = 0; column < reportColumns.size(); column++) {
                 String heading = reportColumns.get(column).toLowerCase(Locale.ROOT);
                 int width = academicPerformanceReport && heading.equals("student name") ? 28
-                        : academicPerformanceReport && heading.contains("identifier") ? 28
+                        : academicPerformanceReport && heading.equals("username") ? 28
                         : academicPerformanceReport && heading.contains("status") ? 22
                         : academicPerformanceReport && (heading.contains("marks") || heading.contains("maximum") || heading.contains("percentage")) ? 17
                         : heading.contains("email") ? 36 : heading.equals("student") || heading.equals("student name") || heading.contains("faculty name") || heading.equals("faculty") ? 32
