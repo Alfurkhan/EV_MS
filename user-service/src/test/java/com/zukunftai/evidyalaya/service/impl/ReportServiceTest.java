@@ -113,7 +113,7 @@ class ReportServiceTest {
 
         var report = reportService.getAttendanceReport(7L, null, null, null, null, "ALL");
 
-        assertEquals("Attendance Report · Date: 2026-06-01 to 2027-03-31 · All grades and sections", report.getReportTitle());
+        assertEquals("Attendance Report · Date: 01-06-2026 to 31-03-2027 · All grades and sections", report.getReportTitle());
         assertEquals("2026-2027", report.getAcademicYear());
         assertEquals(12, report.getColumns().size());
         assertTrue(report.getRows().isEmpty());
