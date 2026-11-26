@@ -1013,7 +1013,10 @@ public class ReportService {
                             rowIndex, rowIndex, 1, Math.max(1, lastColumn)));
                 }
             }
-            if (!classStrengthReport) {
+            if (classStrengthReport) {
+                // Merge the reserved logo area into one block aligned with the five header rows.
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, lastColumn - 1, lastColumn));
+            } else {
                 // The vertical logo region must not overlap the row-wise text merges.
                 sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 0, 0));
                 sheet.setColumnWidth(0, 32 * 256);
