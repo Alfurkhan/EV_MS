@@ -813,13 +813,16 @@ public class ReportService {
                                 for (int col = 0; col < section.getColumns().size(); col++) {
                                     String value = col < row.size() ? row.get(col) : "";
                                     if (isNameColumn(section.getColumns().get(col))) {
-                                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 5.0f,
-                                            margin + pdfColumnOffset(widths, col) + 3, y - 9, value, Color.BLACK, widths[col] - 6);
-                                } else {
-                                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), section.getColumns().size() >= 8 ? 6 : 7,
-                                            margin + pdfColumnOffset(widths, col) + 3, y - 9,
-                                            truncate(value, pdfTextLimit(widths[col])), Color.BLACK);
-                                }
+                                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 5.0f,
+                                                margin + pdfColumnOffset(widths, col) + 3, y - 9, value, Color.BLACK, widths[col] - 6);
+                                    } else if (section.getColumns().get(col).equalsIgnoreCase("Email")) {
+                                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6, 4.25f,
+                                                margin + pdfColumnOffset(widths, col) + 3, y - 9, value, Color.BLACK, widths[col] - 6);
+                                    } else {
+                                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), section.getColumns().size() >= 8 ? 6 : 7,
+                                                margin + pdfColumnOffset(widths, col) + 3, y - 9,
+                                                truncate(value, pdfTextLimit(widths[col])), Color.BLACK);
+                                    }
                                 }
                                 y -= rowHeight;
                             }
@@ -964,7 +967,7 @@ public class ReportService {
             }
             for (int column = 0; column < data.getColumns().size(); column++) {
                 String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
-                int width = heading.contains("email") ? 36 : heading.equals("student") || heading.contains("faculty name") || heading.equals("faculty") ? 32
+                int width = heading.contains("email") ? 36 : heading.equals("student") || heading.equals("student name") || heading.contains("faculty name") || heading.equals("faculty") ? 32
                         : data.getColumns().contains("Attendance Flag") && column == 6 ? 32
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
                         : heading.contains("attendance flag") ? 22 : heading.contains("grade") ? 14 : heading.contains("section") ? 12
@@ -1027,6 +1030,7 @@ public class ReportService {
     }
 
     private float[] pdfColumnRatios(List<String> columns) {
+        if (columns.size() == 4 && columns.contains("Student ID") && columns.contains("Student Name")) return new float[]{0.18f, 0.30f, 0.34f, 0.18f};
         if (columns.size() == 6 && columns.get(0).equalsIgnoreCase("Student")) return new float[]{0.27f, 0.24f, 0.13f, 0.12f, 0.10f, 0.14f};
         if (columns.size() == 6 && columns.get(0).toLowerCase(Locale.ROOT).contains("faculty")) return new float[]{0.27f, 0.23f, 0.13f, 0.20f, 0.09f, 0.08f};
         if (columns.contains("Attendance Flag")) {
@@ -1053,7 +1057,7 @@ public class ReportService {
 
     private boolean isNameColumn(String column) {
         String normalized = column == null ? "" : column.trim().toLowerCase(Locale.ROOT);
-        return normalized.equals("student") || normalized.equals("faculty") || normalized.equals("faculty name");
+        return normalized.equals("student") || normalized.equals("student name") || normalized.equals("faculty") || normalized.equals("faculty name");
     }
 
     private void drawFitText(PDPageContentStream stream, PDType1Font font, float preferredSize, float minimumSize,
