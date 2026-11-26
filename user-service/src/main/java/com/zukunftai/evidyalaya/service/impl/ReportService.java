@@ -977,25 +977,51 @@ public class ReportService {
             }
             int lastColumn = Math.max(1, maxColumnCount - 1);
             boolean classStrengthReport = data.getReportTitle() != null && data.getReportTitle().startsWith("My Class Strength & Student Roster");
+            List<String> excelColumns = data.getColumns();
+            List<List<String>> excelRows = data.getRows();
+            if (classStrengthReport && data.getSections() != null) {
+                excelColumns = List.of("Grade", "Section", "Student ID", "Student Name", "Email", "Phone");
+                List<List<String>> rosterRows = new ArrayList<>();
+                for (ReportData.ReportSection section : data.getSections()) {
+                    String sectionTitle = section.getTitle();
+                    String gradeLabel = sectionTitle.contains(" · Section ") ? sectionTitle.substring(0, sectionTitle.indexOf(" · Section ")) : "";
+                    String sectionLabel = sectionTitle.contains(" · Section ") ? sectionTitle.substring(sectionTitle.indexOf(" · Section ") + 11).replace(" Active Student Roster", "") : "";
+                    for (List<String> student : section.getRows()) {
+                        rosterRows.add(List.of(gradeLabel, sectionLabel,
+                                student.size() > 0 ? student.get(0) : "",
+                                student.size() > 1 ? student.get(1) : "",
+                                student.size() > 2 ? student.get(2) : "",
+                                student.size() > 3 ? student.get(3) : ""));
+                    }
+                }
+                excelRows = rosterRows;
+            }
+            final List<String> reportColumns = excelColumns;
+            final List<List<String>> reportRows = excelRows;
+            maxColumnCount = Math.max(reportColumns.size(), 1);
+            lastColumn = Math.max(1, maxColumnCount - 1);
             for (int rowIndex = 0; rowIndex <= 4; rowIndex++) {
                 Row headerRow = sheet.createRow(rowIndex);
                 headerRow.setHeightInPoints(rowIndex == 0 ? 32 : 22);
-                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowIndex, rowIndex, 1, lastColumn));
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowIndex, rowIndex, 0, classStrengthReport ? Math.max(0, lastColumn - 2) : lastColumn));
             }
-            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 0, 0));
-            sheet.setColumnWidth(0, (classStrengthReport ? 26 : 32) * 256);
+            if (!classStrengthReport) {
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 0, 0));
+                sheet.setColumnWidth(0, 32 * 256);
+            }
             Row schoolRow = sheet.getRow(0);
-            schoolRow.createCell(1).setCellValue(data.getSchool().getName());
-            schoolRow.getCell(1).setCellStyle(titleStyle);
-            sheet.getRow(1).createCell(1).setCellValue(data.getSchool().getTagline());
-            sheet.getRow(2).createCell(1).setCellValue(data.getReportTitle());
+            int headerTextColumn = classStrengthReport ? 0 : 1;
+            schoolRow.createCell(headerTextColumn).setCellValue(data.getSchool().getName());
+            schoolRow.getCell(headerTextColumn).setCellStyle(titleStyle);
+            sheet.getRow(1).createCell(headerTextColumn).setCellValue(data.getSchool().getTagline());
+            sheet.getRow(2).createCell(headerTextColumn).setCellValue(data.getReportTitle());
             int reportRecordCount = classStrengthReport && data.getSections() != null
                     ? data.getSections().stream().mapToInt(section -> section.getRows().size()).sum()
                     : data.getRows().size();
-            sheet.getRow(3).createCell(1).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
+            sheet.getRow(3).createCell(headerTextColumn).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
                     + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRecordCount
                     + (blank(data.getPreparedBy()) ? "" : " · Report prepared by: " + data.getPreparedBy() + " (Faculty)"));
-            sheet.getRow(4).createCell(1).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+            sheet.getRow(4).createCell(headerTextColumn).setCellValue(String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
 
             int rowCursor = 6;
@@ -1018,9 +1044,9 @@ public class ReportService {
             int mainHeaderRow = rowCursor;
             Row headerRow = sheet.createRow(mainHeaderRow);
             headerRow.setHeightInPoints(30);
-            for (int column = 0; column < data.getColumns().size(); column++) {
+            for (int column = 0; column < reportColumns.size(); column++) {
                 Cell cell = headerRow.createCell(column);
-                cell.setCellValue(data.getColumns().get(column));
+                cell.setCellValue(reportColumns.get(column));
                 cell.setCellStyle(headerStyle);
             }
             CellStyle wrappedCellStyle = workbook.createCellStyle();
@@ -1048,11 +1074,11 @@ public class ReportService {
             incompleteStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
             incompleteStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             int mainDataStart = mainHeaderRow + 1;
-            for (int rowIndex = 0; rowIndex < data.getRows().size(); rowIndex++) {
+            for (int rowIndex = 0; rowIndex < reportRows.size(); rowIndex++) {
                 Row row = sheet.createRow(mainDataStart + rowIndex);
-                row.setHeightInPoints(28);
-                List<String> values = data.getRows().get(rowIndex);
-                for (int column = 0; column < data.getColumns().size(); column++) {
+                row.setHeightInPoints(classStrengthReport ? 25 : 28);
+                List<String> values = reportRows.get(rowIndex);
+                for (int column = 0; column < reportColumns.size(); column++) {
                     Cell cell = row.createCell(column);
                     cell.setCellValue(column < values.size() ? values.get(column) : "");
                     cell.setCellStyle(wrappedCellStyle);
@@ -1063,8 +1089,8 @@ public class ReportService {
                     else if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
                 }
             }
-            for (int column = 0; column < data.getColumns().size(); column++) {
-                String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
+            for (int column = 0; column < reportColumns.size(); column++) {
+                String heading = reportColumns.get(column).toLowerCase(Locale.ROOT);
                 int width = heading.contains("email") ? 36 : heading.equals("student") || heading.equals("student name") || heading.contains("faculty name") || heading.equals("faculty") ? 32
                         : data.getColumns().contains("Attendance Flag") && column == 6 ? 32
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
@@ -1073,15 +1099,17 @@ public class ReportService {
                 sheet.setColumnWidth(column, width * 256);
             }
             if (classStrengthReport) {
-                sheet.setColumnWidth(0, 26 * 256);
-                sheet.setColumnWidth(1, 30 * 256);
-                sheet.setColumnWidth(2, 40 * 256);
-                sheet.setColumnWidth(3, 20 * 256);
+                sheet.setColumnWidth(0, 14 * 256);
+                sheet.setColumnWidth(1, 12 * 256);
+                sheet.setColumnWidth(2, 24 * 256);
+                sheet.setColumnWidth(3, 28 * 256);
+                sheet.setColumnWidth(4, 36 * 256);
+                sheet.setColumnWidth(5, 18 * 256);
             }
-            int mainDataEnd = mainDataStart + data.getRows().size() - 1;
-            if (!data.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(mainHeaderRow, mainDataEnd, 0, data.getColumns().size() - 1));
-            int sectionCursor = mainDataStart + data.getRows().size() + 2;
-            if (data.getSections() != null) {
+            int mainDataEnd = mainDataStart + reportRows.size() - 1;
+            if (!reportRows.isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(mainHeaderRow, mainDataEnd, 0, reportColumns.size() - 1));
+            int sectionCursor = mainDataStart + reportRows.size() + 2;
+            if (!classStrengthReport && data.getSections() != null) {
                 for (ReportData.ReportSection section : data.getSections()) {
                     Row sectionTitleRow = sheet.createRow(sectionCursor++);
                     sectionTitleRow.createCell(0).setCellValue(section.getTitle());
@@ -1108,7 +1136,7 @@ public class ReportService {
                     sectionCursor += 1;
                 }
             }
-            embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl());
+            embedExcelLogo(workbook, sheet, data.getSchool().getLogoUrl(), classStrengthReport);
             sheet.createFreezePane(0, mainHeaderRow + 1);
             sheet.getPrintSetup().setLandscape(true);
             sheet.getPrintSetup().setFitWidth((short) 1);
@@ -1116,8 +1144,8 @@ public class ReportService {
             sheet.setFitToPage(true);
             sheet.setAutobreaks(true);
             // Keep one worksheet for both tables; repeating the student header above the audit would be misleading.
-            int printColumnCount = data.getColumns().size();
-            if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) printColumnCount = Math.max(printColumnCount, section.getColumns().size());
+            int printColumnCount = reportColumns.size();
+            if (!classStrengthReport && data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) printColumnCount = Math.max(printColumnCount, section.getColumns().size());
             workbook.setPrintArea(0, 0, Math.max(printColumnCount, 1) - 1, 0, Math.max(sectionCursor - 1, mainHeaderRow));
             workbook.write(output);
             return output.toByteArray();
