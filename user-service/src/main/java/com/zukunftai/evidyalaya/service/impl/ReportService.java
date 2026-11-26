@@ -1060,12 +1060,8 @@ public class ReportService {
                     else if (rowIndex % 2 == 1) cell.setCellStyle(alternateRowStyle);
                 }
             }
-            for (int column = 0; column < maxColumnCount; column++) {
-                String heading = "";
-                for (String reportColumn : data.getColumns()) if (column < data.getColumns().size()) heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
-                if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) {
-                    if (column < section.getColumns().size()) heading = section.getColumns().get(column).toLowerCase(Locale.ROOT);
-                }
+            for (int column = 0; column < data.getColumns().size(); column++) {
+                String heading = data.getColumns().get(column).toLowerCase(Locale.ROOT);
                 int width = heading.contains("email") ? 36 : heading.equals("student") || heading.equals("student name") || heading.contains("faculty name") || heading.equals("faculty") ? 32
                         : data.getColumns().contains("Attendance Flag") && column == 6 ? 32
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
