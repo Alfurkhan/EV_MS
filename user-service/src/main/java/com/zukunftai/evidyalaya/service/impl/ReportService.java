@@ -652,10 +652,32 @@ public class ReportService {
     }
 
     private byte[] createPdf(ReportData data) throws Exception {
+        boolean classStrengthReport = data.getReportTitle() != null && data.getReportTitle().startsWith("My Class Strength & Student Roster");
+        List<String> pdfMainColumns = pdfColumns;
+        List<List<String>> pdfMainRows = pdfRows;
+        if (classStrengthReport && data.getSections() != null) {
+            pdfMainColumns = List.of("Grade", "Section", "Student ID", "Student Name", "Email", "Phone");
+            List<List<String>> rosterRows = new ArrayList<>();
+            for (ReportData.ReportSection section : data.getSections()) {
+                String sectionTitle = section.getTitle();
+                String gradeLabel = sectionTitle.contains(" · Section ") ? sectionTitle.substring(0, sectionTitle.indexOf(" · Section ")) : "";
+                String sectionLabel = sectionTitle.contains(" · Section ") ? sectionTitle.substring(sectionTitle.indexOf(" · Section ") + 11).replace(" Active Student Roster", "") : "";
+                for (List<String> student : section.getRows()) {
+                    rosterRows.add(List.of(gradeLabel, sectionLabel,
+                            student.size() > 0 ? student.get(0) : "",
+                            student.size() > 1 ? student.get(1) : "",
+                            student.size() > 2 ? student.get(2) : "",
+                            student.size() > 3 ? student.get(3) : ""));
+                }
+            }
+            pdfMainRows = rosterRows;
+        }
+        final List<String> pdfColumns = pdfMainColumns;
+        final List<List<String>> pdfRows = pdfMainRows;
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            int mainRowsPerPage = data.getColumns().size() >= 8 ? 30 : 32;
-            int mainPages = Math.max(1, (int) Math.ceil(data.getRows().size() / (double) mainRowsPerPage));
-            int sectionPages = data.getSections() == null ? 0 : data.getSections().stream()
+            int mainRowsPerPage = pdfColumns.size() >= 8 ? 30 : 32;
+            int mainPages = Math.max(1, (int) Math.ceil(pdfRows.size() / (double) mainRowsPerPage));
+            int sectionPages = classStrengthReport || data.getSections() == null ? 0 : data.getSections().stream()
                     .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 32.0))).sum();
             int totalPages = mainPages + sectionPages;
             int pageNumber = 0;
@@ -754,7 +776,7 @@ public class ReportService {
                 }
             }
 
-            if (data.getSections() != null) {
+            if (!classStrengthReport && data.getSections() != null) {
                 for (ReportData.ReportSection section : data.getSections()) {
                     int rowsPerPage = 32;
                     int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
@@ -795,9 +817,9 @@ public class ReportService {
                             stream.fill();
                             float headerSize = section.getColumns().size() >= 8 ? 6.5f : 7.5f;
                             for (int col = 0; col < section.getColumns().size(); col++) {
-                                drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), headerSize,
+                                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), headerSize, 4.5f,
                                         margin + pdfColumnOffset(widths, col) + 3, y - 10,
-                                        truncate(section.getColumns().get(col), section.getColumns().size() >= 8 ? 14 : 20), Color.WHITE);
+                                        section.getColumns().get(col), Color.WHITE, widths[col] - 6);
                             }
                             y -= headerHeight;
                             int start = pageIndex * rowsPerPage;
