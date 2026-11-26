@@ -118,9 +118,12 @@ class ReportServiceTest {
         assertEquals(12, report.getColumns().size());
         assertTrue(report.getRows().isEmpty());
         assertEquals(13, report.getSummary().size());
+        assertEquals("Overall Attendance Rate", report.getSummary().get(9).getLabel());
+        assertEquals("Attendance Marking Completion", report.getSummary().get(10).getLabel());
         assertEquals("Completed Sessions", report.getSummary().get(0).getLabel());
         assertEquals("0", report.getSummary().get(0).getValue());
         assertEquals("Session-wise Attendance Audit", report.getSections().get(0).getTitle());
+        assertEquals(14, report.getSections().get(0).getColumns().size());
         assertTrue(report.getSections().get(0).getRows().isEmpty());
     }
 
@@ -198,6 +201,8 @@ class ReportServiceTest {
         assertEquals("Low Attendance", report.getRows().get(1).get(11));
         assertEquals("50.00%", report.getSummary().get(9).getValue());
         assertEquals("100.00%", report.getSummary().get(10).getValue());
+        assertEquals("2026-06-02", report.getSections().get(0).getRows().get(0).get(0));
+        assertEquals("Complete", report.getSections().get(0).getRows().get(0).get(13));
         assertEquals("Complete", report.getSections().get(0).getRows().get(0).get(13));
 
         var filtered = reportService.getAttendanceReport(7L, null, null, null, null, "PRESENT");
