@@ -729,25 +729,25 @@ public class ReportService {
                     }
                     float headerHeight = 20;
                     float rowHeight = pdfColumns.size() >= 8 ? 12.5f : 17;
-                    float[] columnRatios = pdfColumnRatios(data.getColumns());
-                    float[] columnWidths = new float[data.getColumns().size()];
+                    float[] columnRatios = pdfColumnRatios(pdfColumns);
+                    float[] columnWidths = new float[pdfColumns.size()];
                     for (int col = 0; col < columnWidths.length; col++) columnWidths[col] = usableWidth * columnRatios[col];
                     stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
                     stream.addRect(margin, y - headerHeight + 3, usableWidth, headerHeight);
                     stream.fill();
-                    float headerFontSize = data.getColumns().size() >= 8 ? 6.5f : 7.5f;
-                    for (int col = 0; col < data.getColumns().size(); col++) {
-                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), headerFontSize,
+                    float headerFontSize = pdfColumns.size() >= 8 ? 6.5f : 7.5f;
+                    for (int col = 0; col < pdfColumns.size(); col++) {
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), headerFontSize, 4.5f,
                                 margin + pdfColumnOffset(columnWidths, col) + 3, y - 10,
-                                truncate(data.getColumns().get(col), data.getColumns().size() >= 8 ? 14 : 20), Color.WHITE);
+                                pdfColumns.get(col), Color.WHITE, columnWidths[col] - 6);
                     }
                     y -= headerHeight;
                     int start = pageIndex * mainRowsPerPage;
                     int end = Math.min(pdfRows.size(), start + mainRowsPerPage);
                     for (int rowIndex = start; rowIndex < end; rowIndex++) {
-                        List<String> row = data.getRows().get(rowIndex);
-                        String attendanceFlag = data.getColumns().contains("Attendance Flag") && row.size() > data.getColumns().indexOf("Attendance Flag")
-                                ? row.get(data.getColumns().indexOf("Attendance Flag")) : "";
+                        List<String> row = pdfRows.get(rowIndex);
+                        String attendanceFlag = pdfColumns.contains("Attendance Flag") && row.size() > pdfColumns.indexOf("Attendance Flag")
+                                ? row.get(pdfColumns.indexOf("Attendance Flag")) : "";
                         Color rowBackground = attendanceFlag.equals("Low Attendance") ? new Color(255, 235, 235)
                                 : attendanceFlag.equals("Incomplete") ? new Color(255, 247, 220)
                                 : rowIndex % 2 == 1 ? new Color(245, 247, 250) : null;
@@ -756,16 +756,16 @@ public class ReportService {
                             stream.addRect(margin, y - rowHeight + 3, usableWidth, rowHeight);
                             stream.fill();
                         }
-                        for (int col = 0; col < data.getColumns().size(); col++) {
+                        for (int col = 0; col < pdfColumns.size(); col++) {
                             String value = col < row.size() ? row.get(col) : "";
-                            if (isNameColumn(data.getColumns().get(col))) {
+                            if (isNameColumn(pdfColumns.get(col))) {
                                 drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 5.0f,
                                         margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
-                            } else if (data.getColumns().get(col).equalsIgnoreCase("Email")) {
+                            } else if (pdfColumns.get(col).equalsIgnoreCase("Email")) {
                                 drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6, 4.25f,
                                         margin + pdfColumnOffset(columnWidths, col) + 3, y - 9, value, Color.BLACK, columnWidths[col] - 6);
                             } else {
-                                drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), data.getColumns().size() >= 8 ? 6 : 7,
+                                drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), pdfColumns.size() >= 8 ? 6 : 7,
                                         margin + pdfColumnOffset(columnWidths, col) + 3, y - 9,
                                         truncate(value, pdfTextLimit(columnWidths[col])), Color.BLACK);
                             }
