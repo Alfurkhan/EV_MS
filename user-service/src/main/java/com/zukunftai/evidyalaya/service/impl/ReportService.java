@@ -709,7 +709,7 @@ public class ReportService {
                     float pageWidth = page.getMediaBox().getWidth();
                     float usableWidth = pageWidth - margin * 2;
                     float y = page.getMediaBox().getHeight() - margin;
-                    boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
+                    // Reuse the report-level academicPerformanceReport flag.
                     float logoAreaWidth = 76f;
                     drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageWidth - margin - 48, y - 34);
                     drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 9,
@@ -1095,7 +1095,7 @@ public class ReportService {
                         data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
                 Cell metadataCell = sheet.getRow(4).createCell(headerTextColumn);
                 metadataCell.setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
-                        + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRecordCount
+                        + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRows.size()
                         + (contactDetails.isEmpty() ? "" : " · " + contactDetails));
                 CellStyle metadataStyle = workbook.createCellStyle();
                 metadataStyle.setWrapText(true);
