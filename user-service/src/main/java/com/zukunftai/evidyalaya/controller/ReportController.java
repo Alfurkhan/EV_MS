@@ -15,7 +15,8 @@ import org.springframework.web.bind.annotation.*;
 public class ReportController {
     private static final MediaType XLSX_MEDIA_TYPE = MediaType.parseMediaType(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-    private final ReportService reportService;\n    private final com.zukunftai.evidyalaya.service.impl.AcademicPerformanceReportService academicPerformanceReportService;
+    private final ReportService reportService;
+    private final com.zukunftai.evidyalaya.service.impl.AcademicPerformanceReportService academicPerformanceReportService;
 
     @GetMapping("/attendance")
     @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
