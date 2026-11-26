@@ -916,7 +916,7 @@ public class ReportService {
             sheet.getPrintSetup().setFitHeight((short) 0);
             sheet.setFitToPage(true);
             sheet.setAutobreaks(true);
-            sheet.setRepeatingRows(new org.apache.poi.ss.util.CellRangeAddress(mainHeaderRow, mainHeaderRow));
+            // Keep one worksheet for both tables; repeating the student header above the audit would be misleading.
             int printColumnCount = data.getColumns().size();
             if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) printColumnCount = Math.max(printColumnCount, section.getColumns().size());
             workbook.setPrintArea(0, 0, Math.max(printColumnCount, 1) - 1, 0, Math.max(sectionCursor - 1, mainHeaderRow));
