@@ -23,6 +23,31 @@ public class AcademicPerformanceReportService {
     private final AssessmentAnswerRepository answerRepository;
     private final StudentEnrollmentRepository enrollmentRepository;
     private final ReportService reportService;
+    private final UserRepository userRepository;
+
+    public ReportData previewForFaculty(Long assessmentId) {
+        Assessment assessment = assessmentRepository.findByIdAndFaculty(assessmentId, currentFaculty())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assessment not found."));
+        return preview(assessment.getId());
+    }
+
+    public byte[] exportForFaculty(Long assessmentId, String format) {
+        return reportService.exportCustomReport(previewForFaculty(assessmentId), format);
+    }
+
+    private User currentFaculty() {
+        org.springframework.security.core.Authentication authentication =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User is not authenticated.");
+        }
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found."));
+        if (user.getRoles().stream().noneMatch(role -> role.getName() == RoleName.ROLE_FACULTY)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Faculty access required.");
+        }
+        return user;
+    }
 
     public ReportData preview(Long assessmentId) {
         Assessment assessment = assessmentRepository.findById(assessmentId)
