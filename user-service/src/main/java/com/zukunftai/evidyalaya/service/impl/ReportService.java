@@ -691,7 +691,10 @@ public class ReportService {
                     && data.getSections() != null && data.getSections().size() == 1
                     && data.getSections().get(0).getRows().size() <= 6
                     && pdfRows.size() <= 25;
-            int sectionPages = classStrengthReport || compactAttendanceAudit || data.getSections() == null ? 0 : data.getSections().stream()
+            boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
+            boolean compactAcademicDistribution = academicPerformanceReport && data.getSections() != null
+                    && data.getSections().size() == 1 && data.getSections().get(0).getRows().size() <= 4 && pdfRows.size() <= 20;
+            int sectionPages = classStrengthReport || compactAttendanceAudit || compactAcademicDistribution || data.getSections() == null ? 0 : data.getSections().stream()
                     .mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 32.0))).sum();
             int totalPages = mainPages + sectionPages;
             int pageNumber = 0;
@@ -706,21 +709,34 @@ public class ReportService {
                     float pageWidth = page.getMediaBox().getWidth();
                     float usableWidth = pageWidth - margin * 2;
                     float y = page.getMediaBox().getHeight() - margin;
-                    drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageWidth - margin - 42, y - 34);
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14,
-                            margin, y, data.getSchool().getName(), color(data.getSchool().getPrimaryColor()));
+                    boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
+                    float logoAreaWidth = 76f;
+                    drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageWidth - margin - 48, y - 34);
+                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 9,
+                            margin, y, data.getSchool().getName(), color(data.getSchool().getPrimaryColor()), usableWidth - logoAreaWidth);
                     y -= 17;
                     if (!blank(data.getSchool().getTagline())) {
-                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, margin, y,
-                                data.getSchool().getTagline(), Color.DARK_GRAY);
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6.5f, margin, y,
+                                data.getSchool().getTagline(), Color.DARK_GRAY, usableWidth - logoAreaWidth);
                         y -= 12;
                     }
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11,
-                            margin, y, data.getReportTitle(), Color.BLACK);
-                    y -= 15;
+                    if (academicPerformanceReport) {
+                        String reportSubtitle = data.getReportTitle().replaceFirst("^Academic Performance Report\\s*[·-]?\\s*", "");
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11,
+                                margin, y, "Academic Performance Report", Color.BLACK);
+                        y -= 14;
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6.5f,
+                                margin, y, reportSubtitle, Color.DARK_GRAY, usableWidth);
+                        y -= 12;
+                    } else {
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11, 7,
+                                margin, y, data.getReportTitle(), Color.BLACK, usableWidth - logoAreaWidth);
+                        y -= 15;
+                    }
                     String metadata = (blank(data.getAcademicYear()) ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
                             + "Generated: " + data.getGeneratedAt() + " · Records: " + pdfRows.size();
-                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, margin, y, metadata, Color.DARK_GRAY);
+                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7, 6, margin, y,
+                            metadata, Color.DARK_GRAY, usableWidth);
                     y -= 11;
                     if (!blank(data.getPreparedBy())) {
                         drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 7, margin, y,
@@ -826,11 +842,46 @@ public class ReportService {
                             }
                         }
                     }
+                    if (compactAcademicDistribution && pageIndex == mainPages - 1) {
+                        ReportData.ReportSection distribution = data.getSections().get(0);
+                        y -= 8;
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 9,
+                                margin, y, distribution.getTitle(), Color.BLACK);
+                        y -= 14;
+                        float sectionHeaderHeight = 16;
+                        float sectionRowHeight = 13;
+                        float[] sectionRatios = pdfColumnRatios(distribution.getColumns());
+                        float[] sectionWidths = new float[sectionRatios.length];
+                        for (int col = 0; col < sectionWidths.length; col++) sectionWidths[col] = usableWidth * sectionRatios[col];
+                        stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
+                        stream.addRect(margin, y - sectionHeaderHeight + 3, usableWidth, sectionHeaderHeight);
+                        stream.fill();
+                        for (int col = 0; col < distribution.getColumns().size(); col++) {
+                            drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 6.5f, 5,
+                                    margin + pdfColumnOffset(sectionWidths, col) + 3, y - 9,
+                                    distribution.getColumns().get(col), Color.WHITE, sectionWidths[col] - 6);
+                        }
+                        y -= sectionHeaderHeight;
+                        for (int rowIndex = 0; rowIndex < distribution.getRows().size(); rowIndex++) {
+                            List<String> sectionRow = distribution.getRows().get(rowIndex);
+                            if (rowIndex % 2 == 1) {
+                                stream.setNonStrokingColor(new Color(245, 247, 250));
+                                stream.addRect(margin, y - sectionRowHeight + 2, usableWidth, sectionRowHeight);
+                                stream.fill();
+                            }
+                            for (int col = 0; col < distribution.getColumns().size(); col++) {
+                                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6.5f, 5,
+                                        margin + pdfColumnOffset(sectionWidths, col) + 3, y - 8,
+                                        col < sectionRow.size() ? sectionRow.get(col) : "", Color.BLACK, sectionWidths[col] - 6);
+                            }
+                            y -= sectionRowHeight;
+                        }
+                    }
                     drawPdfFooter(stream, pageWidth, margin, pageNumber, totalPages, data);
                 }
             }
 
-            if (!classStrengthReport && !compactAttendanceAudit && data.getSections() != null) {
+            if (!classStrengthReport && !compactAttendanceAudit && !compactAcademicDistribution && data.getSections() != null) {
                 for (ReportData.ReportSection section : data.getSections()) {
                     int rowsPerPage = 32;
                     int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
@@ -1105,7 +1156,11 @@ public class ReportService {
             }
             for (int column = 0; column < reportColumns.size(); column++) {
                 String heading = reportColumns.get(column).toLowerCase(Locale.ROOT);
-                int width = heading.contains("email") ? 36 : heading.equals("student") || heading.equals("student name") || heading.contains("faculty name") || heading.equals("faculty") ? 32
+                int width = academicPerformanceReport && heading.equals("student name") ? 28
+                        : academicPerformanceReport && heading.contains("identifier") ? 28
+                        : academicPerformanceReport && heading.contains("status") ? 22
+                        : academicPerformanceReport && (heading.contains("marks") || heading.contains("maximum") || heading.contains("percentage")) ? 17
+                        : heading.contains("email") ? 36 : heading.equals("student") || heading.equals("student name") || heading.contains("faculty name") || heading.equals("faculty") ? 32
                         : data.getColumns().contains("Attendance Flag") && column == 6 ? 32
                         : heading.contains("subject") ? 28 : heading.contains("phone") ? 18
                         : heading.contains("attendance flag") ? 22 : heading.contains("grade") ? 14 : heading.contains("section") ? 12
