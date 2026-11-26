@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import { getAdminAssessments } from "../../assessments/services/adminAssessmentService";
 import type { AdminAssessmentItem } from "../../assessments/types/adminAssessment";
 import { getFacultyAssessments } from "../../assessments/services/assessmentService";
-import type { Assessment } from "../../assessments/types/assessment";
 import { previewAcademicPerformanceReport, downloadAcademicPerformanceReport, type ReportData } from "../services/reportService";
 import api from "../../../api/axios";
 
