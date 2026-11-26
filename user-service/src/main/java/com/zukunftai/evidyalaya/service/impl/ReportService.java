@@ -1093,9 +1093,17 @@ public class ReportService {
                 sheet.getRow(3).setHeightInPoints(32);
                 String contactDetails = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                         data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
-                sheet.getRow(4).createCell(headerTextColumn).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
+                Cell metadataCell = sheet.getRow(4).createCell(headerTextColumn);
+                metadataCell.setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
                         + "Generated: " + data.getGeneratedAt() + " · Records: " + reportRecordCount
                         + (contactDetails.isEmpty() ? "" : " · " + contactDetails));
+                CellStyle metadataStyle = workbook.createCellStyle();
+                metadataStyle.setWrapText(true);
+                Font metadataFont = workbook.createFont();
+                metadataFont.setFontHeightInPoints((short) 7);
+                metadataStyle.setFont(metadataFont);
+                metadataCell.setCellStyle(metadataStyle);
+                sheet.getRow(4).setHeightInPoints(32);
             } else {
                 sheet.getRow(2).createCell(headerTextColumn).setCellValue(data.getReportTitle());
                 sheet.getRow(3).createCell(headerTextColumn).setCellValue((data.getAcademicYear() == null ? "" : "Academic Year: " + data.getAcademicYear() + " · ")
