@@ -80,18 +80,30 @@ public class ReportController {
         return documentResponse(reportService.exportFacultyDirectory(subjectId, accountStatus, format), format, "faculty-directory");
     }
 
+    @GetMapping("/my-class-scope")
+    @PreAuthorize("hasRole('FACULTY')")
+    public java.util.List<ReportService.FacultyReportScopeOption> getFacultyReportScope(
+            @RequestParam(required = false) Long academicYearId) {
+        return reportService.getFacultyReportScope(academicYearId);
+    }
+
     @GetMapping("/my-class-strength")
     @PreAuthorize("hasRole('FACULTY')")
-    public ReportData getFacultyClassStrength(@RequestParam(required = false) Long academicYearId) {
-        return reportService.getFacultyClassStrength(academicYearId);
+    public ReportData getFacultyClassStrength(
+            @RequestParam(required = false) Long academicYearId,
+            @RequestParam(required = false) Long gradeId,
+            @RequestParam(required = false) Long sectionId) {
+        return reportService.getFacultyClassStrength(academicYearId, gradeId, sectionId);
     }
 
     @GetMapping("/my-class-strength/export")
     @PreAuthorize("hasRole('FACULTY')")
     public ResponseEntity<byte[]> exportFacultyClassStrength(
             @RequestParam(required = false) Long academicYearId,
+            @RequestParam(required = false) Long gradeId,
+            @RequestParam(required = false) Long sectionId,
             @RequestParam(defaultValue = "pdf") String format) {
-        return documentResponse(reportService.exportFacultyClassStrength(academicYearId, format), format, "my-class-strength");
+        return documentResponse(reportService.exportFacultyClassStrength(academicYearId, gradeId, sectionId, format), format, "my-class-strength");
     }
 
     private ResponseEntity<byte[]> documentResponse(byte[] content, String format, String fileName) {
