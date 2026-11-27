@@ -1329,7 +1329,7 @@ public class ReportService {
                 Cell title = reportTitle.createCell(0);
                 title.setCellValue("TIMETABLE REPORT  |  " + section.getTitle());
                 title.setCellStyle(titleStyle);
-                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 9));
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 7));
 
                 Row metadata = sheet.createRow(2); metadata.setHeightInPoints(23);
                 Cell meta = metadata.createCell(0);
