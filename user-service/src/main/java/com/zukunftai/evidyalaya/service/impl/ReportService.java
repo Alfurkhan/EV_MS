@@ -18,6 +18,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFont;
@@ -1348,7 +1349,7 @@ public class ReportService {
             Row weekdayHeader = summary.createRow(weekdayHeaderRow + 1); weekdayHeader.setHeightInPoints(24);
             for (int c = 0; c < 3; c++) {
                 Cell cell = weekdayHeader.createCell(c);
-                cell.setCellValue(List.of("Day", "Schedules", "Worksheet")[c]);
+                cell.setCellValue(new String[] {"Day", "Schedules", "Worksheet"}[c]);
                 cell.setCellStyle(tableHeaderStyle);
             }
             int weekdayRow = weekdayHeaderRow + 2;
