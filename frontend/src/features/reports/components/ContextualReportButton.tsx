@@ -22,7 +22,7 @@ import {
 
 export type ContextReportKind = "student-roster" | "faculty-directory" | "my-class-strength" | "attendance" | "timetable";
 
-type Props = { report: ContextReportKind };
+type Props = { report: ContextReportKind; position?: "default" | "higher" };
 
 const reportTitles: Record<ContextReportKind, string> = {
     "student-roster": "Student Strength & Roster",
@@ -32,7 +32,7 @@ const reportTitles: Record<ContextReportKind, string> = {
     "timetable": "Timetable Report",
 };
 
-export default function ContextualReportButton({ report }: Props) {
+export default function ContextualReportButton({ report, position = "default" }: Props) {
     const [open, setOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -191,7 +191,7 @@ export default function ContextualReportButton({ report }: Props) {
                 onClick={() => setOpen(true)}
                 aria-label="Generate report"
                 title="Generate report"
-                className={`fixed bottom-8 right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto ${isVisible ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-75 opacity-0"}`}
+                className={`fixed ${position === "higher" ? "bottom-24" : "bottom-8"} right-8 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-white text-brand shadow-lg transition-all duration-300 ease-out hover:scale-110 hover:bg-brand-soft focus:outline-none focus:ring-4 focus:ring-brand/20 focus-visible:opacity-100 focus-visible:pointer-events-auto ${isVisible ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-75 opacity-0"}`}
             >
                 <FileChartColumn size={24} strokeWidth={2.2} />
             </button>
