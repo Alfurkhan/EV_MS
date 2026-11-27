@@ -1463,7 +1463,7 @@ public class ReportService {
 
     private String meetingDisplayLabel(String url) {
         String host = "";
-        try { host = java.net.URI.create(url).getHost().toLowerCase(Locale.ROOT).replaceFirst("^www\\\\.", ""); }
+        try { host = java.net.URI.create(url).getHost().toLowerCase(Locale.ROOT).replaceFirst("^www\\.", ""); }
         catch (Exception ignored) {}
         if (host.contains("zoom")) return "Join Zoom meeting";
         if (host.contains("meet.google")) return "Join Google Meet";
