@@ -50,7 +50,7 @@ public class FacultyStudentsController {
         return authorizedGrades.stream()
                 .filter(g -> gradeId == null || g.getId().equals(gradeId))
                 .flatMap(g -> enrollmentRepository
-                        .findByAcademicYearAndGradeAndActiveTrue(academicYear, g, g.getAcademicYear().getActive())
+                        .findByAcademicYearAndGradeAndActiveTrue(academicYear, g)
                         .stream())
                 .filter(e -> sectionId == null || e.getSection().getId().equals(sectionId))
                 .map(this::toResponse)
