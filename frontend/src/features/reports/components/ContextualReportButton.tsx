@@ -81,7 +81,8 @@ export default function ContextualReportButton({ report, position = "default" }:
             setAcademicYears(years);
             const active = years.find((year) => year.active) ?? years[0];
             setFilters((current) => ({ ...current, academicYearId: current.academicYearId ?? active?.id,
-                ...(report === "attendance" && !current.startDate && active ? { startDate: active.startDate, endDate: active.endDate, status: "ALL" } : {}) }));
+                ...(report === "attendance" && !current.startDate && active ? { startDate: active.startDate, endDate: active.endDate, status: "ALL" } : {}),
+                ...(report === "timetable" ? { status: current.status ?? "ALL", active: current.active ?? "ALL", dayOfWeek: current.dayOfWeek ?? "ALL", classType: current.classType ?? "ALL" } : {}) }));
         }).catch(() => toast.error("Unable to load academic years."));
     }, [open, report]);
 
@@ -96,6 +97,7 @@ export default function ContextualReportButton({ report, position = "default" }:
             if (cancelled) return;
             setFacultyScope(scope);
             setIsFacultyScope(true);
+            if (report === "timetable") setFilters(current => ({ ...current, status: "APPROVED", active: "ACTIVE", facultyId: undefined }));
             const uniqueGrades = [...new Map(scope.map(item => [item.gradeId, item])).values()];
             if (uniqueGrades.length === 1) {
                 setFilters(current => ({ ...current, gradeId: uniqueGrades[0].gradeId, sectionId: undefined }));
@@ -115,7 +117,7 @@ export default function ContextualReportButton({ report, position = "default" }:
     }, [open, report, filters.academicYearId]);
 
     useEffect(() => {
-        if (!open || !["student-roster", "attendance", "my-class-strength"].includes(report) || !filters.academicYearId) {
+        if (!open || !["student-roster", "attendance", "my-class-strength", "timetable"].includes(report) || !filters.academicYearId) {
             setGrades([]);
             return;
         }
@@ -144,7 +146,9 @@ export default function ContextualReportButton({ report, position = "default" }:
                     ? await previewFacultyDirectory(filters)
                     : report === "attendance"
                         ? await previewAttendanceReport(filters)
-                        : await previewMyClassStrength(filters);
+                        : report === "timetable"
+                            ? await previewTimetableReport(filters)
+                            : await previewMyClassStrength(filters);
             if (requestId === previewRequestRef.current) {
                 setData(result);
                 setPreviewStale(false);
@@ -255,7 +259,7 @@ export default function ContextualReportButton({ report, position = "default" }:
                             {isFacultyScope && facultyScope.length === 0 && ["student-roster", "attendance", "my-class-strength", "timetable"].includes(report) && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">No approved teaching assignments are available for this academic year.</div>}
 
                             {report === "timetable" && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Faculty</span><select value={filters.facultyId ?? ""} onChange={event => updateReportFilters(current => ({...current, facultyId: event.target.value ? Number(event.target.value) : undefined}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All faculty</option>{faculties.map(faculty => <option key={faculty.id} value={faculty.id}>{faculty.fullName}</option>)}</select></label>
+                                {!isFacultyScope && <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Faculty</span><select value={filters.facultyId ?? ""} onChange={event => updateReportFilters(current => ({...current, facultyId: event.target.value ? Number(event.target.value) : undefined}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All faculty</option>{faculties.map(faculty => <option key={faculty.id} value={faculty.id}>{faculty.fullName}</option>)}</select></label>}
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Day</span><select value={filters.dayOfWeek ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, dayOfWeek: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All days</option>{["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"].map(day=><option key={day} value={day}>{day[0]+day.slice(1).toLowerCase()}</option>)}</select></label>
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Class Type</span><select value={filters.classType ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, classType: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All types</option><option value="OFFLINE">Offline</option><option value="ONLINE">Online</option></select></label>
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Schedule Status</span><select value={filters.status ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, status: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All statuses</option><option value="APPROVED">Approved</option><option value="PENDING_APPROVAL">Pending approval</option><option value="DRAFT">Draft</option><option value="REJECTED">Rejected</option></select></label>
