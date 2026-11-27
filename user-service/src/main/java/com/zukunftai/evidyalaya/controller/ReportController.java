@@ -18,7 +18,37 @@ public class ReportController {
     private final ReportService reportService;
     private final com.zukunftai.evidyalaya.service.impl.AcademicPerformanceReportService academicPerformanceReportService;
 
-    @GetMapping("/attendance")
+        @GetMapping("/timetable")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
+    public ReportData getTimetableReport(
+            @RequestParam(required = false) Long academicYearId,
+            @RequestParam(required = false) Long gradeId,
+            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) Long facultyId,
+            @RequestParam(required = false) String dayOfWeek,
+            @RequestParam(required = false) String classType,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String active) {
+        return reportService.getTimetableReport(academicYearId, gradeId, sectionId, facultyId, dayOfWeek, classType, status, active);
+    }
+
+    @GetMapping("/timetable/export")
+    @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
+    public ResponseEntity<byte[]> exportTimetableReport(
+            @RequestParam(required = false) Long academicYearId,
+            @RequestParam(required = false) Long gradeId,
+            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) Long facultyId,
+            @RequestParam(required = false) String dayOfWeek,
+            @RequestParam(required = false) String classType,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String active,
+            @RequestParam(defaultValue = "pdf") String format) {
+        byte[] document = reportService.exportTimetableReport(academicYearId, gradeId, sectionId, facultyId, dayOfWeek, classType, status, active, format);
+        return documentResponse(document, format, "timetable-report");
+    }
+
+@GetMapping("/attendance")
     @PreAuthorize("hasAnyRole('ADMIN', 'FACULTY')")
     public ReportData getAttendanceReport(
             @RequestParam(required = false) Long academicYearId,
