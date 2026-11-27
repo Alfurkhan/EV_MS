@@ -42,12 +42,21 @@ export type ReportFilters = {
     endDate?: string;
     status?: string;
     reportKind?: string;
+    facultyId?: number;
+    dayOfWeek?: string;
+    classType?: string;
+    active?: string;
 };
 
 function queryParams(filters: ReportFilters) {
     return Object.fromEntries(
         Object.entries(filters).filter(([, value]) => value !== undefined && value !== null),
     );
+}
+
+export async function previewTimetableReport(filters: ReportFilters): Promise<ReportData> {
+    const { data } = await api.get<ReportData>("/reports/timetable", { params: queryParams(filters) });
+    return data;
 }
 
 export async function previewAttendanceReport(filters: ReportFilters): Promise<ReportData> {
@@ -93,6 +102,25 @@ export async function downloadAcademicPerformanceReport(assessmentId: number, fo
     const anchor = document.createElement("a");
     anchor.href = blobUrl;
     anchor.download = filenameStem ? `${filenameStem}.${format}` : `academic-performance-report.${format}`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(blobUrl);
+}
+
+export async function downloadTimetableReport(
+    format: "pdf" | "xlsx",
+    filters: ReportFilters = {},
+    filenameStem?: string,
+): Promise<void> {
+    const { data } = await api.get<Blob>("/reports/timetable/export", {
+        params: { ...queryParams(filters), format },
+        responseType: "blob",
+    });
+    const blobUrl = URL.createObjectURL(data);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = filenameStem ? `${filenameStem}.${format}` : `timetable-report.${format}`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
