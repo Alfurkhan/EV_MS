@@ -12,13 +12,15 @@ import {
     previewMyClassStrength,
     previewStudentRoster,
     previewAttendanceReport,
+    previewTimetableReport,
+    downloadTimetableReport,
     getFacultyReportScope,
     type FacultyReportScopeOption,
     type ReportData,
     type ReportFilters,
 } from "../services/reportService";
 
-export type ContextReportKind = "student-roster" | "faculty-directory" | "my-class-strength" | "attendance";
+export type ContextReportKind = "student-roster" | "faculty-directory" | "my-class-strength" | "attendance" | "timetable";
 
 type Props = { report: ContextReportKind };
 
@@ -27,6 +29,7 @@ const reportTitles: Record<ContextReportKind, string> = {
     "faculty-directory": "Faculty Directory",
     "my-class-strength": "My Class Strength",
     "attendance": "Attendance Report",
+    "timetable": "Timetable Report",
 };
 
 export default function ContextualReportButton({ report }: Props) {
@@ -37,6 +40,7 @@ export default function ContextualReportButton({ report }: Props) {
     const [grades, setGrades] = useState<Grade[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [faculties, setFaculties] = useState<Faculty[]>([]);
     const [facultyScope, setFacultyScope] = useState<FacultyReportScopeOption[]>([]);
     const [isFacultyScope, setIsFacultyScope] = useState(false);
     const [filters, setFilters] = useState<ReportFilters>({ accountStatus: "all" });
@@ -82,7 +86,7 @@ export default function ContextualReportButton({ report }: Props) {
     }, [open, report]);
 
     useEffect(() => {
-        if (!open || !filters.academicYearId || !["student-roster", "attendance", "my-class-strength"].includes(report)) {
+        if (!open || !filters.academicYearId || !["student-roster", "attendance", "my-class-strength", "timetable"].includes(report)) {
             setFacultyScope([]);
             setIsFacultyScope(false);
             return;
@@ -169,9 +173,9 @@ export default function ContextualReportButton({ report }: Props) {
                     ? ["Faculty-Directory", filters.subjectId ? subjects.find(s => s.id === filters.subjectId)?.name : "All-Subjects", filters.accountStatus && filters.accountStatus !== "all" ? filters.accountStatus : undefined].filter(Boolean).join("_")
                     : report === "attendance"
                     ? ["Attendance", academicYears.find(y => y.id === filters.academicYearId)?.name, facultyTag, gradeTag, filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined, dateTag(filters.startDate), dateTag(filters.endDate), filters.status !== "ALL" ? filters.status : undefined].filter(Boolean).join("_")
-                    : ["My-Class-Strength", academicYears.find(y => y.id === filters.academicYearId)?.name, facultyTag, gradeTag, filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined].filter(Boolean).join("_");
+                    : report === "timetable"\n                        ? ["Timetable", academicYears.find(y => y.id === filters.academicYearId)?.name, filters.gradeId ? grades.find(g => g.id === filters.gradeId)?.name : "All-Grades", filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined, filters.facultyId ? faculties.find(f => f.id === filters.facultyId)?.fullName : isFacultyScope ? data?.preparedBy : "All-Faculty", filters.dayOfWeek && filters.dayOfWeek !== "ALL" ? filters.dayOfWeek : undefined, filters.classType && filters.classType !== "ALL" ? filters.classType : undefined, filters.status && filters.status !== "ALL" ? filters.status : undefined, filters.active && filters.active !== "ALL" ? filters.active : undefined].filter(Boolean).join("_")\n                        : ["My-Class-Strength", academicYears.find(y => y.id === filters.academicYearId)?.name, facultyTag, gradeTag, filters.sectionId ? sections.find(s => s.id === filters.sectionId)?.name : undefined].filter(Boolean).join("_");
             const safeStem = stem.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-");
-            await downloadReport(report, format, filters, safeStem);
+            if (report === "timetable") await downloadTimetableReport(format, filters, safeStem);\n            else await downloadReport(report, format, filters, safeStem);
             toast.success(`Report downloaded as ${format.toUpperCase()}.`);
         } catch (error: any) {
             toast.error(error?.response?.data?.message || "Unable to download report.");
@@ -218,7 +222,7 @@ export default function ContextualReportButton({ report }: Props) {
                                     </select></label>
                             </div>}
                             {report !== "faculty-directory" && (
-                                <div className={"grid gap-3 sm:grid-cols-2 " + (["student-roster", "attendance", "my-class-strength"].includes(report) ? "lg:grid-cols-3" : "")}>
+                                <div className={"grid gap-3 sm:grid-cols-2 " + (["student-roster", "attendance", "my-class-strength", "timetable"].includes(report) ? "lg:grid-cols-3" : "")}>
                                     <label className="block">
                                         <span className="mb-1.5 block text-sm font-medium text-slate-700">Academic Year</span>
                                         <select value={filters.academicYearId ?? ""} onChange={(event) => { const selectedYear = academicYears.find(year => year.id === Number(event.target.value)) ?? academicYears.find(year => year.active) ?? academicYears[0]; updateReportFilters((current) => ({ ...current, academicYearId: event.target.value ? Number(event.target.value) : undefined, gradeId: undefined, sectionId: undefined, ...(report === "attendance" ? { startDate: selectedYear?.startDate, endDate: selectedYear?.endDate } : {}) })); }} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand">
@@ -226,7 +230,7 @@ export default function ContextualReportButton({ report }: Props) {
                                             {academicYears.map((year) => <option key={year.id} value={year.id}>{year.name}{year.active ? " (Active)" : ""}</option>)}
                                         </select>
                                     </label>
-                                    {["student-roster", "attendance", "my-class-strength"].includes(report) && <>
+                                    {["student-roster", "attendance", "my-class-strength", "timetable"].includes(report) && <>
                                         <label className="block">
                                             <span className="mb-1.5 block text-sm font-medium text-slate-700">Grade</span>
                                             <select value={filters.gradeId ?? ""} disabled={isFacultyScope && grades.length === 1} onChange={(event) => updateReportFilters((current) => ({ ...current, gradeId: event.target.value ? Number(event.target.value) : undefined, sectionId: undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand disabled:bg-slate-50 disabled:text-slate-600">
@@ -247,6 +251,13 @@ export default function ContextualReportButton({ report }: Props) {
 
                             {isFacultyScope && facultyScope.length === 0 && ["student-roster", "attendance", "my-class-strength"].includes(report) && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">No approved teaching assignments are available for this academic year.</div>}
 
+                            {report === "timetable" && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Faculty</span><select value={filters.facultyId ?? ""} onChange={event => updateReportFilters(current => ({...current, facultyId: event.target.value ? Number(event.target.value) : undefined}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All faculty</option>{faculties.map(faculty => <option key={faculty.id} value={faculty.id}>{faculty.fullName}</option>)}</select></label>
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Day</span><select value={filters.dayOfWeek ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, dayOfWeek: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All days</option>{["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"].map(day=><option key={day} value={day}>{day[0]+day.slice(1).toLowerCase()}</option>)}</select></label>
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Class Type</span><select value={filters.classType ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, classType: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All types</option><option value="OFFLINE">Offline</option><option value="ONLINE">Online</option></select></label>
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Schedule Status</span><select value={filters.status ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, status: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All statuses</option><option value="APPROVED">Approved</option><option value="PENDING_APPROVAL">Pending approval</option><option value="DRAFT">Draft</option><option value="REJECTED">Rejected</option></select></label>
+                                <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Activation</span><select value={filters.active ?? "ALL"} onChange={event => updateReportFilters(current => ({...current, active: event.target.value}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="ALL">All schedules</option><option value="ACTIVE">Active only</option><option value="INACTIVE">Inactive only</option></select></label>
+                            </div>}
                             {report === "attendance" && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Start Date</span><input type="date" value={filters.startDate ?? ""} onChange={event => updateReportFilters(current => ({...current, startDate: event.target.value || undefined}))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand" min={academicYears.find(year => year.id === filters.academicYearId)?.startDate} max={academicYears.find(year => year.id === filters.academicYearId)?.endDate} /></label>
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">End Date</span><input type="date" value={filters.endDate ?? ""} onChange={event => updateReportFilters(current => ({...current, endDate: event.target.value || undefined}))} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-brand" min={academicYears.find(year => year.id === filters.academicYearId)?.startDate} max={academicYears.find(year => year.id === filters.academicYearId)?.endDate} /></label>
