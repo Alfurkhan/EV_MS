@@ -6,6 +6,8 @@ import { getAcademicYears, type AcademicYear } from "../../academic/services/aca
 import { getGradesByAcademicYear, type Grade } from "../../academic/services/gradeService";
 import { getSectionsByGrade, type Section } from "../../academic/services/sectionService";
 import { getAllSubjects, type Subject } from "../../academic/services/subjectService";
+import { getFaculties } from "../../faculty/services/facultyService";
+import type { Faculty } from "../../faculty/types/faculty";
 import {
     downloadReport,
     previewFacultyDirectory,
@@ -73,6 +75,9 @@ export default function ContextualReportButton({ report, position = "default" }:
 
     useEffect(() => {
         if (!open) return;
+        if (report === "timetable") {
+            getFaculties().then(setFaculties).catch(() => toast.error("Unable to load faculty."));
+        }
         if (report === "faculty-directory") {
             getAllSubjects().then(setSubjects).catch(() => toast.error("Unable to load subjects."));
             return;
