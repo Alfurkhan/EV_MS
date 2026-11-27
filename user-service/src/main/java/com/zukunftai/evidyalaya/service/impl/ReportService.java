@@ -1224,85 +1224,177 @@ public class ReportService {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             String primary = validColor(data.getSchool().getPrimaryColor(), DEFAULT_PRIMARY);
             String accent = validColor(data.getSchool().getAccentColor(), DEFAULT_ACCENT);
+            List<ReportData.ReportSection> sections = data.getSections() == null ? List.of() : data.getSections();
+
+            CellStyle schoolStyle = workbook.createCellStyle();
+            Font schoolFont = workbook.createFont();
+            schoolFont.setBold(true); schoolFont.setFontHeightInPoints((short) 16);
+            schoolFont.setColor(toXssfColor(workbook, primary));
+            schoolStyle.setFont(schoolFont); schoolStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
             CellStyle titleStyle = workbook.createCellStyle();
-            Font titleFont = workbook.createFont(); titleFont.setBold(true); titleFont.setFontHeightInPoints((short) 15);
-            titleFont.setColor(IndexedColors.WHITE.getIndex()); titleStyle.setFont(titleFont);
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true); titleFont.setFontHeightInPoints((short) 12);
+            titleFont.setColor(IndexedColors.WHITE.getIndex());
+            titleStyle.setFont(titleFont);
             ((XSSFCellStyle) titleStyle).setFillForegroundColor(toXssfColor(workbook, primary));
             titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            titleStyle.setAlignment(HorizontalAlignment.LEFT);
+
             CellStyle metadataStyle = workbook.createCellStyle();
             metadataStyle.setWrapText(true); metadataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
             Font metadataFont = workbook.createFont(); metadataFont.setFontHeightInPoints((short) 9);
-            metadataFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex()); metadataStyle.setFont(metadataFont);
+            metadataFont.setColor(toXssfColor(workbook, "475569")); metadataStyle.setFont(metadataFont);
+            ((XSSFCellStyle) metadataStyle).setFillForegroundColor(toXssfColor(workbook, "F1F5F9"));
+            metadataStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle filterStyle = workbook.createCellStyle();
+            filterStyle.cloneStyleFrom(metadataStyle);
+            Font filterFont = workbook.createFont(); filterFont.setFontHeightInPoints((short) 9);
+            filterFont.setColor(toXssfColor(workbook, "64748B")); filterStyle.setFont(filterFont);
+            ((XSSFCellStyle) filterStyle).setFillForegroundColor(toXssfColor(workbook, "F8FAFC"));
+
             CellStyle headerStyle = workbook.createCellStyle();
             headerStyle.setWrapText(true); headerStyle.setAlignment(HorizontalAlignment.CENTER);
             headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            Font headerFont = workbook.createFont(); headerFont.setBold(true); headerFont.setFontHeightInPoints((short) 10);
+            headerStyle.setBorderBottom(BorderStyle.MEDIUM);
+            ((XSSFCellStyle) headerStyle).setBottomBorderColor(toXssfColor(workbook, accent));
+            Font headerFont = workbook.createFont(); headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 10);
             headerFont.setColor(IndexedColors.WHITE.getIndex()); headerStyle.setFont(headerFont);
             ((XSSFCellStyle) headerStyle).setFillForegroundColor(toXssfColor(workbook, primary));
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            ((XSSFCellStyle) headerStyle).setBottomBorderColor(toXssfColor(workbook, accent));
-            headerStyle.setBorderBottom(BorderStyle.MEDIUM);
+
             CellStyle bodyStyle = workbook.createCellStyle();
             bodyStyle.setWrapText(true); bodyStyle.setVerticalAlignment(VerticalAlignment.CENTER);
             bodyStyle.setBorderBottom(BorderStyle.THIN);
-            ((XSSFCellStyle) bodyStyle).setBottomBorderColor(toXssfColor(workbook, "E4E9F0"));
+            ((XSSFCellStyle) bodyStyle).setBottomBorderColor(toXssfColor(workbook, "E2E8F0"));
+            Font bodyFont = workbook.createFont(); bodyFont.setFontHeightInPoints((short) 10);
+            bodyStyle.setFont(bodyFont);
+
             CellStyle alternateStyle = workbook.createCellStyle(); alternateStyle.cloneStyleFrom(bodyStyle);
-            ((XSSFCellStyle) alternateStyle).setFillForegroundColor(toXssfColor(workbook, "F4F7FB"));
+            ((XSSFCellStyle) alternateStyle).setFillForegroundColor(toXssfColor(workbook, "F8FAFC"));
             alternateStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
             CellStyle linkStyle = workbook.createCellStyle(); linkStyle.cloneStyleFrom(bodyStyle);
-            Font linkFont = workbook.createFont(); linkFont.setColor(IndexedColors.BLUE.getIndex()); linkFont.setUnderline(Font.U_SINGLE);
+            Font linkFont = workbook.createFont(); linkFont.setFontHeightInPoints((short) 10);
+            linkFont.setColor(toXssfColor(workbook, "2563EB")); linkFont.setUnderline(Font.U_SINGLE);
             linkStyle.setFont(linkFont);
 
-            List<ReportData.ReportSection> sections = data.getSections() == null ? List.of() : data.getSections();
+            CellStyle statusApproved = workbook.createCellStyle(); statusApproved.cloneStyleFrom(bodyStyle);
+            ((XSSFCellStyle) statusApproved).setFillForegroundColor(toXssfColor(workbook, "DCFCE7"));
+            statusApproved.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font approvedFont = workbook.createFont(); approvedFont.setBold(true); approvedFont.setColor(toXssfColor(workbook, "166534"));
+            statusApproved.setFont(approvedFont);
+
+            CellStyle statusPending = workbook.createCellStyle(); statusPending.cloneStyleFrom(bodyStyle);
+            ((XSSFCellStyle) statusPending).setFillForegroundColor(toXssfColor(workbook, "FEF3C7"));
+            statusPending.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font pendingFont = workbook.createFont(); pendingFont.setBold(true); pendingFont.setColor(toXssfColor(workbook, "92400E"));
+            statusPending.setFont(pendingFont);
+
+            CellStyle statusOther = workbook.createCellStyle(); statusOther.cloneStyleFrom(bodyStyle);
+            ((XSSFCellStyle) statusOther).setFillForegroundColor(toXssfColor(workbook, "FEE2E2"));
+            statusOther.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font otherFont = workbook.createFont(); otherFont.setBold(true); otherFont.setColor(toXssfColor(workbook, "991B1B"));
+            statusOther.setFont(otherFont);
+
+            CellStyle activeStyle = workbook.createCellStyle(); activeStyle.cloneStyleFrom(bodyStyle);
+            ((XSSFCellStyle) activeStyle).setFillForegroundColor(toXssfColor(workbook, "E0F2FE"));
+            activeStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            Font activeFont = workbook.createFont(); activeFont.setBold(true); activeFont.setColor(toXssfColor(workbook, "075985"));
+            activeStyle.setFont(activeFont);
+
+            CellStyle inactiveStyle = workbook.createCellStyle(); inactiveStyle.cloneStyleFrom(bodyStyle);
+            Font inactiveFont = workbook.createFont(); inactiveFont.setColor(toXssfColor(workbook, "64748B"));
+            inactiveStyle.setFont(inactiveFont);
+
+            int[] widths = {19, 20, 28, 22, 14, 29, 22, 14, 16, 16};
             for (ReportData.ReportSection section : sections) {
                 String sheetName = section.getTitle().replaceAll("[\\\\/?*\\[\\]:]", " ").trim();
                 if (sheetName.length() > 31) sheetName = sheetName.substring(0, 31);
                 Sheet sheet = workbook.createSheet(sheetName);
-                int[] widths = {16, 17, 27, 22, 13, 32, 20, 13, 15, 15};
+                sheet.setTabColor(toXssfColor(workbook, primary));
+                sheet.setDisplayGridlines(false);
                 for (int c = 0; c < widths.length; c++) sheet.setColumnWidth(c, widths[c] * 256);
-                Row schoolRow = sheet.createRow(0); schoolRow.setHeightInPoints(28);
-                Cell school = schoolRow.createCell(0); school.setCellValue(data.getSchool().getName() + " · " + section.getTitle()); school.setCellStyle(titleStyle);
-                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, section.getColumns().size() - 1));
-                Row metadata = sheet.createRow(1); metadata.setHeightInPoints(30);
-                Cell metadataCell = metadata.createCell(0);
-                metadataCell.setCellValue("Academic Year: " + safe(data.getAcademicYear()) + "  |  Generated: " + safe(data.getGeneratedAt())
-                        + (blank(timetableFilterSummary(data.getReportTitle())) ? "" : "  |  Filters: " + timetableFilterSummary(data.getReportTitle())));
-                metadataCell.setCellStyle(metadataStyle);
-                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, section.getColumns().size() - 1));
-                Row header = sheet.createRow(3); header.setHeightInPoints(30);
+
+                Row schoolRow = sheet.createRow(0); schoolRow.setHeightInPoints(30);
+                Cell school = schoolRow.createCell(0);
+                school.setCellValue(safe(data.getSchool().getName()));
+                school.setCellStyle(schoolStyle);
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 7));
+
+                Row reportTitle = sheet.createRow(1); reportTitle.setHeightInPoints(25);
+                Cell title = reportTitle.createCell(0);
+                title.setCellValue("TIMETABLE REPORT  |  " + section.getTitle());
+                title.setCellStyle(titleStyle);
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 9));
+
+                Row metadata = sheet.createRow(2); metadata.setHeightInPoints(23);
+                Cell meta = metadata.createCell(0);
+                meta.setCellValue("Academic Year: " + safe(data.getAcademicYear()) + "     •     Generated: " + safe(data.getGeneratedAt()));
+                meta.setCellStyle(metadataStyle);
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(2, 2, 0, 9));
+
+                Row filters = sheet.createRow(3); filters.setHeightInPoints(32);
+                Cell filterCell = filters.createCell(0);
+                String filterText = timetableFilterSummary(data.getReportTitle());
+                filterCell.setCellValue(blank(filterText) ? "Filters: None" : "Filters: " + filterText);
+                filterCell.setCellStyle(filterStyle);
+                sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(3, 3, 0, 9));
+
+                sheet.createRow(4).setHeightInPoints(8);
+                Row header = sheet.createRow(5); header.setHeightInPoints(34);
                 for (int c = 0; c < section.getColumns().size(); c++) {
-                    Cell cell = header.createCell(c); cell.setCellValue(section.getColumns().get(c)); cell.setCellStyle(headerStyle);
+                    Cell cell = header.createCell(c);
+                    cell.setCellValue(section.getColumns().get(c));
+                    cell.setCellStyle(headerStyle);
                 }
+
                 for (int i = 0; i < section.getRows().size(); i++) {
                     List<String> values = section.getRows().get(i);
-                    Row row = sheet.createRow(4 + i);
-                    int maxLines = 1;
+                    Row row = sheet.createRow(6 + i);
+                    row.setHeightInPoints(29);
                     for (int c = 0; c < section.getColumns().size(); c++) {
                         String value = c < values.size() ? values.get(c) : "";
                         Cell cell = row.createCell(c);
+                        cell.setCellStyle(i % 2 == 0 ? bodyStyle : alternateStyle);
                         if (c == 5 && isHttpUrl(value)) {
                             cell.setCellValue(meetingDisplayLabel(value));
                             Hyperlink meetingLink = workbook.getCreationHelper().createHyperlink(HyperlinkType.URL);
                             meetingLink.setAddress(value); cell.setHyperlink(meetingLink); cell.setCellStyle(linkStyle);
                         } else {
                             cell.setCellValue((c == 8 || c == 9) ? formatTimetableDate(value) : value);
-                            cell.setCellStyle(i % 2 == 1 ? alternateStyle : bodyStyle);
+                            if (c == 6) {
+                                if ("APPROVED".equalsIgnoreCase(value)) cell.setCellStyle(statusApproved);
+                                else if ("PENDING_APPROVAL".equalsIgnoreCase(value) || "DRAFT".equalsIgnoreCase(value)) cell.setCellStyle(statusPending);
+                                else if (!blank(value)) cell.setCellStyle(statusOther);
+                            } else if (c == 7) {
+                                cell.setCellStyle("Active".equalsIgnoreCase(value) ? activeStyle : inactiveStyle);
+                            }
                         }
-                        maxLines = Math.max(maxLines, Math.min(3, (safe(value).length() / Math.max(10, widths[c] - 4)) + 1));
                     }
-                    row.setHeightInPoints(Math.min(48, 20 + (maxLines - 1) * 12));
                 }
-                if (!section.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(3, 3 + section.getRows().size(), 0, section.getColumns().size() - 1));
-                sheet.createFreezePane(0, 4);
-                sheet.setRepeatingRows(new org.apache.poi.ss.util.CellRangeAddress(3, 3, -1, -1));
-                workbook.setPrintArea(workbook.getSheetIndex(sheet), 0, section.getColumns().size() - 1, 0, 3 + section.getRows().size());
-                sheet.getPrintSetup().setLandscape(true); sheet.getPrintSetup().setPaperSize(PrintSetup.A4_PAPERSIZE);
-                sheet.getPrintSetup().setFitWidth((short) 1); sheet.getPrintSetup().setFitHeight((short) 0);
+
+                int lastRow = 5 + section.getRows().size();
+                if (!section.getRows().isEmpty()) sheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(5, lastRow, 0, section.getColumns().size() - 1));
+                sheet.createFreezePane(0, 6);
+                sheet.setRepeatingRows(new org.apache.poi.ss.util.CellRangeAddress(0, 5, -1, -1));
+                workbook.setPrintArea(workbook.getSheetIndex(sheet), 0, section.getColumns().size() - 1, 0, lastRow);
+                sheet.getPrintSetup().setLandscape(true);
+                sheet.getPrintSetup().setPaperSize(PrintSetup.A4_PAPERSIZE);
+                sheet.getPrintSetup().setFitWidth((short) 1);
+                sheet.getPrintSetup().setFitHeight((short) 0);
                 sheet.setFitToPage(true); sheet.setAutobreaks(true);
-                sheet.setMargin(Sheet.LeftMargin, 0.3); sheet.setMargin(Sheet.RightMargin, 0.3);
-                sheet.setMargin(Sheet.TopMargin, 0.4); sheet.setMargin(Sheet.BottomMargin, 0.4);
+                sheet.setHorizontallyCenter(true);
+                sheet.setMargin(Sheet.LeftMargin, 0.25); sheet.setMargin(Sheet.RightMargin, 0.25);
+                sheet.setMargin(Sheet.TopMargin, 0.35); sheet.setMargin(Sheet.BottomMargin, 0.35);
+                sheet.getHeader().setLeft(safe(data.getSchool().getName()));
+                sheet.getHeader().setRight(section.getTitle() + " Timetable");
+                sheet.getFooter().setLeft("Generated: " + safe(data.getGeneratedAt()));
                 sheet.getFooter().setRight("Page &P of &N");
+                embedTimetableExcelLogo(workbook, sheet, data.getSchool().getLogoUrl(), 8, 10, 0, 2);
             }
             workbook.write(output);
             return output.toByteArray();
