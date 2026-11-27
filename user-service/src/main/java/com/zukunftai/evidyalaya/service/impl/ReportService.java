@@ -15,6 +15,8 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
+import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFColor;
@@ -251,14 +253,14 @@ public class ReportService {
         List<ReportData.ReportSection> daySections = java.util.Arrays.stream(java.time.DayOfWeek.values())
                 .filter(d -> (day.equals("ALL") || d.name().equals(day)) && schedules.stream().anyMatch(item -> item.getDayOfWeek() == d))
                 .map(d -> ReportData.ReportSection.builder().title(d.name())
-                        .columns(List.of("Time", "Grade / Section", "Subject", "Faculty", "Class Type", "Room / Meeting", "Status", "Valid From", "Valid Until"))
+                        .columns(List.of("Time", "Grade / Section", "Subject", "Faculty", "Class Type", "Room / Meeting", "Approval Status", "Activity", "Valid From", "Valid Until"))
                         .rows(schedules.stream().filter(item -> item.getDayOfWeek() == d).map(item -> List.of(
                                 formatTimetableTime(item.getStartTime()) + " – " + formatTimetableTime(item.getEndTime()),
                                 safe(item.getGrade().getName()) + " / " + safe(item.getSection().getName()),
                                 safe(item.getSubject().getName()), safe(item.getFaculty().getFullName()), item.getClassType().name(),
                                 item.getClassType() == ClassType.ONLINE ? safe(blank(item.getMeetingLink()) ? (item.getMeetingPlatform() == null ? "" : item.getMeetingPlatform().name()) : item.getMeetingLink()) : safe(item.getRoom()),
-                                item.getStatus().name() + (item.isActive() ? " · Active" : " · Inactive"),
-                                String.valueOf(item.getStartDate()), String.valueOf(item.getEndDate())
+                                item.getStatus().name(), item.isActive() ? "Active" : "Inactive",
+                                formatTimetableDate(String.valueOf(item.getStartDate())), formatTimetableDate(String.valueOf(item.getEndDate()))
                         )).toList()).build()).toList();
 
         long activeCount = schedules.stream().filter(Timetable::isActive).count();
@@ -1069,17 +1071,14 @@ public class ReportService {
     }
 
     private boolean isTimetableReport(ReportData data) {
-        return data.getReportTitle() != null && data.getReportTitle().startsWith("Timetable Report");
+        return data.getReportTitle() != null && (data.getReportTitle().startsWith("Timetable Report") || data.getReportTitle().startsWith("My Timetable Report"));
     }
 
     private static String formatTimetableTime(Object value) {
         if (value == null) return "";
         String text = value.toString();
-        try {
-            return java.time.LocalTime.parse(text).format(DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH));
-        } catch (Exception ignored) {
-            return text;
-        }
+        try { return java.time.LocalTime.parse(text).format(DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)); }
+        catch (Exception ignored) { return text; }
     }
 
     private List<String> wrapPdfCell(String text, int maxChars) {
@@ -1090,7 +1089,14 @@ public class ReportService {
         String remaining = value;
         while (remaining.length() > limit) {
             int breakAt = remaining.lastIndexOf(' ', limit);
-            if (breakAt <= 0) breakAt = limit;
+            if (breakAt <= 0) {
+                breakAt = Math.min(limit, remaining.length());
+                for (int i = breakAt - 1; i >= Math.max(0, limit - 8); i--) {
+                    if (remaining.charAt(i) == '/' || remaining.charAt(i) == '-' || remaining.charAt(i) == '?' || remaining.charAt(i) == '&') {
+                        breakAt = i + 1; break;
+                    }
+                }
+            }
             lines.add(remaining.substring(0, breakAt));
             remaining = remaining.substring(breakAt).trim();
         }
@@ -1101,81 +1107,94 @@ public class ReportService {
     private byte[] createTimetablePdf(ReportData data) throws Exception {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             List<ReportData.ReportSection> sections = data.getSections() == null ? List.of() : data.getSections();
-            int totalPages = 1 + sections.stream().mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 18.0))).sum();
+            int rowsPerPage = 14;
+            int totalPages = 1 + sections.stream().mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage))).sum();
             int pageNumber = 0;
-            PDRectangle landscape = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
-            float margin = 32f;
-            float usableWidth = landscape.getWidth() - margin * 2;
-            // Summary cover page: deliberately no duplicate timetable table.
-            PDPage cover = new PDPage(landscape);
+            PDRectangle pageSize = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
+            float margin = 34f;
+            float usableWidth = pageSize.getWidth() - margin * 2;
+
+            PDPage cover = new PDPage(pageSize);
             document.addPage(cover);
             pageNumber++;
             try (PDPageContentStream stream = new PDPageContentStream(document, cover)) {
-                float y = landscape.getHeight() - margin;
-                drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), landscape.getWidth() - margin - 48, y - 34);
-                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 17, 11, margin, y,
-                        data.getSchool().getName(), color(data.getSchool().getPrimaryColor()), usableWidth - 75);
-                y -= 22;
-                if (!blank(data.getSchool().getTagline())) {
-                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9, 7, margin, y,
-                            data.getSchool().getTagline(), Color.DARK_GRAY, usableWidth - 75);
-                    y -= 16;
-                }
-                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 10, margin, y,
-                        data.getReportTitle(), Color.BLACK, usableWidth);
-                y -= 20;
-                String metadata = "Academic Year: " + safe(data.getAcademicYear()) + " · Generated: " + safe(data.getGeneratedAt())
-                        + " · Schedules: " + sections.stream().mapToInt(section -> section.getRows().size()).sum();
-                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9, 7, margin, y, metadata, Color.DARK_GRAY, usableWidth);
-                y -= 16;
-                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6, margin, y,
-                        data.getReportTitle().replace("Timetable Report · ", ""), Color.DARK_GRAY, usableWidth);
+                float y = pageSize.getHeight() - margin;
+                drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageSize.getWidth() - margin - 48, y - 40);
+                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 20, 13,
+                        margin, y, data.getSchool().getName(), color(data.getSchool().getPrimaryColor()), usableWidth - 82);
                 y -= 24;
-                if (data.getSummary() != null) {
-                    for (int i = 0; i < data.getSummary().size(); i += 3) {
-                        String line = data.getSummary().subList(i, Math.min(i + 3, data.getSummary().size())).stream()
-                                .map(metric -> metric.getLabel() + ": " + metric.getValue()).collect(java.util.stream.Collectors.joining("     ·     "));
-                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11, 8, margin, y,
-                                line, Color.DARK_GRAY, usableWidth);
-                        y -= 24;
-                    }
+                if (!blank(data.getSchool().getTagline())) {
+                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9, 7,
+                            margin, y, data.getSchool().getTagline(), Color.DARK_GRAY, usableWidth - 82);
+                    y -= 18;
                 }
-                String contact = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+                drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 19,
+                        margin, y, "Timetable Report", Color.BLACK);
+                y -= 26;
+                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10, 8,
+                        margin, y, "Academic Year: " + safe(data.getAcademicYear()) + "  |  Generated: " + safe(data.getGeneratedAt()),
+                        Color.DARK_GRAY, usableWidth);
+                y -= 18;
+                String filters = timetableFilterSummary(data.getReportTitle());
+                if (!blank(filters)) {
+                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9, 7.5f,
+                            margin, y, "Filters: " + filters, Color.DARK_GRAY, usableWidth);
+                    y -= 22;
+                } else y -= 8;
+
+                float cardGap = 14f;
+                float cardWidth = (usableWidth - cardGap * 2) / 3f;
+                float cardHeight = 58f;
+                float cardY = y - cardHeight;
+                for (int i = 0; i < data.getSummary().size(); i++) {
+                    int row = i / 3;
+                    int col = i % 3;
+                    drawTimetableMetricCard(stream, margin + col * (cardWidth + cardGap), cardY - row * (cardHeight + 12),
+                            cardWidth, cardHeight, data.getSummary().get(i).getLabel(), data.getSummary().get(i).getValue(),
+                            data.getSchool().getPrimaryColor(), data.getSchool().getAccentColor());
+                }
+                y = cardY - ((data.getSummary().size() + 2) / 3) * (cardHeight + 12) - 12;
+                String contact = String.join("  |  ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                         data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
-                if (!contact.isEmpty()) {
-                    y -= 10;
-                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6, margin, y, contact, Color.DARK_GRAY, usableWidth);
-                }
-                drawPdfFooter(stream, landscape.getWidth(), margin, pageNumber, totalPages, data);
+                if (!contact.isEmpty()) drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6.5f,
+                        margin, Math.max(90, y), contact, Color.DARK_GRAY, usableWidth);
+                drawPdfFooter(stream, pageSize.getWidth(), margin, pageNumber, totalPages, data);
             }
 
-            float[] ratios = {0.11f, 0.12f, 0.17f, 0.13f, 0.08f, 0.16f, 0.10f, 0.065f, 0.065f};
+            float[] ratios = {0.105f, 0.10f, 0.135f, 0.105f, 0.07f, 0.20f, 0.09f, 0.08f, 0.0575f, 0.0575f};
             for (ReportData.ReportSection section : sections) {
-                int rowsPerPage = 18;
                 int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
                 for (int p = 0; p < pages; p++) {
-                    PDPage page = new PDPage(landscape);
+                    PDPage page = new PDPage(pageSize);
                     document.addPage(page);
                     pageNumber++;
                     try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
-                        float y = landscape.getHeight() - margin;
-                        drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), landscape.getWidth() - margin - 42, y - 34);
-                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 9, margin, y,
-                                data.getSchool().getName(), color(data.getSchool().getPrimaryColor()), usableWidth - 60);
-                        y -= 20;
-                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12, margin, y, section.getTitle(), Color.BLACK);
-                        y -= 16;
-                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6, margin, y,
-                                "Academic Year: " + safe(data.getAcademicYear()) + " · " + data.getReportTitle(), Color.DARK_GRAY, usableWidth);
-                        y -= 18;
-                        float headerHeight = 22;
+                        float y = pageSize.getHeight() - margin;
+                        drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), pageSize.getWidth() - margin - 48, y - 36);
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 16, 11,
+                                margin, y, data.getSchool().getName(), color(data.getSchool().getPrimaryColor()), usableWidth - 65);
+                        y -= 23;
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 15,
+                                margin, y, section.getTitle(), Color.BLACK);
+                        y -= 19;
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8.5f, 7,
+                                margin, y, "Academic Year: " + safe(data.getAcademicYear()) + "  |  Generated: " + safe(data.getGeneratedAt()),
+                                Color.DARK_GRAY, usableWidth);
+                        y -= 13;
+                        String filters = timetableFilterSummary(data.getReportTitle());
+                        if (!blank(filters)) {
+                            drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7.8f, 6.5f,
+                                    margin, y, "Filters: " + filters, Color.DARK_GRAY, usableWidth);
+                            y -= 14;
+                        }
+                        float headerHeight = 24f;
                         float[] widths = new float[ratios.length];
-                        for (int c = 0; c < ratios.length; c++) widths[c] = usableWidth * ratios[c];
+                        for (int c = 0; c < widths.length; c++) widths[c] = usableWidth * ratios[c];
                         stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
                         stream.addRect(margin, y - headerHeight + 3, usableWidth, headerHeight);
                         stream.fill();
                         for (int c = 0; c < section.getColumns().size(); c++) {
-                            drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 7.2f, 5.2f,
+                            drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 7.3f, 5.6f,
                                     margin + pdfColumnOffset(widths, c) + 3, y - 11,
                                     section.getColumns().get(c), Color.WHITE, widths[c] - 6);
                         }
@@ -1183,30 +1202,37 @@ public class ReportService {
                         int start = p * rowsPerPage, end = Math.min(section.getRows().size(), start + rowsPerPage);
                         for (int r = start; r < end; r++) {
                             List<String> row = section.getRows().get(r);
-                            List<List<String>> wrapped = new ArrayList<>();
-                            int maxLines = 1;
-                            for (int c = 0; c < section.getColumns().size(); c++) {
-                                int chars = Math.max(8, (int)(widths[c] / 4.3f));
-                                List<String> cellLines = wrapPdfCell(c < row.size() ? row.get(c) : "", chars);
-                                wrapped.add(cellLines);
-                                maxLines = Math.max(maxLines, cellLines.size());
-                            }
-                            float rowHeight = Math.max(22, maxLines * 9 + 6);
+                            float rowHeight = 29f;
                             if (r % 2 == 1) {
-                                stream.setNonStrokingColor(new Color(245, 247, 250));
+                                stream.setNonStrokingColor(new Color(244, 247, 251));
                                 stream.addRect(margin, y - rowHeight + 3, usableWidth, rowHeight);
                                 stream.fill();
                             }
-                            for (int c = 0; c < wrapped.size(); c++) {
-                                for (int line = 0; line < wrapped.get(c).size(); line++) {
-                                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6.8f,
-                                            margin + pdfColumnOffset(widths, c) + 3, y - 9 - (line * 9),
-                                            wrapped.get(c).get(line), Color.BLACK);
+                            for (int c = 0; c < section.getColumns().size(); c++) {
+                                String value = c < row.size() ? row.get(c) : "";
+                                float x = margin + pdfColumnOffset(widths, c) + 3;
+                                float cellWidth = widths[c] - 6;
+                                if (c == 5 && isHttpUrl(value)) {
+                                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7.6f, 6.2f,
+                                            x, y - 17, meetingDisplayLabel(value), new Color(28, 92, 166), cellWidth);
+                                    PDAnnotationLink annotation = new PDAnnotationLink();
+                                    annotation.setRectangle(new PDRectangle(x, y - rowHeight + 4, cellWidth, rowHeight - 5));
+                                    PDActionURI action = new PDActionURI();
+                                    action.setURI(value);
+                                    annotation.setAction(action);
+                                    page.getAnnotations().add(annotation);
+                                } else {
+                                    List<String> lines = wrapPdfCell(c == 8 || c == 9 ? formatTimetableDate(value) : value,
+                                            Math.max(8, (int) (cellWidth / 4.0f)));
+                                    for (int line = 0; line < Math.min(2, lines.size()); line++) {
+                                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7.5f, 5.8f,
+                                                x, y - 10 - line * 8.2f, lines.get(line), Color.BLACK, cellWidth);
+                                    }
                                 }
                             }
                             y -= rowHeight;
                         }
-                        drawPdfFooter(stream, landscape.getWidth(), margin, pageNumber, totalPages, data);
+                        drawPdfFooter(stream, pageSize.getWidth(), margin, pageNumber, totalPages, data);
                     }
                 }
             }
@@ -1217,92 +1243,255 @@ public class ReportService {
 
     private byte[] createTimetableExcel(ReportData data) throws Exception {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            CellStyle titleStyle = workbook.createCellStyle();
-            Font titleFont = workbook.createFont(); titleFont.setBold(true); titleFont.setFontHeightInPoints((short) 18);
-            titleFont.setColor(IndexedColors.WHITE.getIndex()); titleStyle.setFont(titleFont);
-            ((XSSFCellStyle) titleStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
-            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            CellStyle headerStyle = workbook.createCellStyle(); headerStyle.setWrapText(true);
-            Font headerFont = workbook.createFont(); headerFont.setBold(true); headerFont.setColor(IndexedColors.WHITE.getIndex());
-            headerFont.setFontHeightInPoints((short) 11); headerStyle.setFont(headerFont);
-            ((XSSFCellStyle) headerStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            CellStyle bodyStyle = workbook.createCellStyle(); bodyStyle.setWrapText(true);
-            bodyStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            bodyStyle.setBorderBottom(BorderStyle.THIN); bodyStyle.setBorderTop(BorderStyle.THIN);
-            bodyStyle.setBorderLeft(BorderStyle.THIN); bodyStyle.setBorderRight(BorderStyle.THIN);
-            CellStyle altStyle = workbook.createCellStyle(); altStyle.cloneStyleFrom(bodyStyle);
-            altStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex()); altStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            CellStyle metricStyle = workbook.createCellStyle(); metricStyle.setBorderBottom(BorderStyle.THIN);
-            metricStyle.setBorderTop(BorderStyle.THIN); metricStyle.setBorderLeft(BorderStyle.THIN); metricStyle.setBorderRight(BorderStyle.THIN);
-            Font metricFont = workbook.createFont(); metricFont.setBold(true); metricFont.setFontHeightInPoints((short) 12); metricStyle.setFont(metricFont);
+            String primary = validColor(data.getSchool().getPrimaryColor(), DEFAULT_PRIMARY);
+            String accent = validColor(data.getSchool().getAccentColor(), DEFAULT_ACCENT);
+            CellStyle schoolTitleStyle = workbook.createCellStyle();
+            Font schoolTitleFont = workbook.createFont(); schoolTitleFont.setBold(true); schoolTitleFont.setFontHeightInPoints((short) 18);
+            schoolTitleFont.setColor(IndexedColors.WHITE.getIndex()); schoolTitleStyle.setFont(schoolTitleFont);
+            ((XSSFCellStyle) schoolTitleStyle).setFillForegroundColor(toXssfColor(workbook, primary));
+            schoolTitleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            schoolTitleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle reportTitleStyle = workbook.createCellStyle();
+            Font reportTitleFont = workbook.createFont(); reportTitleFont.setBold(true); reportTitleFont.setFontHeightInPoints((short) 16);
+            reportTitleStyle.setFont(reportTitleFont);
+            ((XSSFCellStyle) reportTitleStyle).setFillForegroundColor(toXssfColor(workbook, "F2F5FA"));
+            reportTitleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            reportTitleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle metadataStyle = workbook.createCellStyle();
+            metadataStyle.setWrapText(true); metadataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            Font metadataFont = workbook.createFont(); metadataFont.setFontHeightInPoints((short) 10);
+            metadataFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex()); metadataStyle.setFont(metadataFont);
+
+            CellStyle filterStyle = workbook.createCellStyle();
+            filterStyle.setWrapText(true); filterStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            Font filterFont = workbook.createFont(); filterFont.setFontHeightInPoints((short) 10); filterFont.setItalic(true);
+            filterFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex()); filterStyle.setFont(filterFont);
+
+            CellStyle metricLabelStyle = workbook.createCellStyle();
+            Font metricLabelFont = workbook.createFont(); metricLabelFont.setBold(true); metricLabelFont.setFontHeightInPoints((short) 10);
+            metricLabelStyle.setFont(metricLabelFont); metricLabelStyle.setAlignment(HorizontalAlignment.CENTER);
+            metricLabelStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            ((XSSFCellStyle) metricLabelStyle).setFillForegroundColor(toXssfColor(workbook, "EAF0F8"));
+            metricLabelStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            metricLabelStyle.setBorderBottom(BorderStyle.THIN); metricLabelStyle.setBorderTop(BorderStyle.THIN);
+            metricLabelStyle.setBorderLeft(BorderStyle.THIN); metricLabelStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle metricValueStyle = workbook.createCellStyle();
+            Font metricValueFont = workbook.createFont(); metricValueFont.setBold(true); metricValueFont.setFontHeightInPoints((short) 16);
+            metricValueFont.setColor(IndexedColors.WHITE.getIndex()); metricValueStyle.setFont(metricValueFont);
+            metricValueStyle.setAlignment(HorizontalAlignment.CENTER); metricValueStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            ((XSSFCellStyle) metricValueStyle).setFillForegroundColor(toXssfColor(workbook, primary));
+            metricValueStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle tableHeaderStyle = workbook.createCellStyle();
+            tableHeaderStyle.setWrapText(true); tableHeaderStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            tableHeaderStyle.setAlignment(HorizontalAlignment.CENTER);
+            Font tableHeaderFont = workbook.createFont(); tableHeaderFont.setBold(true); tableHeaderFont.setFontHeightInPoints((short) 10);
+            tableHeaderFont.setColor(IndexedColors.WHITE.getIndex()); tableHeaderStyle.setFont(tableHeaderFont);
+            ((XSSFCellStyle) tableHeaderStyle).setFillForegroundColor(toXssfColor(workbook, primary));
+            tableHeaderStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            ((XSSFCellStyle) tableHeaderStyle).setBottomBorderColor(toXssfColor(workbook, accent));
+            tableHeaderStyle.setBorderBottom(BorderStyle.MEDIUM);
+
+            CellStyle bodyStyle = workbook.createCellStyle();
+            bodyStyle.setWrapText(true); bodyStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            bodyStyle.setBorderBottom(BorderStyle.THIN);
+            ((XSSFCellStyle) bodyStyle).setBottomBorderColor(toXssfColor(workbook, "E4E9F0"));
+            CellStyle alternateStyle = workbook.createCellStyle(); alternateStyle.cloneStyleFrom(bodyStyle);
+            ((XSSFCellStyle) alternateStyle).setFillForegroundColor(toXssfColor(workbook, "F4F7FB"));
+            alternateStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            CellStyle linkStyle = workbook.createCellStyle(); linkStyle.cloneStyleFrom(bodyStyle);
+            Font linkFont = workbook.createFont(); linkFont.setColor(IndexedColors.BLUE.getIndex()); linkFont.setUnderline(Font.U_SINGLE);
+            linkStyle.setFont(linkFont);
 
             Sheet summary = workbook.createSheet("Summary");
-            summary.setColumnWidth(0, 28 * 256); summary.setColumnWidth(1, 18 * 256);
-            summary.setColumnWidth(2, 24 * 256); summary.setColumnWidth(3, 18 * 256);
-            for (int headerRowIndex = 0; headerRowIndex <= 4; headerRowIndex++) {
-                Row headerRow = summary.createRow(headerRowIndex);
-                headerRow.setHeightInPoints(headerRowIndex == 0 ? 32 : 24);
-                summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(headerRowIndex, headerRowIndex, 0, 1));
+            int[] summaryWidths = {22, 16, 22, 16, 22, 16, 18, 18};
+            for (int c = 0; c < summaryWidths.length; c++) summary.setColumnWidth(c, summaryWidths[c] * 256);
+            for (int r = 0; r <= 4; r++) {
+                Row row = summary.createRow(r);
+                row.setHeightInPoints(r == 0 ? 32 : r == 1 ? 22 : r == 2 ? 30 : r == 3 ? 38 : 24);
             }
-            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 2, 3));
-            Row r0 = summary.getRow(0);
-            Cell school = r0.createCell(0); school.setCellValue(data.getSchool().getName()); school.setCellStyle(titleStyle);
-            summary.getRow(1).createCell(0).setCellValue(data.getSchool().getTagline());
-            summary.getRow(2).createCell(0).setCellValue(data.getReportTitle());
-            summary.getRow(3).createCell(0).setCellValue("Academic Year: " + safe(data.getAcademicYear()) + " · Generated: " + safe(data.getGeneratedAt()));
-            summary.getRow(4).createCell(0).setCellValue(data.getReportTitle().replace("Timetable Report · ", ""));
-            int rowIndex = 6;
-            if (data.getSummary() != null) {
-                for (int i = 0; i < data.getSummary().size(); i += 2) {
-                    Row metricRow = summary.createRow(rowIndex++);
-                    for (int j = i; j < Math.min(i + 2, data.getSummary().size()); j++) {
-                        int col = (j - i) * 2;
-                        Cell label = metricRow.createCell(col); label.setCellValue(data.getSummary().get(j).getLabel()); label.setCellStyle(metricStyle);
-                        Cell value = metricRow.createCell(col + 1); value.setCellValue(data.getSummary().get(j).getValue()); value.setCellStyle(metricStyle);
-                    }
-                }
-            }
-            String contact = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
-                    data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
-            Row contactRow = summary.createRow(rowIndex + 1); contactRow.createCell(0).setCellValue(contact);
-            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(contactRow.getRowNum(), contactRow.getRowNum(), 0, 3));
-            embedExcelLogo(workbook, summary, data.getSchool().getLogoUrl(), 2, 3);
-            summary.createFreezePane(0, 1);
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 3));
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 3));
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(2, 2, 0, 7));
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(3, 3, 0, 7));
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(4, 4, 0, 7));
+            Cell schoolCell = summary.getRow(0).createCell(0); schoolCell.setCellValue(data.getSchool().getName()); schoolCell.setCellStyle(schoolTitleStyle);
+            Cell taglineCell = summary.getRow(1).createCell(0); taglineCell.setCellValue(data.getSchool().getTagline()); taglineCell.setCellStyle(metadataStyle);
+            Cell titleCell = summary.getRow(2).createCell(0); titleCell.setCellValue("Timetable Report · " + safe(data.getAcademicYear())); titleCell.setCellStyle(reportTitleStyle);
+            Cell filterCell = summary.getRow(3).createCell(0); filterCell.setCellValue("Filters: " + timetableFilterSummary(data.getReportTitle())); filterCell.setCellStyle(filterStyle);
+            Cell generatedCell = summary.getRow(4).createCell(0); generatedCell.setCellValue("Generated: " + safe(data.getGeneratedAt())); generatedCell.setCellStyle(metadataStyle);
+            embedTimetableExcelLogo(workbook, summary, data.getSchool().getLogoUrl(), 4, 7, 0, 2);
 
-            if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) {
-                String sheetName = section.getTitle().substring(0, Math.min(31, section.getTitle().length()));
-                Sheet daySheet = workbook.createSheet(sheetName);
-                daySheet.setColumnWidth(0, 20 * 256); daySheet.setColumnWidth(1, 18 * 256);
-                daySheet.setColumnWidth(2, 32 * 256); daySheet.setColumnWidth(3, 24 * 256);
-                daySheet.setColumnWidth(4, 14 * 256); daySheet.setColumnWidth(5, 38 * 256);
-                daySheet.setColumnWidth(6, 24 * 256); daySheet.setColumnWidth(7, 16 * 256); daySheet.setColumnWidth(8, 16 * 256);
+            for (int i = 0; i < data.getSummary().size(); i++) {
+                int cardRow = 6 + (i / 3) * 2;
+                int cardCol = (i % 3) * 2;
+                summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(cardRow, cardRow, cardCol, cardCol + 1));
+                summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(cardRow + 1, cardRow + 1, cardCol, cardCol + 1));
+                Row labelRow = summary.getRow(cardRow) == null ? summary.createRow(cardRow) : summary.getRow(cardRow);
+                Row valueRow = summary.getRow(cardRow + 1) == null ? summary.createRow(cardRow + 1) : summary.getRow(cardRow + 1);
+                labelRow.setHeightInPoints(22); valueRow.setHeightInPoints(32);
+                Cell label = labelRow.createCell(cardCol); label.setCellValue(data.getSummary().get(i).getLabel()); label.setCellStyle(metricLabelStyle);
+                Cell value = valueRow.createCell(cardCol); value.setCellValue(data.getSummary().get(i).getValue()); value.setCellStyle(metricValueStyle);
+            }
+            int weekdayHeaderRow = 12;
+            Row weekdayTitle = summary.createRow(weekdayHeaderRow);
+            weekdayTitle.createCell(0).setCellValue("Schedules by Day");
+            weekdayTitle.getCell(0).setCellStyle(reportTitleStyle);
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(weekdayHeaderRow, weekdayHeaderRow, 0, 3));
+            Row weekdayHeader = summary.createRow(weekdayHeaderRow + 1); weekdayHeader.setHeightInPoints(24);
+            for (int c = 0; c < 3; c++) {
+                Cell cell = weekdayHeader.createCell(c);
+                cell.setCellValue(List.of("Day", "Schedules", "Worksheet")[c]);
+                cell.setCellStyle(tableHeaderStyle);
+            }
+            int weekdayRow = weekdayHeaderRow + 2;
+            for (ReportData.ReportSection section : data.getSections()) {
+                Row row = summary.createRow(weekdayRow++); row.setHeightInPoints(22);
+                row.createCell(0).setCellValue(section.getTitle()); row.getCell(0).setCellStyle(bodyStyle);
+                row.createCell(1).setCellValue(section.getRows().size()); row.getCell(1).setCellStyle(bodyStyle);
+                row.createCell(2).setCellValue("Open " + section.getTitle()); row.getCell(2).setCellStyle(linkStyle);
+                Hyperlink dayLink = workbook.getCreationHelper().createHyperlink(HyperlinkType.DOCUMENT);
+                dayLink.setAddress("'" + section.getTitle() + "'!A1"); row.getCell(2).setHyperlink(dayLink);
+            }
+            int contactRowIndex = weekdayRow + 1;
+            Row contactRow = summary.createRow(contactRowIndex); contactRow.setHeightInPoints(30);
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(contactRowIndex, contactRowIndex, 0, 7));
+            Cell contact = contactRow.createCell(0);
+            contact.setCellValue(String.join("  |  ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+                    data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList()));
+            contact.setCellStyle(metadataStyle);
+            summary.createFreezePane(0, 6);
+            workbook.setPrintArea(0, 0, 7, 0, contactRowIndex);
+            summary.getPrintSetup().setLandscape(true); summary.getPrintSetup().setPaperSize(PrintSetup.A4_PAPERSIZE);
+            summary.getPrintSetup().setFitWidth((short) 1); summary.getPrintSetup().setFitHeight((short) 1);
+            summary.setFitToPage(true); summary.setAutobreaks(true);
+            summary.setMargin(Sheet.LeftMargin, 0.25); summary.setMargin(Sheet.RightMargin, 0.25);
+            summary.setMargin(Sheet.TopMargin, 0.35); summary.setMargin(Sheet.BottomMargin, 0.35);
+            summary.getFooter().setRight("Page &P of &N");
+
+            for (ReportData.ReportSection section : data.getSections()) {
+                Sheet daySheet = workbook.createSheet(section.getTitle());
+                int[] dayWidths = {14, 17, 27, 21, 12, 32, 20, 13, 15, 15};
+                for (int c = 0; c < dayWidths.length; c++) daySheet.setColumnWidth(c, dayWidths[c] * 256);
                 Row titleRow = daySheet.createRow(0); titleRow.setHeightInPoints(30);
-                Cell title = titleRow.createCell(0); title.setCellValue(data.getSchool().getName() + " · " + section.getTitle()); title.setCellStyle(titleStyle);
+                Cell title = titleRow.createCell(0); title.setCellValue(data.getSchool().getName() + " · " + section.getTitle()); title.setCellStyle(schoolTitleStyle);
                 daySheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, section.getColumns().size() - 1));
-                Row metadataRow = daySheet.createRow(1); metadataRow.createCell(0).setCellValue("Academic Year: " + safe(data.getAcademicYear()) + " · " + data.getReportTitle());
+                Row metadataRow = daySheet.createRow(1); metadataRow.setHeightInPoints(38);
+                Cell metadata = metadataRow.createCell(0);
+                metadata.setCellValue("Academic Year: " + safe(data.getAcademicYear()) + "  |  Generated: " + safe(data.getGeneratedAt())
+                        + "  |  Filters: " + timetableFilterSummary(data.getReportTitle()));
+                metadata.setCellStyle(filterStyle);
                 daySheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, section.getColumns().size() - 1));
-                Row h = daySheet.createRow(3); h.setHeightInPoints(32);
-                for (int c = 0; c < section.getColumns().size(); c++) { Cell cell = h.createCell(c); cell.setCellValue(section.getColumns().get(c)); cell.setCellStyle(headerStyle); }
+                Row header = daySheet.createRow(3); header.setHeightInPoints(28);
+                for (int c = 0; c < section.getColumns().size(); c++) {
+                    Cell cell = header.createCell(c); cell.setCellValue(section.getColumns().get(c)); cell.setCellStyle(tableHeaderStyle);
+                }
                 for (int i = 0; i < section.getRows().size(); i++) {
-                    Row row = daySheet.createRow(4 + i); row.setHeightInPoints(34);
-                    List<String> vals = section.getRows().get(i);
+                    List<String> values = section.getRows().get(i);
+                    Row row = daySheet.createRow(4 + i);
+                    int lines = 1;
+                    for (String value : values) lines = Math.max(lines, Math.min(3, (safe(value).length() / 35) + 1));
+                    row.setHeightInPoints(Math.min(54, 22 + (lines - 1) * 12));
                     for (int c = 0; c < section.getColumns().size(); c++) {
-                        Cell cell = row.createCell(c); cell.setCellValue(c < vals.size() ? vals.get(c) : "");
-                        cell.setCellStyle(i % 2 == 1 ? altStyle : bodyStyle);
+                        String value = c < values.size() ? values.get(c) : "";
+                        Cell cell = row.createCell(c);
+                        if (c == 5 && isHttpUrl(value)) {
+                            cell.setCellValue(meetingDisplayLabel(value));
+                            Hyperlink meetingLink = workbook.getCreationHelper().createHyperlink(HyperlinkType.URL);
+                            meetingLink.setAddress(value); cell.setHyperlink(meetingLink); cell.setCellStyle(linkStyle);
+                        } else {
+                            cell.setCellValue(c == 8 || c == 9 ? formatTimetableDate(value) : value);
+                            cell.setCellStyle(i % 2 == 1 ? alternateStyle : bodyStyle);
+                        }
                     }
                 }
                 if (!section.getRows().isEmpty()) daySheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(3, 3 + section.getRows().size(), 0, section.getColumns().size() - 1));
                 daySheet.createFreezePane(0, 4);
-                daySheet.getPrintSetup().setLandscape(true); daySheet.getPrintSetup().setFitWidth((short)1);
-                daySheet.getPrintSetup().setFitHeight((short)0); daySheet.setFitToPage(true);
-                daySheet.setRepeatingRows(
-                        new org.apache.poi.ss.util.CellRangeAddress(3, 3, -1, -1)
+                daySheet.setRepeatingRows(new org.apache.poi.ss.util.CellRangeAddress(3, 3, -1, -1));
+                workbook.setPrintArea(workbook.getSheetIndex(daySheet), 0, section.getColumns().size() - 1, 0, 3 + section.getRows().size());
+                daySheet.getPrintSetup().setLandscape(true); daySheet.getPrintSetup().setPaperSize(PrintSetup.A4_PAPERSIZE);
+                daySheet.getPrintSetup().setFitWidth((short) 1); daySheet.getPrintSetup().setFitHeight((short) 0);
+                daySheet.setFitToPage(true); daySheet.setAutobreaks(true);
+                daySheet.setMargin(Sheet.LeftMargin, 0.25); daySheet.setMargin(Sheet.RightMargin, 0.25);
+                daySheet.setMargin(Sheet.TopMargin, 0.35); daySheet.setMargin(Sheet.BottomMargin, 0.35);
+                daySheet.getFooter().setRight("Page &P of &N");
+            }
+            workbook.write(output);
+            return output.toByteArray();
+        }
+    }
+
+ 3, -1, -1)
                 );
             }
             workbook.write(output);
             return output.toByteArray();
+        }
+    }
+
+    private String timetableFilterSummary(String reportTitle) {
+        String text = safe(reportTitle);
+        text = text.replaceFirst("^(My )?Timetable Report", "").trim();
+        if (text.startsWith("·")) text = text.substring(1).trim();
+        return text.replace("·", " | ");
+    }
+
+    private String formatTimetableDate(String value) {
+        if (blank(value) || value.equals("null")) return "";
+        try { return java.time.LocalDate.parse(value).format(DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)); }
+        catch (Exception ignored) { return value; }
+    }
+
+    private boolean isHttpUrl(String value) {
+        if (blank(value)) return false;
+        try {
+            java.net.URI uri = java.net.URI.create(value.trim());
+            return ("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme())) && uri.getHost() != null;
+        } catch (Exception ignored) { return false; }
+    }
+
+    private String meetingDisplayLabel(String url) {
+        String host = "";
+        try { host = java.net.URI.create(url).getHost().toLowerCase(Locale.ROOT).replaceFirst("^www\\\\.", ""); }
+        catch (Exception ignored) {}
+        if (host.contains("zoom")) return "Join Zoom meeting";
+        if (host.contains("meet.google")) return "Join Google Meet";
+        if (host.contains("jit.si")) return "Join Jitsi meeting";
+        if (host.contains("teams")) return "Join Teams meeting";
+        if (host.contains("webex")) return "Join Webex meeting";
+        return "Open online meeting";
+    }
+
+    private void drawTimetableMetricCard(PDPageContentStream stream, float x, float y, float width, float height,
+                                        String label, String value, String primary, String accent) throws Exception {
+        stream.setNonStrokingColor(new Color(244, 247, 251));
+        stream.addRect(x, y, width, height); stream.fill();
+        stream.setNonStrokingColor(color(accent)); stream.addRect(x, y, 4, height); stream.fill();
+        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 9, 7,
+                x + 14, y + height - 18, label, color(primary), width - 26);
+        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 20, 14,
+                x + 14, y + 17, value, Color.BLACK, width - 26);
+    }
+
+    private void embedTimetableExcelLogo(Workbook workbook, Sheet sheet, String logoUrl,
+                                        int firstColumn, int lastColumn, int firstRow, int lastRow) {
+        if (blank(logoUrl) || !logoUrl.startsWith("/public/school-branding/logo/") || !(workbook instanceof XSSFWorkbook)) return;
+        try {
+            String fileName = logoUrl.substring("/public/school-branding/logo/".length());
+            Path path = brandingStorageService.resolve(fileName);
+            String extension = path.getFileName().toString().toLowerCase(Locale.ROOT);
+            if (extension.endsWith(".webp")) return;
+            int pictureType = extension.endsWith(".png") ? Workbook.PICTURE_TYPE_PNG : Workbook.PICTURE_TYPE_JPEG;
+            int pictureIndex = workbook.addPicture(Files.readAllBytes(path), pictureType);
+            XSSFDrawing drawing = (XSSFDrawing) sheet.createDrawingPatriarch();
+            XSSFClientAnchor anchor = new XSSFClientAnchor(0, 0, 0, 0, firstColumn, firstRow, lastColumn, lastRow);
+            anchor.setAnchorType(ClientAnchor.AnchorType.MOVE_DONT_RESIZE);
+            drawing.createPicture(anchor, pictureIndex).resize(0.8);
+        } catch (Exception ignored) {
+            // Missing or unsupported optional branding must not fail report generation.
         }
     }
 
