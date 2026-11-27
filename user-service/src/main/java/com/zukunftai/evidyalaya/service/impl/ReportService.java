@@ -241,25 +241,26 @@ public class ReportService {
                         .thenComparing(t -> t.getSubject().getName()))
                 .toList();
 
-        List<String> columns = List.of("Day", "Start Time", "End Time", "Academic Year", "Grade", "Section",
-                "Subject", "Faculty", "Class Type", "Room / Meeting", "Status", "Active", "Valid From", "Valid Until");
+        List<String> columns = List.of("Day", "Time", "Academic Year", "Grade", "Section", "Subject", "Faculty",
+                "Class Type", "Room / Meeting", "Status", "Valid Dates");
         List<List<String>> rows = schedules.stream().map(item -> List.of(
-                item.getDayOfWeek().name(), item.getStartTime().toString(), item.getEndTime().toString(),
+                item.getDayOfWeek().name(), item.getStartTime() + " – " + item.getEndTime(),
                 safe(item.getAcademicYear().getName()), safe(item.getGrade().getName()), safe(item.getSection().getName()),
                 safe(item.getSubject().getName()), safe(item.getFaculty().getFullName()), item.getClassType().name(),
                 item.getClassType() == ClassType.ONLINE ? safe(item.getMeetingPlatform() == null ? item.getMeetingLink() : item.getMeetingPlatform().name()) : safe(item.getRoom()),
-                item.getStatus().name(), item.isActive() ? "Active" : "Inactive", item.getStartDate().toString(), item.getEndDate().toString()
+                item.getStatus().name() + (item.isActive() ? " · Active" : " · Inactive"), item.getStartDate() + " – " + item.getEndDate()
         )).toList();
 
         List<ReportData.ReportSection> daySections = java.util.Arrays.stream(java.time.DayOfWeek.values())
-                .filter(d -> day.equals("ALL") || d.name().equals(day))
+                .filter(d -> (day.equals("ALL") || d.name().equals(day)) && schedules.stream().anyMatch(item -> item.getDayOfWeek() == d))
                 .map(d -> ReportData.ReportSection.builder().title(d.name())
-                        .columns(List.of("Time", "Grade", "Section", "Subject", "Faculty", "Type", "Room / Meeting", "Status", "Date Range"))
+                        .columns(List.of("Time", "Academic Year", "Grade", "Section", "Subject", "Faculty", "Type", "Room / Meeting", "Status", "Date Range"))
                         .rows(schedules.stream().filter(item -> item.getDayOfWeek() == d).map(item -> List.of(
-                                item.getStartTime() + " – " + item.getEndTime(), safe(item.getGrade().getName()), safe(item.getSection().getName()),
-                                safe(item.getSubject().getName()), safe(item.getFaculty().getFullName()), item.getClassType().name(),
+                                item.getStartTime() + " – " + item.getEndTime(), safe(item.getAcademicYear().getName()),
+                                safe(item.getGrade().getName()), safe(item.getSection().getName()), safe(item.getSubject().getName()),
+                                safe(item.getFaculty().getFullName()), item.getClassType().name(),
                                 item.getClassType() == ClassType.ONLINE ? safe(item.getMeetingPlatform() == null ? item.getMeetingLink() : item.getMeetingPlatform().name()) : safe(item.getRoom()),
-                                item.getStatus().name(), item.getStartDate() + " – " + item.getEndDate()
+                                item.getStatus().name() + (item.isActive() ? " · Active" : " · Inactive"), item.getStartDate() + " – " + item.getEndDate()
                         )).toList()).build()).toList();
 
         long activeCount = schedules.stream().filter(Timetable::isActive).count();
