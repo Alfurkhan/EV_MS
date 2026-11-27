@@ -275,9 +275,13 @@ public class ReportService {
                 metric("Online", String.valueOf(onlineCount)),
                 metric("Offline", String.valueOf(offlineCount))
         );
+        String facultyFilter = isFaculty ? safe(actor.getFullName())
+                : facultyId == null ? "All Faculty"
+                : userRepository.findById(facultyId).map(User::getFullName).orElse("Selected Faculty");
         String filterText = (selectedYear == null ? "All Academic Years" : selectedYear.getName())
                 + " · Grade: " + (selectedGrade == null ? "All Grades" : selectedGrade.getName())
                 + " · Section: " + (selectedSection == null ? "All Sections" : selectedSection.getName())
+                + " · Faculty: " + facultyFilter
                 + " · Day: " + (day.equals("ALL") ? "All Days" : day)
                 + " · Type: " + type + " · Status: " + scheduleStatus + " · Active: " + active;
         return buildReport(isFaculty ? "My Timetable Report" : "Timetable Report",
@@ -1436,6 +1440,10 @@ public class ReportService {
         String text = safe(reportTitle);
         text = text.replaceFirst("^(My )?Timetable Report", "").trim();
         if (text.startsWith("·")) text = text.substring(1).trim();
+        if (text.matches("^\\d{4}-\\d{4}(?:\\s*·.*)?$")) {
+            int yearSeparator = text.indexOf("·");
+            text = yearSeparator >= 0 ? text.substring(yearSeparator + 1).trim() : "";
+        }
         return text.replace("·", " | ");
     }
 
