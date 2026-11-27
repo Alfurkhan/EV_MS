@@ -249,7 +249,7 @@ export default function ContextualReportButton({ report, position = "default" }:
                                 </div>
                             )}
 
-                            {isFacultyScope && facultyScope.length === 0 && ["student-roster", "attendance", "my-class-strength"].includes(report) && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">No approved teaching assignments are available for this academic year.</div>}
+                            {isFacultyScope && facultyScope.length === 0 && ["student-roster", "attendance", "my-class-strength", "timetable"].includes(report) && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">No approved teaching assignments are available for this academic year.</div>}
 
                             {report === "timetable" && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                 <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Faculty</span><select value={filters.facultyId ?? ""} onChange={event => updateReportFilters(current => ({...current, facultyId: event.target.value ? Number(event.target.value) : undefined}))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand"><option value="">All faculty</option>{faculties.map(faculty => <option key={faculty.id} value={faculty.id}>{faculty.fullName}</option>)}</select></label>
