@@ -1227,7 +1227,7 @@ public class ReportService {
             List<ReportData.ReportSection> sections = data.getSections() == null ? List.of() : data.getSections();
 
             CellStyle schoolStyle = workbook.createCellStyle();
-            Font schoolFont = workbook.createFont();
+            XSSFFont schoolFont = (XSSFFont) workbook.createFont();
             schoolFont.setBold(true); schoolFont.setFontHeightInPoints((short) 16);
             schoolFont.setColor(toXssfColor(workbook, primary));
             schoolStyle.setFont(schoolFont); schoolStyle.setVerticalAlignment(VerticalAlignment.CENTER);
@@ -1244,14 +1244,14 @@ public class ReportService {
 
             CellStyle metadataStyle = workbook.createCellStyle();
             metadataStyle.setWrapText(true); metadataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            Font metadataFont = workbook.createFont(); metadataFont.setFontHeightInPoints((short) 9);
+            XSSFFont metadataFont = (XSSFFont) workbook.createFont(); metadataFont.setFontHeightInPoints((short) 9);
             metadataFont.setColor(toXssfColor(workbook, "475569")); metadataStyle.setFont(metadataFont);
             ((XSSFCellStyle) metadataStyle).setFillForegroundColor(toXssfColor(workbook, "F1F5F9"));
             metadataStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             CellStyle filterStyle = workbook.createCellStyle();
             filterStyle.cloneStyleFrom(metadataStyle);
-            Font filterFont = workbook.createFont(); filterFont.setFontHeightInPoints((short) 9);
+            XSSFFont filterFont = (XSSFFont) workbook.createFont(); filterFont.setFontHeightInPoints((short) 9);
             filterFont.setColor(toXssfColor(workbook, "64748B")); filterStyle.setFont(filterFont);
             ((XSSFCellStyle) filterStyle).setFillForegroundColor(toXssfColor(workbook, "F8FAFC"));
 
@@ -1278,43 +1278,43 @@ public class ReportService {
             alternateStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             CellStyle linkStyle = workbook.createCellStyle(); linkStyle.cloneStyleFrom(bodyStyle);
-            Font linkFont = workbook.createFont(); linkFont.setFontHeightInPoints((short) 10);
+            XSSFFont linkFont = (XSSFFont) workbook.createFont(); linkFont.setFontHeightInPoints((short) 10);
             linkFont.setColor(toXssfColor(workbook, "2563EB")); linkFont.setUnderline(Font.U_SINGLE);
             linkStyle.setFont(linkFont);
 
             CellStyle statusApproved = workbook.createCellStyle(); statusApproved.cloneStyleFrom(bodyStyle);
             ((XSSFCellStyle) statusApproved).setFillForegroundColor(toXssfColor(workbook, "DCFCE7"));
             statusApproved.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Font approvedFont = workbook.createFont(); approvedFont.setBold(true); approvedFont.setColor(toXssfColor(workbook, "166534"));
+            XSSFFont approvedFont = (XSSFFont) workbook.createFont(); approvedFont.setBold(true); approvedFont.setColor(toXssfColor(workbook, "166534"));
             statusApproved.setFont(approvedFont);
 
             CellStyle statusPending = workbook.createCellStyle(); statusPending.cloneStyleFrom(bodyStyle);
             ((XSSFCellStyle) statusPending).setFillForegroundColor(toXssfColor(workbook, "FEF3C7"));
             statusPending.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Font pendingFont = workbook.createFont(); pendingFont.setBold(true); pendingFont.setColor(toXssfColor(workbook, "92400E"));
+            XSSFFont pendingFont = (XSSFFont) workbook.createFont(); pendingFont.setBold(true); pendingFont.setColor(toXssfColor(workbook, "92400E"));
             statusPending.setFont(pendingFont);
 
             CellStyle statusOther = workbook.createCellStyle(); statusOther.cloneStyleFrom(bodyStyle);
             ((XSSFCellStyle) statusOther).setFillForegroundColor(toXssfColor(workbook, "FEE2E2"));
             statusOther.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Font otherFont = workbook.createFont(); otherFont.setBold(true); otherFont.setColor(toXssfColor(workbook, "991B1B"));
+            XSSFFont otherFont = (XSSFFont) workbook.createFont(); otherFont.setBold(true); otherFont.setColor(toXssfColor(workbook, "991B1B"));
             statusOther.setFont(otherFont);
 
             CellStyle activeStyle = workbook.createCellStyle(); activeStyle.cloneStyleFrom(bodyStyle);
             ((XSSFCellStyle) activeStyle).setFillForegroundColor(toXssfColor(workbook, "E0F2FE"));
             activeStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Font activeFont = workbook.createFont(); activeFont.setBold(true); activeFont.setColor(toXssfColor(workbook, "075985"));
+            XSSFFont activeFont = (XSSFFont) workbook.createFont(); activeFont.setBold(true); activeFont.setColor(toXssfColor(workbook, "075985"));
             activeStyle.setFont(activeFont);
 
             CellStyle inactiveStyle = workbook.createCellStyle(); inactiveStyle.cloneStyleFrom(bodyStyle);
-            Font inactiveFont = workbook.createFont(); inactiveFont.setColor(toXssfColor(workbook, "64748B"));
+            XSSFFont inactiveFont = (XSSFFont) workbook.createFont(); inactiveFont.setColor(toXssfColor(workbook, "64748B"));
             inactiveStyle.setFont(inactiveFont);
 
             int[] widths = {19, 20, 28, 22, 14, 29, 22, 14, 16, 16};
             for (ReportData.ReportSection section : sections) {
                 String sheetName = section.getTitle().replaceAll("[\\\\/?*\\[\\]:]", " ").trim();
                 if (sheetName.length() > 31) sheetName = sheetName.substring(0, 31);
-                Sheet sheet = workbook.createSheet(sheetName);
+                XSSFSheet sheet = (XSSFSheet) workbook.createSheet(sheetName);
                 sheet.setTabColor(toXssfColor(workbook, primary));
                 sheet.setDisplayGridlines(false);
                 for (int c = 0; c < widths.length; c++) sheet.setColumnWidth(c, widths[c] * 256);
