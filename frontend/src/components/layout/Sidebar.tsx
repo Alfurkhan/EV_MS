@@ -120,6 +120,12 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_STUDENT"],
             },
             {
+                icon: Users,
+                label: "My Students",
+                path: "/my-students",
+                allowedRoles: ["ROLE_FACULTY"],
+            },
+            {
                 icon: GraduationCap,
                 label: "My Classes",
                 path: "/my-classes",
