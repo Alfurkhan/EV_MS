@@ -1236,14 +1236,20 @@ public class ReportService {
             Font metricFont = workbook.createFont(); metricFont.setBold(true); metricFont.setFontHeightInPoints((short) 12); metricStyle.setFont(metricFont);
 
             Sheet summary = workbook.createSheet("Summary");
-            summary.setColumnWidth(0, 32 * 256); summary.setColumnWidth(1, 22 * 256);
-            Row r0 = summary.createRow(0); r0.setHeightInPoints(32);
+            summary.setColumnWidth(0, 28 * 256); summary.setColumnWidth(1, 18 * 256);
+            summary.setColumnWidth(2, 24 * 256); summary.setColumnWidth(3, 18 * 256);
+            for (int headerRowIndex = 0; headerRowIndex <= 4; headerRowIndex++) {
+                Row headerRow = summary.createRow(headerRowIndex);
+                headerRow.setHeightInPoints(headerRowIndex == 0 ? 32 : 24);
+                summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(headerRowIndex, headerRowIndex, 0, 1));
+            }
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 4, 2, 3));
+            Row r0 = summary.getRow(0);
             Cell school = r0.createCell(0); school.setCellValue(data.getSchool().getName()); school.setCellStyle(titleStyle);
-            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 1));
-            Row r1 = summary.createRow(1); r1.createCell(0).setCellValue(data.getSchool().getTagline());
-            Row r2 = summary.createRow(2); r2.createCell(0).setCellValue(data.getReportTitle());
-            Row r3 = summary.createRow(3); r3.createCell(0).setCellValue("Academic Year: " + safe(data.getAcademicYear()) + " · Generated: " + safe(data.getGeneratedAt()));
-            Row r4 = summary.createRow(4); r4.createCell(0).setCellValue(data.getReportTitle().replace("Timetable Report · ", ""));
+            summary.getRow(1).createCell(0).setCellValue(data.getSchool().getTagline());
+            summary.getRow(2).createCell(0).setCellValue(data.getReportTitle());
+            summary.getRow(3).createCell(0).setCellValue("Academic Year: " + safe(data.getAcademicYear()) + " · Generated: " + safe(data.getGeneratedAt()));
+            summary.getRow(4).createCell(0).setCellValue(data.getReportTitle().replace("Timetable Report · ", ""));
             int rowIndex = 6;
             if (data.getSummary() != null) {
                 for (int i = 0; i < data.getSummary().size(); i += 2) {
@@ -1258,6 +1264,8 @@ public class ReportService {
             String contact = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
                     data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
             Row contactRow = summary.createRow(rowIndex + 1); contactRow.createCell(0).setCellValue(contact);
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(contactRow.getRowNum(), contactRow.getRowNum(), 0, 3));
+            embedExcelLogo(workbook, summary, data.getSchool().getLogoUrl(), 2, 3);
             summary.createFreezePane(0, 1);
 
             if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) {
