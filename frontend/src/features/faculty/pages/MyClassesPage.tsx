@@ -400,7 +400,7 @@ export default function MyClassesPage() {
                     </span>
                 </div>
             )}
-                <ContextualReportButton report="my-class-strength" />
+                <ContextualReportButton report="my-class-strength" position="higher" />\n                <ContextualReportButton report="timetable" />
             </> : <FacultyTimetableDraftPage view={activeView} onViewChange={setActiveView} />}
         </div>
     );
