@@ -183,6 +183,111 @@ public class ReportService {
     }
 
 
+    public ReportData getTimetableReport(Long academicYearId, Long gradeId, Long sectionId, Long facultyId,
+                                         String dayOfWeek, String classType, String status, String activeFilter) {
+        User actor = userService.getPrincipal();
+        boolean isAdmin = hasRole(actor, RoleName.ROLE_ADMIN);
+        boolean isFaculty = hasRole(actor, RoleName.ROLE_FACULTY);
+        if (!isAdmin && !isFaculty) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Timetable reports are available to administrators and faculty.");
+        }
+
+        AcademicYear selectedYear = academicYearId == null ? null : resolveAcademicYear(academicYearId);
+        if (isFaculty && facultyId != null && !facultyId.equals(actor.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Faculty may only view their own timetable.");
+        }
+        Grade selectedGrade = gradeId == null ? null : gradeRepository.findById(gradeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Grade not found."));
+        if (selectedGrade != null && selectedYear != null && !selectedGrade.getAcademicYear().getId().equals(selectedYear.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected grade does not belong to the selected academic year.");
+        }
+        Section selectedSection = sectionId == null ? null : sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Section not found."));
+        if (selectedSection != null && selectedGrade != null && !selectedSection.getGrade().getId().equals(selectedGrade.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected grade.");
+        }
+        if (selectedSection != null && selectedYear != null && !selectedSection.getGrade().getAcademicYear().getId().equals(selectedYear.getId())) {
+            throw new ResponseStatus(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected academic year.");
+        }
+
+        String day = dayOfWeek == null || dayOfWeek.isBlank() ? "ALL" : dayOfWeek.trim().toUpperCase(Locale.ROOT);
+        if (!day.equals("ALL")) {
+            try { java.time.DayOfWeek.valueOf(day); }
+            catch (IllegalArgumentException ex) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid weekday filter."); }
+        }
+        String type = classType == null || classType.isBlank() ? "ALL" : classType.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("ALL", "ONLINE", "OFFLINE").contains(type)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid class type filter.");
+        String scheduleStatus = status == null || status.isBlank() ? (isFaculty ? "APPROVED" : "ALL") : status.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("ALL", "DRAFT", "PENDING_APPROVAL", "APPROVED", "REJECTED").contains(scheduleStatus)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid timetable status filter.");
+        }
+        String active = activeFilter == null || activeFilter.isBlank() ? "ALL" : activeFilter.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("ALL", "ACTIVE", "INACTIVE").contains(active)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid active filter.");
+
+        List<Timetable> schedules = timetableRepository.findAll().stream()
+                .filter(item -> selectedYear == null || item.getAcademicYear().getId().equals(selectedYear.getId()))
+                .filter(item -> gradeId == null || item.getGrade().getId().equals(gradeId))
+                .filter(item -> sectionId == null || item.getSection().getId().equals(sectionId))
+                .filter(item -> !isFaculty || item.getFaculty().getId().equals(actor.getId()))
+                .filter(item -> isFaculty || facultyId == null || item.getFaculty().getId().equals(facultyId))
+                .filter(item -> day.equals("ALL") || item.getDayOfWeek().name().equals(day))
+                .filter(item -> type.equals("ALL") || item.getClassType().name().equals(type))
+                .filter(item -> scheduleStatus.equals("ALL") || item.getStatus().name().equals(scheduleStatus))
+                .filter(item -> active.equals("ALL") || (active.equals("ACTIVE") ? item.isActive() : !item.isActive()))
+                .sorted(Comparator.comparing((Timetable t) -> t.getDayOfWeek().getValue())
+                        .thenComparing(Timetable::getStartTime)
+                        .thenComparing(t -> t.getGrade().getName())
+                        .thenComparing(t -> t.getSection().getName())
+                        .thenComparing(t -> t.getSubject().getName()))
+                .toList();
+
+        List<String> columns = List.of("Day", "Start Time", "End Time", "Academic Year", "Grade", "Section",
+                "Subject", "Faculty", "Class Type", "Room / Meeting", "Status", "Active", "Valid From", "Valid Until");
+        List<List<String>> rows = schedules.stream().map(item -> List.of(
+                item.getDayOfWeek().name(), item.getStartTime().toString(), item.getEndTime().toString(),
+                safe(item.getAcademicYear().getName()), safe(item.getGrade().getName()), safe(item.getSection().getName()),
+                safe(item.getSubject().getName()), safe(item.getFaculty().getFullName()), item.getClassType().name(),
+                item.getClassType() == ClassType.ONLINE ? safe(item.getMeetingPlatform() == null ? item.getMeetingLink() : item.getMeetingPlatform().name()) : safe(item.getRoom()),
+                item.getStatus().name(), item.isActive() ? "Active" : "Inactive", item.getStartDate().toString(), item.getEndDate().toString()
+        )).toList();
+
+        List<ReportData.ReportSection> daySections = java.util.Arrays.stream(java.time.DayOfWeek.values())
+                .filter(d -> day.equals("ALL") || d.name().equals(day))
+                .map(d -> ReportData.ReportSection.builder().title(d.name())
+                        .columns(List.of("Time", "Grade", "Section", "Subject", "Faculty", "Type", "Room / Meeting", "Status", "Date Range"))
+                        .rows(schedules.stream().filter(item -> item.getDayOfWeek() == d).map(item -> List.of(
+                                item.getStartTime() + " – " + item.getEndTime(), safe(item.getGrade().getName()), safe(item.getSection().getName()),
+                                safe(item.getSubject().getName()), safe(item.getFaculty().getFullName()), item.getClassType().name(),
+                                item.getClassType() == ClassType.ONLINE ? safe(item.getMeetingPlatform() == null ? item.getMeetingLink() : item.getMeetingPlatform().name()) : safe(item.getRoom()),
+                                item.getStatus().name(), item.getStartDate() + " – " + item.getEndDate()
+                        )).toList()).build()).toList();
+
+        long activeCount = schedules.stream().filter(Timetable::isActive).count();
+        long approvedCount = schedules.stream().filter(item -> item.getStatus() == TimetableStatus.APPROVED).count();
+        long onlineCount = schedules.stream().filter(item -> item.getClassType() == ClassType.ONLINE).count();
+        long offlineCount = schedules.size() - onlineCount;
+        List<ReportData.SummaryMetric> metrics = List.of(
+                metric("Schedules", String.valueOf(schedules.size())),
+                metric("Approved", String.valueOf(approvedCount)),
+                metric("Active", String.valueOf(activeCount)),
+                metric("Inactive", String.valueOf(schedules.size() - activeCount)),
+                metric("Online", String.valueOf(onlineCount)),
+                metric("Offline", String.valueOf(offlineCount))
+        );
+        String filterText = (selectedYear == null ? "All Academic Years" : selectedYear.getName())
+                + " · Grade: " + (selectedGrade == null ? "All Grades" : selectedGrade.getName())
+                + " · Section: " + (selectedSection == null ? "All Sections" : selectedSection.getName())
+                + " · Day: " + (day.equals("ALL") ? "All Days" : day)
+                + " · Type: " + type + " · Status: " + scheduleStatus + " · Active: " + active;
+        return buildReport(isFaculty ? "My Timetable Report" : "Timetable Report",
+                selectedYear == null ? "All Academic Years" : selectedYear.getName(), columns, rows, filterText, metrics, daySections);
+    }
+
+    public byte[] exportTimetableReport(Long academicYearId, Long gradeId, Long sectionId, Long facultyId,
+                                       String dayOfWeek, String classType, String status, String activeFilter, String format) {
+        return export(getTimetableReport(academicYearId, gradeId, sectionId, facultyId, dayOfWeek, classType, status, activeFilter), format);
+    }
+
     public ReportData getAttendanceReport(
             Long academicYearId,
             Long gradeId,
