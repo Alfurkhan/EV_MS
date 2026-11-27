@@ -85,6 +85,11 @@ public interface StudentEnrollmentRepository
             AcademicYear academicYear
     );
 
+    List<StudentEnrollment> findByAcademicYearAndGradeAndActiveTrue(
+            AcademicYear academicYear,
+            Grade grade
+    );
+
 
     /*
      * Get active enrollments for an
