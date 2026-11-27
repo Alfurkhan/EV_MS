@@ -1428,14 +1428,6 @@ public class ReportService {
         }
     }
 
- 3, -1, -1)
-                );
-            }
-            workbook.write(output);
-            return output.toByteArray();
-        }
-    }
-
     private String timetableFilterSummary(String reportTitle) {
         String text = safe(reportTitle);
         text = text.replaceFirst("^(My )?Timetable Report", "").trim();
