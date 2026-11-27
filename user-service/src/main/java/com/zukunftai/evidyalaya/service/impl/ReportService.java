@@ -1168,10 +1168,11 @@ public class ReportService {
             CellStyle wrappedCellStyle = workbook.createCellStyle();
             wrappedCellStyle.setWrapText(true);
             wrappedCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            Font academicBodyFont = null;
             if (academicPerformanceReport) {
-                Font bodyFont = workbook.createFont();
-                bodyFont.setFontHeightInPoints((short) 11);
-                wrappedCellStyle.setFont(bodyFont);
+                academicBodyFont = workbook.createFont();
+                academicBodyFont.setFontHeightInPoints((short) 11);
+                wrappedCellStyle.setFont(academicBodyFont);
             }
             wrappedCellStyle.setBorderBottom(BorderStyle.THIN);
             wrappedCellStyle.setBorderTop(BorderStyle.THIN);
@@ -1180,7 +1181,7 @@ public class ReportService {
             CellStyle alternateRowStyle = workbook.createCellStyle();
             alternateRowStyle.setWrapText(true);
             alternateRowStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            if (academicPerformanceReport) alternateRowStyle.setFont(wrappedCellStyle.getFont());
+            if (academicPerformanceReport) alternateRowStyle.setFont(academicBodyFont);
             alternateRowStyle.setBorderBottom(BorderStyle.THIN);
             alternateRowStyle.setBorderTop(BorderStyle.THIN);
             alternateRowStyle.setBorderLeft(BorderStyle.THIN);
