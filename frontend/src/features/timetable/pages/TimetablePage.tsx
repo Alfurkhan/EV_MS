@@ -33,6 +33,7 @@ import {
 import type { Timetable } from "../types/timetable";
 
 import Toast from "../../../components/common/Toast";
+import ContextualReportButton from "../../reports/components/ContextualReportButton";
 
 type ViewMode = "timetable" | "list";
 type ClassTypeFilter = "ALL" | "ONLINE" | "OFFLINE";
@@ -1226,7 +1227,7 @@ export default function TimetablePage() {
                     </div>
                 )}
 
-            {/* Toast */}
+            <ContextualReportButton report="timetable" />\n\n            {/* Toast */}
             {toast && (
                 <Toast
                     type={toast.type}
