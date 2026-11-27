@@ -1227,7 +1227,9 @@ export default function TimetablePage() {
                     </div>
                 )}
 
-            <ContextualReportButton report="timetable" />\n\n            {/* Toast */}
+            <ContextualReportButton report="timetable" />
+
+            {/* Toast */}
             {toast && (
                 <Toast
                     type={toast.type}
