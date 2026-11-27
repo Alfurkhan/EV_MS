@@ -241,26 +241,21 @@ public class ReportService {
                         .thenComparing(t -> t.getSubject().getName()))
                 .toList();
 
-        List<String> columns = List.of("Day", "Time", "Academic Year", "Grade", "Section", "Subject", "Faculty",
-                "Class Type", "Room / Meeting", "Status", "Valid Dates");
-        List<List<String>> rows = schedules.stream().map(item -> List.of(
-                item.getDayOfWeek().name(), item.getStartTime() + " – " + item.getEndTime(),
-                safe(item.getAcademicYear().getName()), safe(item.getGrade().getName()), safe(item.getSection().getName()),
-                safe(item.getSubject().getName()), safe(item.getFaculty().getFullName()), item.getClassType().name(),
-                item.getClassType() == ClassType.ONLINE ? safe(item.getMeetingPlatform() == null ? item.getMeetingLink() : item.getMeetingPlatform().name()) : safe(item.getRoom()),
-                item.getStatus().name() + (item.isActive() ? " · Active" : " · Inactive"), item.getStartDate() + " – " + item.getEndDate()
-        )).toList();
+        // Timetable details are presented only in weekday sections; the main report page is summary-only.
+        List<String> columns = List.of();
+        List<List<String>> rows = List.of();
 
         List<ReportData.ReportSection> daySections = java.util.Arrays.stream(java.time.DayOfWeek.values())
                 .filter(d -> (day.equals("ALL") || d.name().equals(day)) && schedules.stream().anyMatch(item -> item.getDayOfWeek() == d))
                 .map(d -> ReportData.ReportSection.builder().title(d.name())
-                        .columns(List.of("Time", "Academic Year", "Grade", "Section", "Subject", "Faculty", "Type", "Room / Meeting", "Status", "Date Range"))
+                        .columns(List.of("Time", "Grade / Section", "Subject", "Faculty", "Class Type", "Room / Meeting", "Status", "Valid From", "Valid Until"))
                         .rows(schedules.stream().filter(item -> item.getDayOfWeek() == d).map(item -> List.of(
-                                item.getStartTime() + " – " + item.getEndTime(), safe(item.getAcademicYear().getName()),
-                                safe(item.getGrade().getName()), safe(item.getSection().getName()), safe(item.getSubject().getName()),
-                                safe(item.getFaculty().getFullName()), item.getClassType().name(),
-                                item.getClassType() == ClassType.ONLINE ? safe(item.getMeetingPlatform() == null ? item.getMeetingLink() : item.getMeetingPlatform().name()) : safe(item.getRoom()),
-                                item.getStatus().name() + (item.isActive() ? " · Active" : " · Inactive"), item.getStartDate() + " – " + item.getEndDate()
+                                formatTimetableTime(item.getStartTime()) + " – " + formatTimetableTime(item.getEndTime()),
+                                safe(item.getGrade().getName()) + " / " + safe(item.getSection().getName()),
+                                safe(item.getSubject().getName()), safe(item.getFaculty().getFullName()), item.getClassType().name(),
+                                item.getClassType() == ClassType.ONLINE ? safe(blank(item.getMeetingLink()) ? (item.getMeetingPlatform() == null ? "" : item.getMeetingPlatform().name()) : item.getMeetingLink()) : safe(item.getRoom()),
+                                item.getStatus().name() + (item.isActive() ? " · Active" : " · Inactive"),
+                                String.valueOf(item.getStartDate()), String.valueOf(item.getEndDate())
                         )).toList()).build()).toList();
 
         long activeCount = schedules.stream().filter(Timetable::isActive).count();
@@ -768,6 +763,7 @@ public class ReportService {
     }
 
     private byte[] createPdf(ReportData data) throws Exception {
+        if (isTimetableReport(data)) return createTimetablePdf(data);
         boolean classStrengthReport = data.getReportTitle() != null && data.getReportTitle().startsWith("My Class Strength & Student Roster");
         List<String> pdfMainColumns = data.getColumns();
         List<List<String>> pdfMainRows = data.getRows();
@@ -1069,6 +1065,234 @@ public class ReportService {
         }
     }
 
+    private boolean isTimetableReport(ReportData data) {
+        return data.getReportTitle() != null && data.getReportTitle().startsWith("Timetable Report");
+    }
+
+    private static String formatTimetableTime(Object value) {
+        if (value == null) return "";
+        String text = value.toString();
+        try {
+            return java.time.LocalTime.parse(text).format(DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH));
+        } catch (Exception ignored) {
+            return text;
+        }
+    }
+
+    private List<String> wrapPdfCell(String text, int maxChars) {
+        String value = safe(text);
+        if (value.isBlank()) return List.of("");
+        int limit = Math.max(8, maxChars);
+        List<String> lines = new ArrayList<>();
+        String remaining = value;
+        while (remaining.length() > limit) {
+            int breakAt = remaining.lastIndexOf(' ', limit);
+            if (breakAt <= 0) breakAt = limit;
+            lines.add(remaining.substring(0, breakAt));
+            remaining = remaining.substring(breakAt).trim();
+        }
+        if (!remaining.isEmpty()) lines.add(remaining);
+        return lines;
+    }
+
+    private byte[] createTimetablePdf(ReportData data) throws Exception {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            List<ReportData.ReportSection> sections = data.getSections() == null ? List.of() : data.getSections();
+            int totalPages = 1 + sections.stream().mapToInt(section -> Math.max(1, (int) Math.ceil(section.getRows().size() / 18.0))).sum();
+            int pageNumber = 0;
+            PDRectangle landscape = new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth());
+            float margin = 32f;
+            float usableWidth = landscape.getWidth() - margin * 2;
+            // Summary cover page: deliberately no duplicate timetable table.
+            PDPage cover = new PDPage(landscape);
+            document.addPage(cover);
+            pageNumber++;
+            try (PDPageContentStream stream = new PDPageContentStream(document, cover)) {
+                float y = landscape.getHeight() - margin;
+                drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), landscape.getWidth() - margin - 48, y - 34);
+                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 17, 11, margin, y,
+                        data.getSchool().getName(), color(data.getSchool().getPrimaryColor()), usableWidth - 75);
+                y -= 22;
+                if (!blank(data.getSchool().getTagline())) {
+                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9, 7, margin, y,
+                            data.getSchool().getTagline(), Color.DARK_GRAY, usableWidth - 75);
+                    y -= 16;
+                }
+                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 10, margin, y,
+                        data.getReportTitle(), Color.BLACK, usableWidth);
+                y -= 20;
+                String metadata = "Academic Year: " + safe(data.getAcademicYear()) + " · Generated: " + safe(data.getGeneratedAt())
+                        + " · Schedules: " + sections.stream().mapToInt(section -> section.getRows().size()).sum();
+                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9, 7, margin, y, metadata, Color.DARK_GRAY, usableWidth);
+                y -= 16;
+                drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6, margin, y,
+                        data.getReportTitle().replace("Timetable Report · ", ""), Color.DARK_GRAY, usableWidth);
+                y -= 24;
+                if (data.getSummary() != null) {
+                    for (int i = 0; i < data.getSummary().size(); i += 3) {
+                        String line = data.getSummary().subList(i, Math.min(i + 3, data.getSummary().size())).stream()
+                                .map(metric -> metric.getLabel() + ": " + metric.getValue()).collect(java.util.stream.Collectors.joining("     ·     "));
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11, 8, margin, y,
+                                line, Color.DARK_GRAY, usableWidth);
+                        y -= 24;
+                    }
+                }
+                String contact = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+                        data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
+                if (!contact.isEmpty()) {
+                    y -= 10;
+                    drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6, margin, y, contact, Color.DARK_GRAY, usableWidth);
+                }
+                drawPdfFooter(stream, landscape.getWidth(), margin, pageNumber, totalPages, data);
+            }
+
+            float[] ratios = {0.11f, 0.12f, 0.17f, 0.13f, 0.08f, 0.16f, 0.10f, 0.065f, 0.065f};
+            for (ReportData.ReportSection section : sections) {
+                int rowsPerPage = 18;
+                int pages = Math.max(1, (int) Math.ceil(section.getRows().size() / (double) rowsPerPage));
+                for (int p = 0; p < pages; p++) {
+                    PDPage page = new PDPage(landscape);
+                    document.addPage(page);
+                    pageNumber++;
+                    try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
+                        float y = landscape.getHeight() - margin;
+                        drawSchoolLogo(document, stream, data.getSchool().getLogoUrl(), landscape.getWidth() - margin - 42, y - 34);
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 9, margin, y,
+                                data.getSchool().getName(), color(data.getSchool().getPrimaryColor()), usableWidth - 60);
+                        y -= 20;
+                        drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12, margin, y, section.getTitle(), Color.BLACK);
+                        y -= 16;
+                        drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8, 6, margin, y,
+                                "Academic Year: " + safe(data.getAcademicYear()) + " · " + data.getReportTitle(), Color.DARK_GRAY, usableWidth);
+                        y -= 18;
+                        float headerHeight = 22;
+                        float[] widths = new float[ratios.length];
+                        for (int c = 0; c < ratios.length; c++) widths[c] = usableWidth * ratios[c];
+                        stream.setNonStrokingColor(color(data.getSchool().getPrimaryColor()));
+                        stream.addRect(margin, y - headerHeight + 3, usableWidth, headerHeight);
+                        stream.fill();
+                        for (int c = 0; c < section.getColumns().size(); c++) {
+                            drawFitText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 7.2f, 5.2f,
+                                    margin + pdfColumnOffset(widths, c) + 3, y - 11,
+                                    section.getColumns().get(c), Color.WHITE, widths[c] - 6);
+                        }
+                        y -= headerHeight;
+                        int start = p * rowsPerPage, end = Math.min(section.getRows().size(), start + rowsPerPage);
+                        for (int r = start; r < end; r++) {
+                            List<String> row = section.getRows().get(r);
+                            List<List<String>> wrapped = new ArrayList<>();
+                            int maxLines = 1;
+                            for (int c = 0; c < section.getColumns().size(); c++) {
+                                int chars = Math.max(8, (int)(widths[c] / 4.3f));
+                                List<String> cellLines = wrapPdfCell(c < row.size() ? row.get(c) : "", chars);
+                                wrapped.add(cellLines);
+                                maxLines = Math.max(maxLines, cellLines.size());
+                            }
+                            float rowHeight = Math.max(22, maxLines * 9 + 6);
+                            if (r % 2 == 1) {
+                                stream.setNonStrokingColor(new Color(245, 247, 250));
+                                stream.addRect(margin, y - rowHeight + 3, usableWidth, rowHeight);
+                                stream.fill();
+                            }
+                            for (int c = 0; c < wrapped.size(); c++) {
+                                for (int line = 0; line < wrapped.get(c).size(); line++) {
+                                    drawText(stream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 6.8f,
+                                            margin + pdfColumnOffset(widths, c) + 3, y - 9 - (line * 9),
+                                            wrapped.get(c).get(line), Color.BLACK);
+                                }
+                            }
+                            y -= rowHeight;
+                        }
+                        drawPdfFooter(stream, landscape.getWidth(), margin, pageNumber, totalPages, data);
+                    }
+                }
+            }
+            document.save(output);
+            return output.toByteArray();
+        }
+    }
+
+    private byte[] createTimetableExcel(ReportData data) throws Exception {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont(); titleFont.setBold(true); titleFont.setFontHeightInPoints((short) 18);
+            titleFont.setColor(IndexedColors.WHITE.getIndex()); titleStyle.setFont(titleFont);
+            ((XSSFCellStyle) titleStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
+            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            CellStyle headerStyle = workbook.createCellStyle(); headerStyle.setWrapText(true);
+            Font headerFont = workbook.createFont(); headerFont.setBold(true); headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerFont.setFontHeightInPoints((short) 11); headerStyle.setFont(headerFont);
+            ((XSSFCellStyle) headerStyle).setFillForegroundColor(toXssfColor(workbook, data.getSchool().getPrimaryColor()));
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            CellStyle bodyStyle = workbook.createCellStyle(); bodyStyle.setWrapText(true);
+            bodyStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            bodyStyle.setBorderBottom(BorderStyle.THIN); bodyStyle.setBorderTop(BorderStyle.THIN);
+            bodyStyle.setBorderLeft(BorderStyle.THIN); bodyStyle.setBorderRight(BorderStyle.THIN);
+            CellStyle altStyle = workbook.createCellStyle(); altStyle.cloneStyleFrom(bodyStyle);
+            altStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex()); altStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            CellStyle metricStyle = workbook.createCellStyle(); metricStyle.setBorderBottom(BorderStyle.THIN);
+            metricStyle.setBorderTop(BorderStyle.THIN); metricStyle.setBorderLeft(BorderStyle.THIN); metricStyle.setBorderRight(BorderStyle.THIN);
+            Font metricFont = workbook.createFont(); metricFont.setBold(true); metricFont.setFontHeightInPoints((short) 12); metricStyle.setFont(metricFont);
+
+            Sheet summary = workbook.createSheet("Summary");
+            summary.setColumnWidth(0, 32 * 256); summary.setColumnWidth(1, 22 * 256);
+            Row r0 = summary.createRow(0); r0.setHeightInPoints(32);
+            Cell school = r0.createCell(0); school.setCellValue(data.getSchool().getName()); school.setCellStyle(titleStyle);
+            summary.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 1));
+            Row r1 = summary.createRow(1); r1.createCell(0).setCellValue(data.getSchool().getTagline());
+            Row r2 = summary.createRow(2); r2.createCell(0).setCellValue(data.getReportTitle());
+            Row r3 = summary.createRow(3); r3.createCell(0).setCellValue("Academic Year: " + safe(data.getAcademicYear()) + " · Generated: " + safe(data.getGeneratedAt()));
+            Row r4 = summary.createRow(4); r4.createCell(0).setCellValue(data.getReportTitle().replace("Timetable Report · ", ""));
+            int rowIndex = 6;
+            if (data.getSummary() != null) {
+                for (int i = 0; i < data.getSummary().size(); i += 2) {
+                    Row metricRow = summary.createRow(rowIndex++);
+                    for (int j = i; j < Math.min(i + 2, data.getSummary().size()); j++) {
+                        int col = (j - i) * 2;
+                        Cell label = metricRow.createCell(col); label.setCellValue(data.getSummary().get(j).getLabel()); label.setCellStyle(metricStyle);
+                        Cell value = metricRow.createCell(col + 1); value.setCellValue(data.getSummary().get(j).getValue()); value.setCellStyle(metricStyle);
+                    }
+                }
+            }
+            String contact = String.join(" · ", Arrays.asList(data.getSchool().getAddress(), data.getSchool().getPhone(),
+                    data.getSchool().getEmail(), data.getSchool().getWebsite()).stream().filter(value -> !blank(value)).toList());
+            Row contactRow = summary.createRow(rowIndex + 1); contactRow.createCell(0).setCellValue(contact);
+            summary.createFreezePane(0, 1);
+
+            if (data.getSections() != null) for (ReportData.ReportSection section : data.getSections()) {
+                String sheetName = section.getTitle().substring(0, Math.min(31, section.getTitle().length()));
+                Sheet daySheet = workbook.createSheet(sheetName);
+                daySheet.setColumnWidth(0, 20 * 256); daySheet.setColumnWidth(1, 18 * 256);
+                daySheet.setColumnWidth(2, 32 * 256); daySheet.setColumnWidth(3, 24 * 256);
+                daySheet.setColumnWidth(4, 14 * 256); daySheet.setColumnWidth(5, 38 * 256);
+                daySheet.setColumnWidth(6, 24 * 256); daySheet.setColumnWidth(7, 16 * 256); daySheet.setColumnWidth(8, 16 * 256);
+                Row titleRow = daySheet.createRow(0); titleRow.setHeightInPoints(30);
+                Cell title = titleRow.createCell(0); title.setCellValue(data.getSchool().getName() + " · " + section.getTitle()); title.setCellStyle(titleStyle);
+                daySheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, section.getColumns().size() - 1));
+                Row metadataRow = daySheet.createRow(1); metadataRow.createCell(0).setCellValue("Academic Year: " + safe(data.getAcademicYear()) + " · " + data.getReportTitle());
+                daySheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, section.getColumns().size() - 1));
+                Row h = daySheet.createRow(3); h.setHeightInPoints(32);
+                for (int c = 0; c < section.getColumns().size(); c++) { Cell cell = h.createCell(c); cell.setCellValue(section.getColumns().get(c)); cell.setCellStyle(headerStyle); }
+                for (int i = 0; i < section.getRows().size(); i++) {
+                    Row row = daySheet.createRow(4 + i); row.setHeightInPoints(34);
+                    List<String> vals = section.getRows().get(i);
+                    for (int c = 0; c < section.getColumns().size(); c++) {
+                        Cell cell = row.createCell(c); cell.setCellValue(c < vals.size() ? vals.get(c) : "");
+                        cell.setCellStyle(i % 2 == 1 ? altStyle : bodyStyle);
+                    }
+                }
+                if (!section.getRows().isEmpty()) daySheet.setAutoFilter(new org.apache.poi.ss.util.CellRangeAddress(3, 3 + section.getRows().size(), 0, section.getColumns().size() - 1));
+                daySheet.createFreezePane(0, 4);
+                daySheet.getPrintSetup().setLandscape(true); daySheet.getPrintSetup().setFitWidth((short)1);
+                daySheet.getPrintSetup().setFitHeight((short)0); daySheet.setFitToPage(true);
+                daySheet.setRepeatingRows(3, 3);
+            }
+            workbook.write(output);
+            return output.toByteArray();
+        }
+    }
+
     private void drawPdfFooter(PDPageContentStream stream, float pageWidth, float margin, int pageNumber, int totalPages, ReportData data) throws Exception {
         stream.setStrokingColor(color(data.getSchool().getAccentColor()));
         stream.moveTo(margin, 30);
@@ -1090,6 +1314,7 @@ public class ReportService {
     }
 
     private byte[] createExcel(ReportData data) throws Exception {
+        if (isTimetableReport(data)) return createTimetableExcel(data);
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Report");
             boolean academicPerformanceReport = data.getReportTitle() != null && data.getReportTitle().startsWith("Academic Performance Report");
