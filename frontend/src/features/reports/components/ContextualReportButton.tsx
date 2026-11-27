@@ -127,7 +127,7 @@ export default function ContextualReportButton({ report, position = "default" }:
     }, [open, report, filters.academicYearId, isFacultyScope, facultyScope]);
 
     useEffect(() => {
-        if (!open || !["student-roster", "attendance", "my-class-strength"].includes(report) || !filters.gradeId) {
+        if (!open || !["student-roster", "attendance", "my-class-strength", "timetable"].includes(report) || !filters.gradeId) {
             setSections([]);
             return;
         }
