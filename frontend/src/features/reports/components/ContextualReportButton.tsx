@@ -75,9 +75,6 @@ export default function ContextualReportButton({ report, position = "default" }:
 
     useEffect(() => {
         if (!open) return;
-        if (report === "timetable") {
-            getFaculties().then(setFaculties).catch(() => toast.error("Unable to load faculty."));
-        }
         if (report === "faculty-directory") {
             getAllSubjects().then(setSubjects).catch(() => toast.error("Unable to load subjects."));
             return;
@@ -112,8 +109,13 @@ export default function ContextualReportButton({ report, position = "default" }:
         }).catch((error: any) => {
             if (cancelled) return;
             if (error?.response?.status === 403) {
+                // Administrators do not have a faculty-specific scope endpoint.
+                // Load the Faculty selector only for Admin timetable reports.
                 setIsFacultyScope(false);
                 setFacultyScope([]);
+                if (report === "timetable") {
+                    getFaculties().then(setFaculties).catch(() => toast.error("Unable to load faculty."));
+                }
             } else {
                 toast.error("Unable to load your assigned report classes.");
             }
