@@ -68,6 +68,12 @@ const menu: MenuSection[] = [
                 allowedRoles: ["ROLE_ADMIN"],
             },
             {
+                icon: Users,
+                label: "My Students",
+                path: "/my-students",
+                allowedRoles: ["ROLE_FACULTY"],
+            },
+            {
                 icon: CalendarCheck,
                 label: "Attendance",
                 path: "/attendance",
@@ -118,12 +124,6 @@ const menu: MenuSection[] = [
                 label: "Quiz & Exams",
                 path: "/my-assessments",
                 allowedRoles: ["ROLE_STUDENT"],
-            },
-            {
-                icon: Users,
-                label: "My Students",
-                path: "/my-students",
-                allowedRoles: ["ROLE_FACULTY"],
             },
             {
                 icon: GraduationCap,
