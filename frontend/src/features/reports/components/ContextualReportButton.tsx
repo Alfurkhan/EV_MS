@@ -139,7 +139,7 @@ export default function ContextualReportButton({ report, position = "default" }:
             return;
         }
         getSectionsByGrade(filters.gradeId).then(allSections => {
-            setSections((isFacultyScope ? allSections.filter(section => facultyScope.some(scope => scope.gradeId === filters.gradeId && scope.sectionId === section.id)) : allSections).filter(section => section.active).sort((a, b) => a.name.localeCompare(b.name)));
+            setSections((report === "my-class-strength" ? allSections : isFacultyScope ? allSections.filter(section => facultyScope.some(scope => scope.gradeId === filters.gradeId && scope.sectionId === section.id)) : allSections).filter(section => section.active).sort((a, b) => a.name.localeCompare(b.name)));
         }).catch(() => toast.error("Unable to load sections."));
     }, [open, report, filters.gradeId, isFacultyScope, facultyScope]);
 
