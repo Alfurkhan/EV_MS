@@ -5,6 +5,7 @@ import { getMyStudents, type FacultyStudent } from "../services/myStudentsServic
 import ContextualReportButton from "../../reports/components/ContextualReportButton";
 import toast from "react-hot-toast";
 import { getFacultyReportScope, type FacultyReportScopeOption } from "../../reports/services/reportService";
+import { getSectionsByGrade, type Section } from "../../academic/services/sectionService";
 
 function initials(name: string) {
     return name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? "").join("");
@@ -19,6 +20,8 @@ export default function MyStudentsPage() {
     const [search, setSearch] = useState("");
     const [gradeId, setGradeId] = useState("");
     const [sectionId, setSectionId] = useState("");
+    const [gradeSections, setGradeSections] = useState<Section[]>([]);
+    const [sectionsLoading, setSectionsLoading] = useState(false);
     const [actionStudent, setActionStudent] = useState<number | null>(null);
     const [detailsStudent, setDetailsStudent] = useState<FacultyStudent | null>(null);
 
@@ -46,7 +49,23 @@ export default function MyStudentsPage() {
     useEffect(() => { void load(); }, []);
 
     const grades = useMemo(() => [...new Map(facultyScope.map(item => [item.gradeId, { id: item.gradeId, name: item.gradeName }])).values()].sort((a, b) => a.name.localeCompare(b.name)), [facultyScope]);
-    const sections = useMemo(() => [...new Map(facultyScope.filter(item => !gradeId || String(item.gradeId) === gradeId).map(item => [item.sectionId, { id: item.sectionId, name: item.sectionName }])).values()].sort((a, b) => a.name.localeCompare(b.name)), [facultyScope, gradeId]);
+    const sections = useMemo(() => gradeSections.filter(section => section.active).sort((a, b) => a.name.localeCompare(b.name)), [gradeSections]);
+
+    useEffect(() => {
+        setGradeSections([]);
+        setSectionId("");
+        if (!gradeId) return;
+        let cancelled = false;
+        setSectionsLoading(true);
+        getSectionsByGrade(Number(gradeId)).then(result => {
+            if (!cancelled) setGradeSections(result);
+        }).catch(() => {
+            if (!cancelled) toast.error("Unable to load sections for the selected Grade.");
+        }).finally(() => {
+            if (!cancelled) setSectionsLoading(false);
+        });
+        return () => { cancelled = true; };
+    }, [gradeId]);
     const filtered = useMemo(() => {
         const term = search.trim().toLowerCase();
         return students.filter(s =>
