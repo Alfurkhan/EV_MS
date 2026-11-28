@@ -207,7 +207,10 @@ public class ReportService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected grade.");
         }
         if (selectedSection != null && selectedYear != null && !selectedSection.getGrade().getAcademicYear().getId().equals(selectedYear.getId())) {
-            throw new ResponseStatus(HttpStatus.BAD_REQUEST, "The selected section does not belong to the selected academic year.");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "The selected section does not belong to the selected academic year."
+            );
         }
 
         String day = dayOfWeek == null || dayOfWeek.isBlank() ? "ALL" : dayOfWeek.trim().toUpperCase(Locale.ROOT);
@@ -1294,7 +1297,9 @@ public class ReportService {
                 daySheet.createFreezePane(0, 4);
                 daySheet.getPrintSetup().setLandscape(true); daySheet.getPrintSetup().setFitWidth((short)1);
                 daySheet.getPrintSetup().setFitHeight((short)0); daySheet.setFitToPage(true);
-                daySheet.setRepeatingRows(3, 3);
+                daySheet.setRepeatingRows(
+                        new org.apache.poi.ss.util.CellRangeAddress(3, 3, -1, -1)
+                );
             }
             workbook.write(output);
             return output.toByteArray();
