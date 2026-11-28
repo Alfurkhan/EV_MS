@@ -139,7 +139,7 @@ export default function ContextualReportButton({ report, position = "default" }:
             return;
         }
         getSectionsByGrade(filters.gradeId).then(allSections => {
-            setSections(isFacultyScope ? allSections.filter(section => facultyScope.some(scope => scope.gradeId === filters.gradeId && scope.sectionId === section.id)) : allSections);
+            setSections((isFacultyScope ? allSections.filter(section => facultyScope.some(scope => scope.gradeId === filters.gradeId && scope.sectionId === section.id)) : allSections).filter(section => section.active).sort((a, b) => a.name.localeCompare(b.name)));
         }).catch(() => toast.error("Unable to load sections."));
     }, [open, report, filters.gradeId, isFacultyScope, facultyScope]);
 
@@ -255,7 +255,7 @@ export default function ContextualReportButton({ report, position = "default" }:
                                         <label className="block">
                                             <span className="mb-1.5 block text-sm font-medium text-slate-700">Section</span>
                                             <select value={filters.sectionId ?? ""} disabled={!filters.gradeId} onChange={(event) => updateReportFilters((current) => ({ ...current, sectionId: event.target.value ? Number(event.target.value) : undefined }))} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand disabled:bg-slate-50">
-                                                <option value="">{isFacultyScope ? "All assigned sections" : "All sections"}</option>
+                                                <option value="">{!filters.gradeId ? "Select Grade first" : isFacultyScope ? "All assigned sections" : "All sections"}</option>
                                                 {sections.map((section) => <option key={section.id} value={section.id}>{section.name}</option>)}
                                             </select>
                                         </label>
