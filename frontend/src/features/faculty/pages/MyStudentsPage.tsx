@@ -104,14 +104,14 @@ export default function MyStudentsPage() {
             <div className="flex flex-wrap items-end gap-3">
                 <div className="min-w-[160px] flex-1">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500" htmlFor="faculty-student-grade">Grade</label>
-                    <select id="faculty-student-grade" value={gradeId} onChange={e => { setGradeId(e.target.value); setSectionId(""); }} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
+                    <select id="faculty-student-grade" value={gradeId} onChange={e => { setGradeId(e.target.value); setSectionId(""); }} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-slate-50 disabled:text-slate-400">
                         <option value="">All Grades</option>{grades.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
                 </div>
                 <div className="min-w-[160px] flex-1">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500" htmlFor="faculty-student-section">Section</label>
                     <select id="faculty-student-section" value={sectionId} disabled={!gradeId || sectionsLoading} onChange={e => setSectionId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
-                        <option value="">All Sections</option>{sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        <option value="">{!gradeId ? "Select Grade first" : sectionsLoading ? "Loading sections..." : "All Sections"}</option>{sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                 </div>
                 {hasFilters && <button type="button" onClick={clearFilters} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-800">Clear Filters</button>}
