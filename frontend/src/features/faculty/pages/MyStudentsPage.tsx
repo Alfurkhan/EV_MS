@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { getFacultyReportScope, type FacultyReportScopeOption } from "../../reports/services/reportService";
 
 function initials(name: string) {
-    return name.trim().split(/\\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? "").join("");
+    return name.trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? "").join("");
 }
 
 export default function MyStudentsPage() {
@@ -17,8 +17,8 @@ export default function MyStudentsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
-    const [grade, setGrade] = useState("");
-    const [section, setSection] = useState("");
+    const [gradeId, setGradeId] = useState("");
+    const [sectionId, setSectionId] = useState("");
     const [actionStudent, setActionStudent] = useState<number | null>(null);
     const [detailsStudent, setDetailsStudent] = useState<FacultyStudent | null>(null);
 
@@ -46,18 +46,18 @@ export default function MyStudentsPage() {
     useEffect(() => { void load(); }, []);
 
     const grades = useMemo(() => [...new Map(facultyScope.map(item => [item.gradeId, { id: item.gradeId, name: item.gradeName }])).values()].sort((a, b) => a.name.localeCompare(b.name)), [facultyScope]);
-    const sections = useMemo(() => [...new Map(facultyScope.filter(item => !grade || item.gradeName === grade).map(item => [item.sectionId, { id: item.sectionId, name: item.sectionName }])).values()].sort((a, b) => a.name.localeCompare(b.name)), [facultyScope, grade]);
+    const sections = useMemo(() => [...new Map(facultyScope.filter(item => !gradeId || String(item.gradeId) === gradeId).map(item => [item.sectionId, { id: item.sectionId, name: item.sectionName }])).values()].sort((a, b) => a.name.localeCompare(b.name)), [facultyScope, gradeId]);
     const filtered = useMemo(() => {
         const term = search.trim().toLowerCase();
         return students.filter(s =>
-            (!grade || s.gradeName === grade) &&
-            (!section || s.sectionName === section) &&
+            (!gradeId || String(s.gradeId) === gradeId) &&
+            (!sectionId || String(s.sectionId) === sectionId) &&
             (!term || [s.fullName, s.email, s.phoneNumber ?? "", s.gradeName, s.sectionName, String(s.studentId)].some(v => v.toLowerCase().includes(term)))
         );
-    }, [students, search, grade, section]);
+    }, [students, search, gradeId, sectionId]);
 
-    const clearFilters = () => { setSearch(""); setGrade(""); setSection(""); };
-    const hasFilters = Boolean(search.trim() || grade || section);
+    const clearFilters = () => { setSearch(""); setGradeId(""); setSectionId(""); };
+    const hasFilters = Boolean(search.trim() || gradeId || sectionId);
 
     return <div className="space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -85,13 +85,13 @@ export default function MyStudentsPage() {
             <div className="flex flex-wrap items-end gap-3">
                 <div className="min-w-[160px] flex-1">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500" htmlFor="faculty-student-grade">Grade</label>
-                    <select id="faculty-student-grade" value={grade} onChange={e => { setGrade(e.target.value); setSection(""); }} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
-                        <option value="">All Grades</option>{grades.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
+                    <select id="faculty-student-grade" value={gradeId} onChange={e => { setGradeId(e.target.value); setSectionId(""); }} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        <option value="">All Grades</option>{grades.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
                 </div>
                 <div className="min-w-[160px] flex-1">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500" htmlFor="faculty-student-section">Section</label>
-                    <select id="faculty-student-section" value={section} onChange={e => setSection(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
+                    <select id="faculty-student-section" value={sectionId} onChange={e => setSectionId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
                         <option value="">All Sections</option>{sections.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
