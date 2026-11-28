@@ -616,20 +616,45 @@ public class ReportService {
         AcademicYear year = resolveAcademicYear(academicYearId);
         Set<SectionScope> scope = getFacultyScope(actor, year);
         if (scope.isEmpty()) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No assigned classes are available for this academic year.");
-        if (gradeId != null && scope.stream().noneMatch(item -> item.gradeId().equals(gradeId))) {
+        Set<Long> authorizedGradeIds = scope.stream()
+                .map(SectionScope::gradeId)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        if (gradeId != null && !authorizedGradeIds.contains(gradeId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not assigned to the selected grade.");
         }
-        if (sectionId != null && scope.stream().noneMatch(item -> item.sectionId().equals(sectionId) && (gradeId == null || item.gradeId().equals(gradeId)))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not assigned to the selected section.");
+
+        // Class Strength is grade-authorized: an approved assignment to a grade grants
+        // access to every active section in that grade for this academic year.
+        List<Grade> authorizedGrades = authorizedGradeIds.stream()
+                .map(id -> gradeRepository.findById(id)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assigned grade not found.")))
+                .filter(grade -> grade.isActive() && grade.getAcademicYear().getId().equals(year.getId()))
+                .filter(grade -> gradeId == null || grade.getId().equals(gradeId))
+                .toList();
+
+        List<SectionScope> selectedScope;
+        if (sectionId != null) {
+            Section selectedSection = sectionRepository.findById(sectionId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Selected section not found."));
+            Grade selectedGrade = selectedSection.getGrade();
+            if (!selectedSection.isActive() || selectedGrade == null || !selectedGrade.isActive()
+                    || !selectedGrade.getAcademicYear().getId().equals(year.getId())
+                    || !authorizedGradeIds.contains(selectedGrade.getId())
+                    || (gradeId != null && !selectedGrade.getId().equals(gradeId))) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to view the selected section.");
+            }
+            selectedScope = List.of(new SectionScope(selectedGrade.getId(), selectedSection.getId()));
+        } else {
+            selectedScope = authorizedGrades.stream()
+                    .flatMap(grade -> sectionRepository.findByGradeAndActiveTrue(grade).stream()
+                            .filter(Section::isActive)
+                            .map(section -> new SectionScope(grade.getId(), section.getId())))
+                    .sorted(Comparator.comparing(item -> {
+                        Grade grade = gradeRepository.findById(item.gradeId()).orElseThrow();
+                        Section section = sectionRepository.findById(item.sectionId()).orElseThrow();
+                        return grade.getName() + " " + section.getName();
+                    })).toList();
         }
-        List<SectionScope> selectedScope = scope.stream()
-                .filter(item -> gradeId == null || item.gradeId().equals(gradeId))
-                .filter(item -> sectionId == null || item.sectionId().equals(sectionId))
-                .sorted(Comparator.comparing(item -> {
-                    Grade grade = gradeRepository.findById(item.gradeId()).orElseThrow();
-                    Section section = sectionRepository.findById(item.sectionId()).orElseThrow();
-                    return grade.getName() + " " + section.getName();
-                })).toList();
 
         List<List<String>> rows = selectedScope.stream().map(item -> {
             Grade grade = gradeRepository.findById(item.gradeId()).orElseThrow();
