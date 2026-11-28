@@ -3,6 +3,8 @@ import { RefreshCw, Search, X, MoreVertical, Eye, Users, SearchX, AlertCircle, P
 import { getActiveAcademicYear, type AcademicYear } from "../../academic/services/academicYearService";
 import { getMyStudents, type FacultyStudent } from "../services/myStudentsService";
 import ContextualReportButton from "../../reports/components/ContextualReportButton";
+import toast from "react-hot-toast";
+import { getFacultyReportScope, type FacultyReportScopeOption } from "../../reports/services/reportService";
 
 function initials(name: string) {
     return name.trim().split(/\\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? "").join("");
@@ -11,6 +13,7 @@ function initials(name: string) {
 export default function MyStudentsPage() {
     const [year, setYear] = useState<AcademicYear | null>(null);
     const [students, setStudents] = useState<FacultyStudent[]>([]);
+    const [facultyScope, setFacultyScope] = useState<FacultyReportScopeOption[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
@@ -19,24 +22,31 @@ export default function MyStudentsPage() {
     const [actionStudent, setActionStudent] = useState<number | null>(null);
     const [detailsStudent, setDetailsStudent] = useState<FacultyStudent | null>(null);
 
-    const load = async () => {
+    const load = async (showSuccessToast = false) => {
         setLoading(true);
         setError(null);
         try {
             const activeYear = await getActiveAcademicYear();
             setYear(activeYear);
-            const roster = await getMyStudents({ academicYearId: activeYear.id });
+            const [roster, scope] = await Promise.all([
+                getMyStudents({ academicYearId: activeYear.id }),
+                getFacultyReportScope(activeYear.id, "my-class-strength"),
+            ]);
             setStudents(roster);
+            setFacultyScope(scope);
+            if (showSuccessToast) toast.success("Student roster refreshed successfully.");
         } catch (err: any) {
-            setError(err?.response?.data?.message || err?.response?.data?.error || err?.message || "Unable to load your students. Please try again.");
+            const message = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Unable to load your students. Please try again.";
+            setError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }
     };
     useEffect(() => { void load(); }, []);
 
-    const grades = useMemo(() => [...new Set(students.map(s => s.gradeName))].sort((a, b) => a.localeCompare(b)), [students]);
-    const sections = useMemo(() => [...new Set(students.filter(s => !grade || s.gradeName === grade).map(s => s.sectionName))].sort((a, b) => a.localeCompare(b)), [students, grade]);
+    const grades = useMemo(() => [...new Map(facultyScope.map(item => [item.gradeId, { id: item.gradeId, name: item.gradeName }])).values()].sort((a, b) => a.name.localeCompare(b.name)), [facultyScope]);
+    const sections = useMemo(() => [...new Map(facultyScope.filter(item => !grade || item.gradeName === grade).map(item => [item.sectionId, { id: item.sectionId, name: item.sectionName }])).values()].sort((a, b) => a.name.localeCompare(b.name)), [facultyScope, grade]);
     const filtered = useMemo(() => {
         const term = search.trim().toLowerCase();
         return students.filter(s =>
@@ -55,7 +65,7 @@ export default function MyStudentsPage() {
                 <h1 className="text-4xl font-bold text-slate-800">My Students</h1>
                 <p className="mt-1 text-slate-500">Students enrolled in the Grades assigned to you</p>
             </div>
-            <button type="button" onClick={load} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="button" onClick={() => void load(true)} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
                 <RefreshCw size={16} className={loading ? "animate-spin" : ""}/>{loading ? "Refreshing..." : "Refresh"}
             </button>
         </div>
@@ -76,7 +86,7 @@ export default function MyStudentsPage() {
                 <div className="min-w-[160px] flex-1">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500" htmlFor="faculty-student-grade">Grade</label>
                     <select id="faculty-student-grade" value={grade} onChange={e => { setGrade(e.target.value); setSection(""); }} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
-                        <option value="">All Grades</option>{grades.map(g => <option key={g} value={g}>{g}</option>)}
+                        <option value="">All Grades</option>{grades.map(g => <option key={g.id} value={g.name}>{g.name}</option>)}
                     </select>
                 </div>
                 <div className="min-w-[160px] flex-1">
