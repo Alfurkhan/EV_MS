@@ -110,7 +110,7 @@ export default function MyStudentsPage() {
                 </div>
                 <div className="min-w-[160px] flex-1">
                     <label className="mb-1.5 block text-xs font-medium text-slate-500" htmlFor="faculty-student-section">Section</label>
-                    <select id="faculty-student-section" value={sectionId} onChange={e => setSectionId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
+                    <select id="faculty-student-section" value={sectionId} disabled={!gradeId || sectionsLoading} onChange={e => setSectionId(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/20">
                         <option value="">All Sections</option>{sections.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
                 </div>
