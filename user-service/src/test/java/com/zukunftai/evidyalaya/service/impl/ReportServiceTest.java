@@ -103,6 +103,47 @@ class ReportServiceTest {
     }
 
     @Test
+    void facultyClassStrengthAllowsOtherActiveSectionsWithinAuthorizedGrade() {
+        AcademicYear year = AcademicYear.builder().id(9L).name("2026-2027")
+                .startDate(LocalDate.of(2026, 6, 1)).endDate(LocalDate.of(2027, 3, 31)).active(true).build();
+        User faculty = User.builder().id(2L).fullName("Assigned Faculty")
+                .roles(Set.of(new Role(2L, RoleName.ROLE_FACULTY))).build();
+        var grade = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Grade.class);
+        var assignedSection = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Section.class);
+        var selectedSectionB = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Section.class);
+        var timetable = org.mockito.Mockito.mock(com.zukunftai.evidyalaya.database.Timetable.class);
+        when(userService.getPrincipal()).thenReturn(faculty);
+        when(academicYearRepository.findById(9L)).thenReturn(Optional.of(year));
+        when(grade.getId()).thenReturn(5L);
+        when(grade.getName()).thenReturn("Grade 10");
+        when(grade.isActive()).thenReturn(true);
+        when(grade.getAcademicYear()).thenReturn(year);
+        when(assignedSection.getId()).thenReturn(6L);
+        when(assignedSection.getName()).thenReturn("A");
+        when(assignedSection.isActive()).thenReturn(true);
+        when(selectedSectionB.getId()).thenReturn(7L);
+        when(selectedSectionB.getName()).thenReturn("B");
+        when(selectedSectionB.isActive()).thenReturn(true);
+        when(selectedSectionB.getGrade()).thenReturn(grade);
+        when(timetable.getAcademicYear()).thenReturn(year);
+        when(timetable.getGrade()).thenReturn(grade);
+        when(timetable.getSection()).thenReturn(assignedSection);
+        when(timetableRepository.findByFacultyAndStatusAndActiveTrue(faculty,
+                com.zukunftai.evidyalaya.database.TimetableStatus.APPROVED)).thenReturn(List.of(timetable));
+        when(gradeRepository.findById(5L)).thenReturn(Optional.of(grade));
+        when(sectionRepository.findById(7L)).thenReturn(Optional.of(selectedSectionB));
+        when(enrollmentRepository.countByAcademicYearAndGradeAndSectionAndActiveTrue(year, grade, selectedSectionB)).thenReturn(0L);
+        when(enrollmentRepository.findByAcademicYearAndActiveTrue(year)).thenReturn(List.of());
+
+        var report = reportService.getFacultyClassStrength(9L, 5L, 7L);
+
+        assertEquals(List.of(List.of("Grade 10", "B", "0")), report.getRows());
+        assertEquals("0", report.getSummary().get(2).getValue());
+        assertEquals("Grade 10 · Section B Active Student Roster", report.getSections().get(0).getTitle());
+        assertTrue(report.getSections().get(0).getRows().isEmpty());
+    }
+
+    @Test
     void facultyClassStrengthIncludesRosterDetailsForAuthorizedSection() throws Exception {
         AcademicYear year = AcademicYear.builder().id(9L).name("2026-2027")
                 .startDate(LocalDate.of(2026, 6, 1)).endDate(LocalDate.of(2027, 3, 31)).active(true).build();
